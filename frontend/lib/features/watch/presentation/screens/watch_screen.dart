@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../ui/widgets/app_scaffold.dart';
-import '../../../../ui/widgets/app_top_bar.dart';
+import '../../../../ui/widgets/app_header.dart';
 import '../../../../ui/widgets/card_container.dart';
 import '../../../../ui/theme/app_typography.dart';
 import '../../../../ui/theme/app_spacing.dart';
@@ -12,7 +12,7 @@ class WatchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBar: const AppTopBar(title: '내 사료'),
+      appBar: const AppHeader(title: '내 사료'),
       body: ListView(
         children: [
           // 추적 중 사료 카드들 (Placeholder)

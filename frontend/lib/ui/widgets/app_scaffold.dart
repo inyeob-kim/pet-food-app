@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_spacing.dart';
 
 /// 공통 Scaffold 위젯
 class AppScaffold extends StatelessWidget {
@@ -27,6 +27,7 @@ class AppScaffold extends StatelessWidget {
       backgroundColor: backgroundColor ?? AppColors.background,
       appBar: appBar,
       body: SafeArea(
+        top: false, // AppHeader가 SafeArea를 처리
         child: Padding(
           padding: padding ?? const EdgeInsets.all(AppSpacing.pagePadding),
           child: body,

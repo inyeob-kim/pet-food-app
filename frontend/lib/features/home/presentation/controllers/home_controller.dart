@@ -5,26 +5,40 @@ import '../../../../data/models/recommendation_dto.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/providers/pet_id_provider.dart';
 
+enum HomeEmptyStateType {
+  none, // 데이터 있음
+  noProfile, // 프로필 없음 (중립)
+  error, // 서버/네트워크 오류 (빨간 톤)
+}
+
 class HomeState {
   final RecommendationResponseDto? recommendations;
   final bool isLoading;
   final String? error;
+  final HomeEmptyStateType emptyStateType;
 
   HomeState({
     this.recommendations,
     this.isLoading = false,
     this.error,
+    this.emptyStateType = HomeEmptyStateType.none,
   });
+
+  bool get hasData => recommendations != null && (recommendations?.items.isNotEmpty ?? false);
+  bool get isNoProfile => emptyStateType == HomeEmptyStateType.noProfile;
+  bool get isError => emptyStateType == HomeEmptyStateType.error;
 
   HomeState copyWith({
     RecommendationResponseDto? recommendations,
     bool? isLoading,
     String? error,
+    HomeEmptyStateType? emptyStateType,
   }) {
     return HomeState(
       recommendations: recommendations ?? this.recommendations,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
+      emptyStateType: emptyStateType ?? this.emptyStateType,
     );
   }
 }
@@ -36,14 +50,18 @@ class HomeController extends StateNotifier<HomeState> {
   HomeController(this._productRepository, this._ref) : super(HomeState());
 
   Future<void> loadRecommendations() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      emptyStateType: HomeEmptyStateType.none,
+    );
 
     try {
       final petId = _ref.read(currentPetIdProvider);
       if (petId == null) {
         state = state.copyWith(
           isLoading: false,
-          error: '반려동물 정보가 없습니다. 프로필을 먼저 등록해주세요.',
+          emptyStateType: HomeEmptyStateType.noProfile,
         );
         return;
       }
@@ -52,6 +70,9 @@ class HomeController extends StateNotifier<HomeState> {
       state = state.copyWith(
         isLoading: false,
         recommendations: recommendations,
+        emptyStateType: (recommendations.items.isEmpty)
+            ? HomeEmptyStateType.noProfile
+            : HomeEmptyStateType.none,
       );
     } catch (e) {
       Failure failure;
@@ -63,6 +84,7 @@ class HomeController extends StateNotifier<HomeState> {
       state = state.copyWith(
         isLoading: false,
         error: failure.message,
+        emptyStateType: HomeEmptyStateType.error,
       );
     }
   }

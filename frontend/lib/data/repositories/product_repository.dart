@@ -5,7 +5,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/endpoints.dart';
 import '../models/recommendation_dto.dart';
 import '../models/product_dto.dart';
-import '../../core/constants/enums.dart';
+import '../mock/mock_data.dart';
 
 class ProductRepository {
   final ApiClient _apiClient;
@@ -63,63 +63,11 @@ class ProductRepository {
   }
 
   RecommendationResponseDto _getMockRecommendations(String petId) {
-    return RecommendationResponseDto(
-      petId: petId,
-      items: [
-        RecommendationItemDto(
-          product: ProductDto(
-            id: '00000000-0000-0000-0000-000000000001',
-            brandName: '로얄캐닌',
-            productName: '미니 어덜트',
-            sizeLabel: '3kg',
-            isActive: true,
-          ),
-          offerMerchant: Merchant.coupang,
-          currentPrice: 35000,
-          avgPrice: 38000,
-          deltaPercent: -7.89,
-          isNewLow: true,
-        ),
-        RecommendationItemDto(
-          product: ProductDto(
-            id: '00000000-0000-0000-0000-000000000002',
-            brandName: '힐스',
-            productName: '사이언스 다이어트',
-            sizeLabel: '5kg',
-            isActive: true,
-          ),
-          offerMerchant: Merchant.naver,
-          currentPrice: 45000,
-          avgPrice: 45000,
-          deltaPercent: 0.0,
-          isNewLow: false,
-        ),
-        RecommendationItemDto(
-          product: ProductDto(
-            id: '00000000-0000-0000-0000-000000000003',
-            brandName: '퍼피',
-            productName: '초이스',
-            sizeLabel: '2kg',
-            isActive: true,
-          ),
-          offerMerchant: Merchant.coupang,
-          currentPrice: 28000,
-          avgPrice: 30000,
-          deltaPercent: -6.67,
-          isNewLow: true,
-        ),
-      ],
-    );
+    return MockData.getRecommendations(petId);
   }
 
   ProductDto _getMockProduct(String id) {
-    return ProductDto(
-      id: id,
-      brandName: '로얄캐닌',
-      productName: '미니 어덜트',
-      sizeLabel: '3kg',
-      isActive: true,
-    );
+    return MockData.getProduct(id);
   }
 }
 

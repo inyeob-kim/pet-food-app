@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../ui/widgets/app_scaffold.dart';
-import '../../../../ui/widgets/app_top_bar.dart';
+import '../../../../ui/widgets/app_header.dart';
 import '../../../../ui/widgets/card_container.dart';
 import '../../../../ui/theme/app_typography.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../core/widgets/loading.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../feed/ui/components/food_recommendation_card.dart';
 import '../../../feed/ui/components/price_history_mini.dart';
 import '../../../feed/ui/components/alert_rule_tile.dart';
 import '../controllers/home_controller.dart';
 import '../widgets/product_card.dart';
+import '../widgets/today_empty_state.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +36,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final state = ref.watch(homeControllerProvider);
 
     return AppScaffold(
-      appBar: const AppTopBar(title: '오늘'),
+      appBar: const AppHeader(title: '오늘'),
       body: _buildBody(context, state),
     );
   }
@@ -44,28 +46,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return const LoadingWidget();
     }
 
-    if (state.error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              state.error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                ref.read(homeControllerProvider.notifier).loadRecommendations();
-              },
-              child: const Text('다시 시도'),
-            ),
-          ],
-        ),
+    // 에러 상태 (서버/네트워크 오류)
+    if (state.isError && state.error != null) {
+      return EmptyStateWidget(
+        title: '오류가 발생했습니다',
+        description: state.error!,
+        icon: Icons.error_outline,
+        buttonText: '다시 시도',
+        onButtonPressed: () {
+          ref.read(homeControllerProvider.notifier).loadRecommendations();
+        },
       );
     }
 
-    final items = state.recommendations?.items ?? [];
+    // 프로필 없음 또는 데이터 없음 (중립 EmptyState)
+    if (state.isNoProfile || !state.hasData) {
+      return TodayEmptyState(
+        onBrowseProducts: () {
+          // TODO: 대표 사료 둘러보기 화면 연결
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('사료 둘러보기 기능 준비중')),
+          );
+        },
+      );
+    }
+
+    final items = state.recommendations!.items;
     
     return RefreshIndicator(
       onRefresh: () async {
@@ -130,27 +136,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // 우리 아이 추천 섹션
           _SectionCard(
             title: '우리 아이 추천',
-            child: items.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(AppSpacing.pagePadding),
-                    child: Text(
-                      '반려동물 정보를 등록해주세요',
-                      style: AppTypography.body,
+            child: Column(
+              children: items
+                  .take(5)
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppSpacing.sectionGap,
+                      ),
+                      child: ProductCard(item: item),
                     ),
                   )
-                : Column(
-                    children: items
-                        .take(5)
-                        .map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppSpacing.sectionGap,
-                            ),
-                            child: ProductCard(item: item),
-                          ),
-                        )
-                        .toList(),
-                  ),
+                  .toList(),
+            ),
           ),
           const SizedBox(height: AppSpacing.sectionGap),
           

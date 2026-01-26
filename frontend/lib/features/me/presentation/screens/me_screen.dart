@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../ui/widgets/app_scaffold.dart';
-import '../../../../ui/widgets/app_top_bar.dart';
+import '../../../../ui/widgets/app_header.dart';
 import '../../../../ui/widgets/card_container.dart';
 import '../../../../ui/theme/app_typography.dart';
 import '../../../../ui/theme/app_spacing.dart';
@@ -12,9 +12,9 @@ class MeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBar: const AppTopBar(
+      appBar: const AppHeader(
         title: '마이',
-        onSettingsTap: null, // TODO: 설정 화면 연결
+        showNotification: false,
       ),
       body: ListView(
         children: [

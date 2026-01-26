@@ -1,9 +1,12 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/config/env.dart';
 import 'interceptors.dart';
+
+// Conditional import for Platform (not available on web)
+import 'dart:io' if (dart.library.html) 'platform_stub.dart' as io;
 
 class ApiClient {
   final Dio _dio;
@@ -23,7 +26,11 @@ class ApiClient {
 
     // 디버깅: 사용 중인 baseUrl 출력
     print('[ApiClient] Base URL: $baseUrl');
-    print('[ApiClient] Platform: ${Platform.isIOS ? "iOS" : Platform.isAndroid ? "Android" : "Other"}');
+    if (!kIsWeb) {
+      print('[ApiClient] Platform: ${io.Platform.isIOS ? "iOS" : io.Platform.isAndroid ? "Android" : "Other"}');
+    } else {
+      print('[ApiClient] Platform: Web');
+    }
     print('[ApiClient] Env.baseUrl: ${Env.baseUrl}');
     print('[ApiClient] Env.deviceBaseUrl: ${Env.deviceBaseUrl}');
 
@@ -33,13 +40,18 @@ class ApiClient {
 
   /// 플랫폼에 따라 적절한 baseUrl 반환
   String _getBaseUrl() {
+    // 웹 플랫폼인 경우 baseUrl 사용
+    if (kIsWeb) {
+      return Env.baseUrl;
+    }
+    
     // iOS/Android 플랫폼인 경우 deviceBaseUrl 사용
     // deviceBaseUrl은 .env 파일에서 설정 가능
-    if (Platform.isIOS || Platform.isAndroid) {
+    if (io.Platform.isIOS || io.Platform.isAndroid) {
       return Env.deviceBaseUrl;
     }
     
-    // 데스크톱/웹은 baseUrl 사용
+    // 데스크톱은 baseUrl 사용
     return Env.baseUrl;
   }
 
