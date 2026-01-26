@@ -11,7 +11,7 @@
 *~
 .DS_Store
 
-# Python
+# Python (Backend)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -23,7 +23,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+backend/lib/
 lib64/
 parts/
 sdist/
@@ -37,9 +37,11 @@ MANIFEST
 venv/
 ENV/
 env/
+env.bak/
+venv.bak/
 
 # Alembic
-alembic/versions/*.pyc
+backend/alembic/versions/*.pyc
 
 # Database
 *.db
@@ -66,3 +68,53 @@ docker-compose.override.yml
 *.tmp
 *.temp
 .cache/
+
+# Flutter/Dart (Frontend)
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+frontend/build/
+frontend/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+frontend/android/app/debug
+frontend/android/app/profile
+frontend/android/app/release
+
+# Miscellaneous
+*.class
+*.pyc
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+
+# Testing (Python)
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
