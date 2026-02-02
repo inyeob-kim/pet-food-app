@@ -53,8 +53,11 @@ class OnboardingController extends StateNotifier<OnboardingState> {
 
   /// 닉네임 저장
   Future<void> saveNickname(String nickname) async {
+    print('[OnboardingController] saveNickname() called, nickname: $nickname');
     state = state.copyWith(nickname: nickname);
+    print('[OnboardingController] State updated, current step: ${state.currentStep}, nickname: ${state.nickname}');
     await _repository.saveDraftNickname(nickname);
+    print('[OnboardingController] Nickname saved to repository');
   }
 
   /// 프로필 초안 저장
@@ -65,10 +68,16 @@ class OnboardingController extends StateNotifier<OnboardingState> {
 
   /// 다음 단계로 이동
   Future<void> nextStep() async {
+    print('[OnboardingController] nextStep() called, current step: ${state.currentStep}');
     final next = state.currentStep.next;
+    print('[OnboardingController] Next step: $next');
     if (next != null) {
       state = state.copyWith(currentStep: next);
+      print('[OnboardingController] State updated to step: $next');
       await _repository.saveLastStep(next);
+      print('[OnboardingController] Last step saved to repository');
+    } else {
+      print('[OnboardingController] No next step available');
     }
   }
 

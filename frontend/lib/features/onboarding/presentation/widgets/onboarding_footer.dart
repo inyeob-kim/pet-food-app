@@ -19,14 +19,15 @@ class OnboardingFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('[OnboardingFooter] build() called, buttonText: $buttonText, isEnabled: $isEnabled, onPressed: ${onPressed != null}');
     return SafeArea(
       top: false,
       child: Padding(
         padding: EdgeInsets.only(
-          left: AppSpacing.pagePadding,
-          right: AppSpacing.pagePadding,
+          left: AppSpacing.pagePaddingHorizontal,
+          right: AppSpacing.pagePaddingHorizontal,
           top: AppSpacing.md,
-          bottom: AppSpacing.pagePadding,
+          bottom: AppSpacing.pagePaddingHorizontal,
         ),
         child: AppPrimaryButton(
           text: buttonText,

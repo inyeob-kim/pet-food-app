@@ -52,10 +52,12 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
   @override
   Future<void> saveLastStep(OnboardingStep step) async {
+    print('[OnboardingRepository] saveLastStep() called, step: $step, stepNumber: ${step.stepNumber}');
     await SecureStorage.write(
       StorageKeys.onboardingStep,
       step.stepNumber.toString(),
     );
+    print('[OnboardingRepository] Last step saved to secure storage');
   }
 
   @override
@@ -65,7 +67,9 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
   @override
   Future<void> saveDraftNickname(String nickname) async {
+    print('[OnboardingRepository] saveDraftNickname() called, nickname: $nickname');
     await SecureStorage.write(StorageKeys.draftNickname, nickname);
+    print('[OnboardingRepository] Nickname saved to secure storage');
   }
 
   @override

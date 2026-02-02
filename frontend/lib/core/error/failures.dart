@@ -21,15 +21,3 @@ class ValidationFailure extends Failure {
   const ValidationFailure(super.message);
 }
 
-Failure handleException(Exception exception) {
-  if (exception is ServerException) {
-    return ServerFailure(exception.message);
-  } else if (exception is NetworkException) {
-    return NetworkFailure(exception.message);
-  } else if (exception is CacheException) {
-    return CacheFailure(exception.message);
-  } else {
-    return ServerFailure('알 수 없는 오류가 발생했습니다.');
-  }
-}
-

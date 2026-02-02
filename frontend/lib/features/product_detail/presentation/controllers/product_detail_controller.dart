@@ -4,6 +4,7 @@ import '../../../../data/repositories/product_repository.dart';
 import '../../../../data/repositories/tracking_repository.dart';
 import '../../../../data/models/product_dto.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class ProductDetailState {
   final ProductDto? product;
@@ -56,12 +57,9 @@ class ProductDetailController extends StateNotifier<ProductDetailState> {
         product: product,
       );
     } catch (e) {
-      Failure failure;
-      if (e is Exception) {
-        failure = handleException(e);
-      } else {
-        failure = ServerFailure('알 수 없는 오류가 발생했습니다: ${e.toString()}');
-      }
+      final failure = e is Exception
+          ? handleException(e)
+          : ServerFailure('알 수 없는 오류가 발생했습니다: ${e.toString()}');
       state = state.copyWith(
         isLoading: false,
         error: failure.message,
@@ -82,7 +80,9 @@ class ProductDetailController extends StateNotifier<ProductDetailState> {
         trackingCreated: true,
       );
     } catch (e) {
-      final failure = handleException(e as Exception);
+      final failure = e is Exception
+          ? handleException(e)
+          : ServerFailure('알 수 없는 오류가 발생했습니다: ${e.toString()}');
       state = state.copyWith(
         isTrackingLoading: false,
         error: failure.message,

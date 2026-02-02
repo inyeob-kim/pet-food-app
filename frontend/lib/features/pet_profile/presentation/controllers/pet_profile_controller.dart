@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/pet_repository.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/providers/pet_id_provider.dart';
 
 class PetProfileState {
@@ -58,12 +59,9 @@ class PetProfileController extends StateNotifier<PetProfileState> {
         petId: pet.id,
       );
     } catch (e) {
-      Failure failure;
-      if (e is Exception) {
-        failure = handleException(e);
-      } else {
-        failure = ServerFailure('알 수 없는 오류가 발생했습니다: ${e.toString()}');
-      }
+      final failure = e is Exception
+          ? handleException(e)
+          : ServerFailure('알 수 없는 오류가 발생했습니다: ${e.toString()}');
       state = state.copyWith(
         isLoading: false,
         error: failure.message,

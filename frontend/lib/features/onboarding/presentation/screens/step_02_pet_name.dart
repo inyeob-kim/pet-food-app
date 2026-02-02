@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_radius.dart';
+import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_typography.dart';
-import '../controllers/onboarding_controller.dart';
-import '../widgets/onboarding_header.dart';
-import '../widgets/onboarding_footer.dart';
-import '../widgets/emoji_icon.dart';
 import '../../data/models/onboarding_step.dart';
+import '../controllers/onboarding_controller.dart';
+import '../widgets/emoji_icon.dart';
+import '../widgets/onboarding_footer.dart';
+import '../widgets/onboarding_header.dart';
 
 /// Step 2: 아이 이름
 class Step02PetNameScreen extends ConsumerStatefulWidget {
@@ -28,8 +29,9 @@ class _Step02PetNameScreenState extends ConsumerState<Step02PetNameScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = ref.read(onboardingControllerProvider);
-      if (state.profile.name != null) {
+      if (state.profile.name != null && state.profile.name!.isNotEmpty) {
         _nameController.text = state.profile.name!;
+        setState(() {});
       }
     });
   }
@@ -40,16 +42,16 @@ class _Step02PetNameScreenState extends ConsumerState<Step02PetNameScreen> {
     super.dispose();
   }
 
-  void _onNext() {
+  Future<void> _onNext() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
     HapticFeedback.lightImpact();
     final profile = ref.read(onboardingControllerProvider).profile;
-    ref.read(onboardingControllerProvider.notifier).saveProfile(
+    await ref.read(onboardingControllerProvider.notifier).saveProfile(
           profile.copyWith(name: name),
         );
-    ref.read(onboardingControllerProvider.notifier).nextStep();
+    await ref.read(onboardingControllerProvider.notifier).nextStep();
   }
 
   void _onBack() {
@@ -74,7 +76,7 @@ class _Step02PetNameScreenState extends ConsumerState<Step02PetNameScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.pagePadding,
+                  horizontal: AppSpacing.pagePaddingHorizontal,
                 ),
                 child: Column(
                   children: [
@@ -83,7 +85,7 @@ class _Step02PetNameScreenState extends ConsumerState<Step02PetNameScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     Text(
                       '우리 아이 이름은요? 🐾',
-                      style: AppTypography.title,
+                      style: AppTypography.h2,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.xxl),

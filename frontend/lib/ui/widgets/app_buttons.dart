@@ -30,12 +30,20 @@ class _AppPrimaryButtonState extends State<AppPrimaryButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: widget.onPressed != null ? (_) => setState(() => _isPressed = true) : null,
+      onTapDown: widget.onPressed != null ? (_) {
+        print('[AppPrimaryButton] onTapDown, text: ${widget.text}, onPressed: ${widget.onPressed != null}');
+        setState(() => _isPressed = true);
+      } : null,
       onTapUp: widget.onPressed != null ? (_) {
+        print('[AppPrimaryButton] onTapUp, text: ${widget.text}, calling onPressed');
         setState(() => _isPressed = false);
         widget.onPressed?.call();
+        print('[AppPrimaryButton] onPressed called, text: ${widget.text}');
       } : null,
-      onTapCancel: widget.onPressed != null ? () => setState(() => _isPressed = false) : null,
+      onTapCancel: widget.onPressed != null ? () {
+        print('[AppPrimaryButton] onTapCancel, text: ${widget.text}');
+        setState(() => _isPressed = false);
+      } : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         width: widget.width ?? double.infinity,

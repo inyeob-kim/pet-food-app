@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_radius.dart';
+import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../ui/widgets/app_buttons.dart';
-import '../controllers/onboarding_controller.dart';
-import '../widgets/onboarding_header.dart';
-import '../widgets/onboarding_footer.dart';
-import '../widgets/emoji_icon.dart';
 import '../../data/models/onboarding_step.dart';
+import '../controllers/onboarding_controller.dart';
+import '../widgets/emoji_icon.dart';
+import '../widgets/onboarding_footer.dart';
+import '../widgets/onboarding_header.dart';
 
 /// Step 1: Welcome + 닉네임
 class Step01WelcomeNicknameScreen extends ConsumerStatefulWidget {
@@ -46,8 +47,9 @@ class _Step01WelcomeNicknameScreenState
     // 저장된 닉네임 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = ref.read(onboardingControllerProvider);
-      if (state.nickname != null) {
+      if (state.nickname != null && state.nickname!.isNotEmpty) {
         _nicknameController.text = state.nickname!;
+        setState(() {});
       }
     });
   }
@@ -63,23 +65,49 @@ class _Step01WelcomeNicknameScreenState
     HapticFeedback.lightImpact();
     final random = _randomNicknames[
         DateTime.now().millisecondsSinceEpoch % _randomNicknames.length];
-    _nicknameController.text = random;
+    setState(() {
+      _nicknameController.text = random;
+    });
     _focusNode.unfocus();
   }
 
-  void _onNext() {
+  Future<void> _onNext() async {
     final nickname = _nicknameController.text.trim();
-    if (nickname.length < 2) return;
+    print('[Step01] _onNext() called, nickname: $nickname');
+    
+    if (nickname.length < 2 || nickname.length > 12) {
+      print('[Step01] Invalid nickname length: ${nickname.length}');
+      return;
+    }
 
     HapticFeedback.lightImpact();
-    ref.read(onboardingControllerProvider.notifier).saveNickname(nickname);
-    ref.read(onboardingControllerProvider.notifier).nextStep();
+    print('[Step01] HapticFeedback triggered');
+    
+    try {
+      // 닉네임 저장 및 다음 단계로 이동
+      print('[Step01] Saving nickname...');
+      await ref.read(onboardingControllerProvider.notifier).saveNickname(nickname);
+      print('[Step01] Nickname saved');
+      
+      print('[Step01] Moving to next step...');
+      await ref.read(onboardingControllerProvider.notifier).nextStep();
+      print('[Step01] Next step called');
+      
+      // 상태 확인
+      final currentState = ref.read(onboardingControllerProvider);
+      print('[Step01] Current step after nextStep: ${currentState.currentStep}');
+      print('[Step01] Current nickname: ${currentState.nickname}');
+    } catch (e, stackTrace) {
+      print('[Step01] Error in _onNext: $e');
+      print('[Step01] StackTrace: $stackTrace');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final nickname = _nicknameController.text.trim();
     final isValid = nickname.length >= 2 && nickname.length <= 12;
+    print('[Step01] build() called, nickname: $nickname, isValid: $isValid');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -93,7 +121,7 @@ class _Step01WelcomeNicknameScreenState
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.pagePadding,
+                  horizontal: AppSpacing.pagePaddingHorizontal,
                 ),
                 child: Column(
                   children: [
@@ -102,13 +130,13 @@ class _Step01WelcomeNicknameScreenState
                     const SizedBox(height: AppSpacing.lg),
                     Text(
                       '안녕하세요 😊',
-                      style: AppTypography.title,
+                      style: AppTypography.h2,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       '헤이제노에서 쓸 닉네임만 먼저 정해볼까요?',
-                      style: AppTypography.body2,
+                      style: AppTypography.lead,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.xxl),

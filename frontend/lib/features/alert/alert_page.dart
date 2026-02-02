@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../ui/widgets/app_scaffold.dart';
 import '../../../ui/widgets/app_header.dart';
 import '../../../ui/widgets/card_container.dart';
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../app/theme/app_spacing.dart';
 
