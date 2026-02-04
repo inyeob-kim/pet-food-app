@@ -26,6 +26,9 @@ class _PetProfileScreenState extends ConsumerState<PetProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('반려동물 프로필'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
       ),
       body: SafeArea(
         child: Padding(

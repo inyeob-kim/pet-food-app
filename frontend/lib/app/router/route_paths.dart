@@ -7,6 +7,7 @@ class RoutePaths {
   // 메인 탭
   static const String home = '/home';
   static const String watch = '/watch';
+  static const String market = '/market';
   static const String benefits = '/benefits';
   static const String me = '/me';
   

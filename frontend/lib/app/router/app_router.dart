@@ -11,8 +11,12 @@ import '../../features/pet_profile/presentation/screens/pet_profile_screen.dart'
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/watch/presentation/screens/watch_screen.dart';
 import '../../features/benefits/presentation/screens/benefits_screen.dart';
+import '../../features/market/presentation/screens/market_screen.dart';
 import '../../features/me/presentation/screens/me_screen.dart';
 import '../../features/product_detail/presentation/screens/product_detail_screen.dart';
+
+// 루트 네비게이터 키 (바텀 탭 밖의 페이지용) - 전역으로 선언하여 접근 가능하게
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// GoRouter Provider (Riverpod과 연동)
 final routerProvider = Provider<GoRouter>((ref) {
@@ -23,10 +27,12 @@ GoRouter _createRouter(Ref ref) {
   // 각 탭별 NavigatorKey 생성
   final homeNavigatorKey = GlobalKey<NavigatorState>();
   final watchNavigatorKey = GlobalKey<NavigatorState>();
+  final marketNavigatorKey = GlobalKey<NavigatorState>();
   final benefitsNavigatorKey = GlobalKey<NavigatorState>();
   final meNavigatorKey = GlobalKey<NavigatorState>();
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: RoutePaths.onboarding,
     redirect: (context, state) async {
       final onboardingRepo = OnboardingRepositoryImpl();
@@ -95,6 +101,17 @@ GoRouter _createRouter(Ref ref) {
               ),
             ],
           ),
+          // 검색/마켓 탭
+          StatefulShellBranch(
+            navigatorKey: marketNavigatorKey,
+            routes: [
+              GoRoute(
+                path: RoutePaths.market,
+                name: RoutePaths.market,
+                builder: (context, state) => const MarketScreen(),
+              ),
+            ],
+          ),
           // 혜택 탭
           StatefulShellBranch(
             navigatorKey: benefitsNavigatorKey,
@@ -120,7 +137,7 @@ GoRouter _createRouter(Ref ref) {
         ],
       ),
       
-      // 상세 화면 (탭 외부)
+      // 상세 화면 (탭 외부 - 루트 네비게이터 사용)
       GoRoute(
         path: RoutePaths.productDetail,
         name: RoutePaths.productDetail,

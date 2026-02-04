@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 import '../../app/theme/app_typography.dart';
 import '../../app/theme/app_spacing.dart';
 import '../icons/app_icons.dart';
@@ -9,25 +9,23 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onNotificationTap;
   final bool showNotification;
+  final bool showBackButton;
+  final VoidCallback? onBackTap;
 
   const AppHeader({
     super.key,
     required this.title,
     this.onNotificationTap,
     this.showNotification = true,
+    this.showBackButton = false,
+    this.onBackTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.divider,
-            width: 1,
-          ),
-        ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
       ),
       child: SafeArea(
         bottom: false,
@@ -38,6 +36,27 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: Row(
             children: [
+              // 뒤로 가기 버튼
+              if (showBackButton)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_ios, size: 20),
+                  onPressed: onBackTap ?? () {
+                    // Navigator를 직접 사용하여 뒤로 가기
+                    final navigator = Navigator.of(context);
+                    if (navigator.canPop()) {
+                      navigator.pop();
+                    } else {
+                      // Navigator로 pop이 안되면 GoRouter 사용
+                      final router = GoRouter.of(context);
+                      if (router.canPop()) {
+                        router.pop();
+                      }
+                    }
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              if (showBackButton) const SizedBox(width: 8),
               // 타이틀 (H2: 26px, letter-spacing: -0.5px)
               Text(
                 title,

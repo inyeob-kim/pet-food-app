@@ -30,6 +30,15 @@ class AppIcons {
     );
   }
 
+  // 검색
+  static Widget search({bool isActive = false, double size = 24}) {
+    return Icon(
+      Icons.search,
+      size: size,
+      color: isActive ? AppColors.primary : AppColors.textSecondary,
+    );
+  }
+
   // 혜택
   static Widget gift({bool isActive = false, double size = 24}) {
     return Icon(

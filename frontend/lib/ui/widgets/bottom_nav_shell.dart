@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
-import 'add_item_sheet.dart';
 import 'app_bottom_tab_bar.dart';
 
 /// 하단 네비게이션 셸 위젯
@@ -14,70 +13,59 @@ class BottomNavShell extends StatelessWidget {
   });
 
   /// 탭 인덱스를 브랜치 인덱스로 매핑
-  /// BottomNavigationBar: [0: 홈, 1: 관심, 2: + 버튼, 3: 혜택, 4: 마이]
-  /// Branches: [0: 홈, 1: 관심, 2: 혜택, 3: 마이]
-  int _mapTabIndexToBranchIndex(int tabIndex) {
-    if (tabIndex == 2) {
-      // 중앙 + 버튼 - bottom sheet 표시
-      return -1;
-    } else if (tabIndex == 3) {
-      // 혜택 탭 -> 브랜치 인덱스 2
-      return 2;
-    } else if (tabIndex == 4) {
-      // 마이 탭 -> 브랜치 인덱스 3
-      return 3;
-    }
-    // 홈(0) -> 브랜치 0, 관심(1) -> 브랜치 1
-    return tabIndex;
-  }
-
-  /// 브랜치 인덱스를 탭 인덱스로 매핑
-  int _mapBranchIndexToTabIndex(int branchIndex) {
-    if (branchIndex == 2) {
-      return 3; // 혜택 브랜치 -> 탭 인덱스 3
-    } else if (branchIndex == 3) {
-      return 4; // 마이 브랜치 -> 탭 인덱스 4
-    }
-    return branchIndex; // 홈(0), 관심(1)은 동일
-  }
-
-  void _onTabTapped(int index, BuildContext context) {
-    if (index == 2) {
-      // + 버튼 클릭 시 bottom sheet 표시
-      _onFabTapped(context);
+  /// BottomNavigationBar: [0: 홈, 1: 관심, 2: 검색, 3: 혜택, 4: 마이]
+  /// Branches: [0: 홈, 1: 관심, 2: 마켓, 3: 혜택, 4: 마이]
+  /// 탭 인덱스와 브랜치 인덱스가 1:1로 매핑됨
+  static const int _branchCount = 5; // 브랜치 개수: 홈, 관심, 마켓, 혜택, 마이
+  
+  void _onTabTapped(int tabIndex, BuildContext context) {
+    // 범위 체크
+    if (tabIndex < 0 || tabIndex >= _branchCount) {
+      debugPrint('⚠️ 잘못된 탭 인덱스: $tabIndex (브랜치 개수: $_branchCount)');
       return;
     }
     
-    final branchIndex = _mapTabIndexToBranchIndex(index);
-    if (branchIndex == -1) {
-      return;
+    // 탭 인덱스와 브랜치 인덱스가 동일하므로 직접 사용
+    try {
+      navigationShell.goBranch(
+        tabIndex,
+        initialLocation: tabIndex == navigationShell.currentIndex,
+      );
+    } catch (e) {
+      debugPrint('⚠️ goBranch 에러: $e (탭 인덱스: $tabIndex)');
     }
-    navigationShell.goBranch(
-      branchIndex,
-      initialLocation: branchIndex == navigationShell.currentIndex,
-    );
-  }
-
-  void _onFabTapped(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => const AddItemSheet(),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentTabIndex = _mapBranchIndexToTabIndex(navigationShell.currentIndex);
+    // 현재 브랜치 인덱스를 탭 인덱스로 변환 (안전하게 범위 체크)
+    final currentBranchIndex = navigationShell.currentIndex;
+    final safeTabIndex = (currentBranchIndex >= 0 && currentBranchIndex < _branchCount)
+        ? currentBranchIndex
+        : 0; // 기본값은 0 (홈)
     
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: navigationShell,
-      bottomNavigationBar: AppBottomTabBar(
-        currentIndex: currentTabIndex,
-        onTap: (index) => _onTabTapped(index, context),
-        onFabTap: () => _onFabTapped(context),
+    return PopScope(
+      canPop: false, // 바텀 탭에서는 뒤로가기로 탭 간 이동 불가
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          return;
+        }
+        
+        // 현재 브랜치의 Navigator가 pop 가능하면 (서브 페이지가 있으면) pop
+        // navigationShell의 현재 브랜치 Navigator를 확인
+        final navigator = Navigator.maybeOf(context);
+        if (navigator != null && navigator.canPop()) {
+          navigator.pop();
+        }
+        // 루트에 있으면 아무것도 하지 않음 (앱 종료는 시스템이 처리)
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: navigationShell,
+        bottomNavigationBar: AppBottomTabBar(
+          currentIndex: safeTabIndex,
+          onTap: (index) => _onTabTapped(index, context),
+        ),
       ),
     );
   }

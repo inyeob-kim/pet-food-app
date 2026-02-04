@@ -6,8 +6,7 @@ import '../../../../../ui/widgets/app_scaffold.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../app/theme/app_spacing.dart';
 import '../../../../../app/router/route_paths.dart';
-import '../../../../../core/widgets/loading.dart';
-import '../../../../../core/widgets/empty_state.dart';
+import '../../../../../core/widgets/state_handler.dart';
 import '../../../../../ui/widgets/app_buttons.dart';
 import '../controllers/home_controller.dart';
 import '../widgets/pet_card.dart';
@@ -56,46 +55,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           style: AppTypography.h2,
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
       );
     }
     return AppBar(
       title: Text('오늘', style: AppTypography.h2),
       elevation: 0,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
     );
   }
 
   Widget _buildBody(BuildContext context, HomeState state) {
-    // A) 로딩 중
-    if (state.isLoading) {
-      return const LoadingWidget();
-    }
-
-    // B) Primary Pet 존재 → 정상 홈
+    // Primary Pet 존재 → 정상 홈
     if (state.hasPet) {
-      return _buildHomeWithPet(context, state);
-    }
-
-    // C) Pet 없음 → Empty State
-    if (state.isNoPet) {
-      return _buildEmptyState(context);
-    }
-
-    // 에러 상태
-    if (state.isError) {
-      return EmptyStateWidget(
-        title: '오류가 발생했습니다',
-        description: state.error ?? '알 수 없는 오류',
-        icon: Icons.error_outline,
-        buttonText: '다시 시도',
-        onButtonPressed: () {
+      return StateHandler(
+        isLoading: state.isLoading,
+        error: state.error,
+        isEmpty: false,
+        onRetry: () {
           ref.read(homeControllerProvider.notifier).initialize();
         },
+        child: _buildHomeWithPet(context, state),
       );
     }
 
-    return const SizedBox.shrink();
+    // Pet 없음 → Empty State
+    if (state.isNoPet) {
+      return StateHandler(
+        isLoading: state.isLoading,
+        error: state.error,
+        isEmpty: false,
+        onRetry: () {
+          ref.read(homeControllerProvider.notifier).initialize();
+        },
+        child: _buildEmptyState(context),
+      );
+    }
+
+    // 로딩/에러 처리
+    return StateHandler(
+      isLoading: state.isLoading,
+      error: state.error,
+      isEmpty: false,
+      onRetry: () {
+        ref.read(homeControllerProvider.notifier).initialize();
+      },
+      child: const SizedBox.shrink(),
+    );
   }
 
   /// B 상태: Pet이 있는 정상 홈

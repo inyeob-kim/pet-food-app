@@ -166,14 +166,29 @@ def upgrade() -> None:
     op.create_foreign_key(None, 'outbound_clicks', 'pets', ['pet_id'], ['id'], ondelete='SET NULL')
     op.create_foreign_key(None, 'outbound_clicks', 'products', ['product_id'], ['id'], ondelete='CASCADE')
     op.drop_column('outbound_clicks', 'updated_at')
-    op.add_column('pets', sa.Column('species', postgresql.ENUM('DOG', 'CAT', name='petspecies', create_type=False), nullable=False))
-    op.add_column('pets', sa.Column('age_mode', postgresql.ENUM('BIRTHDATE', 'APPROX', name='ageinputmode', create_type=False), nullable=False))
+    # 기존 데이터 처리를 위해 nullable=True로 먼저 추가
+    op.add_column('pets', sa.Column('species', postgresql.ENUM('DOG', 'CAT', name='petspecies', create_type=False), nullable=True))
+    op.add_column('pets', sa.Column('age_mode', postgresql.ENUM('BIRTHDATE', 'APPROX', name='ageinputmode', create_type=False), nullable=True))
     op.add_column('pets', sa.Column('birthdate', sa.Date(), nullable=True))
     op.add_column('pets', sa.Column('approx_age_months', sa.Integer(), nullable=True))
-    op.add_column('pets', sa.Column('sex', postgresql.ENUM('MALE', 'FEMALE', 'UNKNOWN', name='petsex', create_type=False), server_default='UNKNOWN', nullable=False))
-    op.add_column('pets', sa.Column('weight_kg', sa.Numeric(precision=5, scale=2), nullable=False))
-    op.add_column('pets', sa.Column('body_condition_score', sa.Integer(), nullable=False))
+    op.add_column('pets', sa.Column('sex', postgresql.ENUM('MALE', 'FEMALE', 'UNKNOWN', name='petsex', create_type=False), server_default='UNKNOWN', nullable=True))
+    op.add_column('pets', sa.Column('weight_kg', sa.Numeric(precision=5, scale=2), nullable=True))
+    op.add_column('pets', sa.Column('body_condition_score', sa.Integer(), nullable=True))
+    # 기존 데이터에 기본값 설정
+    op.execute("UPDATE pets SET species = 'DOG' WHERE species IS NULL")
+    op.execute("UPDATE pets SET age_mode = 'APPROX' WHERE age_mode IS NULL")
+    op.execute("UPDATE pets SET sex = 'UNKNOWN' WHERE sex IS NULL")
+    op.execute("UPDATE pets SET weight_kg = 10.0 WHERE weight_kg IS NULL")
+    op.execute("UPDATE pets SET body_condition_score = 5 WHERE body_condition_score IS NULL")
+    # 이제 NOT NULL 제약 추가
+    op.alter_column('pets', 'species', nullable=False)
+    op.alter_column('pets', 'age_mode', nullable=False)
+    op.alter_column('pets', 'sex', nullable=False)
+    op.alter_column('pets', 'weight_kg', nullable=False)
+    op.alter_column('pets', 'body_condition_score', nullable=False)
     op.add_column('pets', sa.Column('photo_url', sa.String(length=500), nullable=True))
+    # 기존 데이터에 name 기본값 설정
+    op.execute("UPDATE pets SET name = '펫' WHERE name IS NULL")
     op.alter_column('pets', 'name',
                existing_type=sa.VARCHAR(length=100),
                nullable=False)
@@ -234,7 +249,12 @@ def upgrade() -> None:
     op.create_foreign_key(None, 'trackings', 'products', ['product_id'], ['id'], ondelete='CASCADE')
     op.create_foreign_key(None, 'trackings', 'users', ['user_id'], ['id'], ondelete='CASCADE')
     op.create_foreign_key(None, 'trackings', 'pets', ['pet_id'], ['id'], ondelete='CASCADE')
-    op.add_column('users', sa.Column('nickname', sa.String(length=50), nullable=False))
+    # 기존 데이터 처리를 위해 nullable=True로 먼저 추가
+    op.add_column('users', sa.Column('nickname', sa.String(length=50), nullable=True))
+    # 기존 데이터에 기본값 설정 (provider_user_id를 사용하거나 기본값 사용)
+    op.execute("UPDATE users SET nickname = COALESCE(email, 'user_' || SUBSTRING(provider_user_id::text, 1, 8)) WHERE nickname IS NULL")
+    # 이제 NOT NULL 제약 추가
+    op.alter_column('users', 'nickname', nullable=False)
     op.drop_index('ix_users_email', table_name='users')
     op.create_index('idx_users_nickname', 'users', ['nickname'], unique=False)
     op.create_index('idx_users_provider_user_id', 'users', ['provider', 'provider_user_id'], unique=False)
