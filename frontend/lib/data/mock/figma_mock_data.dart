@@ -1,0 +1,85 @@
+import '../../ui/widgets/figma_product_tile.dart';
+
+/// Figma 디자인 기반 Mock 데이터
+class FigmaMockData {
+  static final List<ProductTileData> mockProducts = [
+    ProductTileData(
+      id: '1',
+      name: '프리미엄 그레인프리 강아지 사료',
+      brand: '로얄캐닌',
+      price: 45000,
+      comparePrice: 55000,
+      image: 'https://images.unsplash.com/photo-1747577672787-56218a6cbc87?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkb2clMjBmb29kJTIwa2liYmxlJTIwcHJvZHVjdHxlbnwxfHx8fDE3NzAxODc4Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      isWatched: true,
+      protein: '28%',
+      fat: '15%',
+      fiber: '3.5%',
+    ),
+    ProductTileData(
+      id: '2',
+      name: '네추럴 고양이 습식 사료 종합 세트',
+      brand: '힐스 사이언스',
+      price: 32000,
+      comparePrice: 38000,
+      image: 'https://images.unsplash.com/photo-1766852217075-0e48f46a0767?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXQlMjBmb29kJTIwd2V0JTIwZm9vZHxlbnwxfHx8fDE3NzAxODc4NDB8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      isWatched: false,
+      protein: '10%',
+      fat: '5%',
+      fiber: '1.5%',
+    ),
+    ProductTileData(
+      id: '3',
+      name: '오가닉 훈련용 간식',
+      brand: '블루 버팔로',
+      price: 18000,
+      image: 'https://images.unsplash.com/photo-1741942732076-da82c73d3334?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXQlMjB0cmVhdHMlMjBuYXR1cmFsfGVufDF8fHx8MTc3MDE4Nzg0MHww&ixlib=rb-4.1.0&q=80&w=1080',
+      isWatched: true,
+      protein: '22%',
+      fat: '8%',
+      fiber: '4%',
+    ),
+    ProductTileData(
+      id: '4',
+      name: '퍼피 성장 포뮬라',
+      brand: '푸리나 프로',
+      price: 52000,
+      comparePrice: 60000,
+      image: 'https://images.unsplash.com/photo-1747577672787-56218a6cbc87?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkb2clMjBmb29kJTIwa2liYmxlJTIwcHJvZHVjdHxlbnwxfHx8fDE3NzAxODc4Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      isWatched: false,
+      protein: '30%',
+      fat: '18%',
+      fiber: '3%',
+    ),
+    ProductTileData(
+      id: '5',
+      name: '시니어 강아지 사료 포뮬라',
+      brand: '누트로',
+      price: 42000,
+      image: 'https://images.unsplash.com/photo-1747577672787-56218a6cbc87?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkb2clMjBmb29kJTIwa2liYmxlJTIwcHJvZHVjdHxlbnwxfHx8fDE3NzAxODc4Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      isWatched: true,
+      protein: '26%',
+      fat: '12%',
+      fiber: '4%',
+    ),
+    ProductTileData(
+      id: '6',
+      name: '인도어 고양이 완전 영양식',
+      brand: '로얄캐닌',
+      price: 38000,
+      comparePrice: 45000,
+      image: 'https://images.unsplash.com/photo-1766852217075-0e48f46a0767?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXQlMjBmb29kJTIwd2V0JTIwZm9vZHxlbnwxfHx8fDE3NzAxODc4NDB8MA&ixlib=rb-4.1.0&q=80&w=1080',
+      isWatched: false,
+      protein: '27%',
+      fat: '11%',
+      fiber: '5%',
+    ),
+  ];
+
+  static final petData = {
+    'name': '맥스',
+    'age': 3,
+    'weight': 15.2,
+    'breed': '골든 리트리버',
+    'bcs': 5,
+  };
+}

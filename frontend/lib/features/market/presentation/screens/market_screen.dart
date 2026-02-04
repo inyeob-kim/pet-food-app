@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../app/theme/app_typography.dart';
+import '../../../../../ui/theme/app_typography.dart';
+import '../../../../../ui/theme/app_colors.dart';
 import '../../../../../app/theme/app_spacing.dart';
-import '../../../../../app/theme/app_colors.dart';
 import '../../../../../app/router/route_paths.dart';
 import '../../../../../ui/icons/app_icons.dart';
 import '../../../../../core/widgets/state_handler.dart';
 import '../../../../../core/widgets/empty_state.dart';
-import '../widgets/section_header.dart';
+import '../../../../../ui/components/section_header.dart';
 import '../widgets/horizontal_product_list.dart';
 import '../widgets/recommend_banner_card.dart';
 import '../widgets/category_chips.dart';
@@ -42,7 +42,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final state = ref.watch(marketControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white, // 전체 흰색 배경
+      backgroundColor: AppColors.bg,
       body: StateHandler(
         isLoading: state.isLoading,
         error: state.error,
@@ -57,18 +57,16 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           color: AppColors.primary,
           child: CustomScrollView(
         slivers: [
-          // SliverAppBar
+          // SliverAppBar (pinned=true)
           SliverAppBar(
             title: Text(
               '사료마켓',
-              style: AppTypography.h2.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTypography.title,
             ),
             pinned: true,
             elevation: 0,
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.white,
+            backgroundColor: AppColors.bg,
+            surfaceTintColor: AppColors.bg,
             actions: [
               IconButton(
                 icon: AppIcons.bell(),
@@ -89,7 +87,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           // 검색 바
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: _buildSearchBar(),
             ),
           ),
@@ -113,14 +111,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     context.push(RoutePaths.productDetailPath(productId));
                   },
                 ),
-                const SizedBox(height: 20),
-                // 섹션 구분선
-                Divider(
-                  height: 1,
-                  thickness: 3,
-                  color: Colors.grey.shade100,
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 28), // spacing으로만 구분
               ],
             ),
           ),
@@ -144,14 +135,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     context.push(RoutePaths.productDetailPath(productId));
                   },
                 ),
-                const SizedBox(height: 20),
-                // 섹션 구분선
-                Divider(
-                  height: 1,
-                  thickness: 3,
-                  color: Colors.grey.shade100,
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 28), // spacing으로만 구분
               ],
             ),
           ),
@@ -161,14 +145,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
             child: Column(
               children: [
                 const RecommendBannerCard(),
-                const SizedBox(height: 20),
-                // 섹션 구분선
-                Divider(
-                  height: 1,
-                  thickness: 3,
-                  color: Colors.grey.shade100,
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 28), // spacing으로만 구분
               ],
             ),
           ),
@@ -182,23 +159,16 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                   title: '카테고리',
                 ),
                 const SizedBox(height: 16),
-                         CategoryChips(
-                           categories: state.categories,
-                           selectedCategoryId: state.selectedCategoryId,
-                           onCategoryTap: (categoryId) {
-                             ref.read(marketControllerProvider.notifier).selectCategory(
-                                   categoryId == 'all' ? null : categoryId,
-                                 );
-                           },
-                         ),
-                const SizedBox(height: 20),
-                // 섹션 구분선
-                Divider(
-                  height: 1,
-                  thickness: 3,
-                  color: Colors.grey.shade100,
+                CategoryChips(
+                  categories: state.categories,
+                  selectedCategoryId: state.selectedCategoryId,
+                  onCategoryTap: (categoryId) {
+                    ref.read(marketControllerProvider.notifier).selectCategory(
+                          categoryId == 'all' ? null : categoryId,
+                        );
+                  },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 28), // spacing으로만 구분
               ],
             ),
           ),
@@ -260,16 +230,23 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200.withOpacity(0.3)),
+        border: Border.all(
+          color: AppColors.divider.withOpacity(0.5), // 연한 border
+          width: 1,
+        ),
       ),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
           hintText: '사료 브랜드나 제품명을 검색하세요',
-          hintStyle: AppTypography.body2.copyWith(
-            color: Colors.grey.shade500,
+          hintStyle: AppTypography.sub.copyWith(
+            color: AppColors.textSub,
           ),
-          prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+          prefixIcon: Icon(
+            Icons.search,
+            color: AppColors.iconMuted,
+            size: 20,
+          ),
           suffixIcon: state.searchQuery != null && state.searchQuery!.isNotEmpty
               ? IconButton(
                   icon: Icon(Icons.clear, size: 20, color: Colors.grey.shade500),

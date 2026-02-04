@@ -1,83 +1,120 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../../ui/widgets/app_scaffold.dart';
-import '../../../../../ui/widgets/app_header.dart';
-import '../../../../../ui/widgets/card_container.dart';
-import '../../../../../app/theme/app_colors.dart';
-import '../../../../../app/theme/app_typography.dart';
-import '../../../../../app/theme/app_spacing.dart';
+import '../../../../../ui/theme/app_colors.dart';
+import '../../../../../ui/theme/app_typography.dart';
+import '../../../../../ui/components/section_header.dart';
+import '../../../../../app/router/route_paths.dart';
 import 'package:pet_food_app/features/home/presentation/controllers/home_controller.dart';
 
-/// 마이 화면 (DESIGN_GUIDE.md 스타일)
+/// 마이 화면 (토스 스타일 - 상태 요약 대시보드)
 class MeScreen extends ConsumerWidget {
   const MeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeControllerProvider);
-    final petName = homeState.petSummary?.name ?? '우리 아이';
-    final healthSummary = homeState.petSummary?.healthSummary ?? '특이사항 없음';
+    final petSummary = homeState.petSummary;
+    final petName = petSummary?.name ?? '우리 아이';
+    final healthSummary = petSummary?.healthSummary ?? '특이사항 없음';
     
-    // 건강 포인트 요약 문구 생성
-    final healthSummaryText = healthSummary.isEmpty || healthSummary == '특이사항 없음'
-        ? '특이사항 없음, 건강해요!'
-        : '$healthSummary, 꼼꼼히 챙겨요';
+    // 건강 상태 요약 문구
+    final healthStatusText = healthSummary.isEmpty || healthSummary == '특이사항 없음'
+        ? '특이사항 없이 건강해요'
+        : healthSummary;
 
     return AppScaffold(
-      appBar: const AppHeader(
-        title: '마이',
-        showNotification: false,
+      appBar: AppBar(
+        title: Text('마이', style: AppTypography.title),
+        elevation: 0,
+        backgroundColor: AppColors.bg,
+        surfaceTintColor: AppColors.bg,
       ),
+      backgroundColor: AppColors.bg,
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.pagePaddingHorizontal),
+        padding: const EdgeInsets.only(bottom: 80),
         children: [
-          // 반려동물 건강 리포트 섹션
-          CardContainer(
+          // 상단 상태 요약 (카드 없이)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // H3: 18px
-                Text('$petName의 건강 리포트', style: AppTypography.h3),
-                const SizedBox(height: AppSpacing.gridGap),
-                // 건강 포인트 요약
+                Text(
+                  '$petName의 건강 리포트',
+                  style: AppTypography.title,
+                ),
+                const SizedBox(height: 12),
+                // 상태 pill 또는 한 줄 강조
                 Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.positive.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        '💚 ',
-                        style: AppTypography.body,
+                      Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: AppColors.positive,
                       ),
-                      Expanded(
-                        child: Text(
-                          healthSummaryText,
-                          style: AppTypography.body.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                      const SizedBox(width: 6),
+                      Text(
+                        healthStatusText,
+                        style: AppTypography.sub.copyWith(
+                          color: AppColors.positive,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.gridGap),
-                _ProfileItem(label: '견종', value: '골든 리트리버'),
-                const SizedBox(height: AppSpacing.gridGap),
-                _ProfileItem(label: '체중', value: '10-15kg'),
-                const SizedBox(height: AppSpacing.gridGap),
-                _ProfileItem(label: '나이', value: '성견'),
-                const SizedBox(height: AppSpacing.lg),
+              ],
+            ),
+          ),
+
+          // 프로필 정보 섹션
+          const SectionHeader(
+            title: '프로필',
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                if (petSummary != null) ...[
+                  _ProfileItem(
+                    label: '견종',
+                    value: petSummary.species == 'DOG' ? '강아지' : '고양이',
+                  ),
+                  const SizedBox(height: 12),
+                  _ProfileItem(
+                    label: '체중',
+                    value: '${petSummary.weightKg}kg',
+                  ),
+                  const SizedBox(height: 12),
+                  _ProfileItem(
+                    label: '나이',
+                    value: petSummary.ageSummary,
+                  ),
+                ] else ...[
+                  _ProfileItem(label: '견종', value: '-'),
+                  const SizedBox(height: 12),
+                  _ProfileItem(label: '체중', value: '-'),
+                  const SizedBox(height: 12),
+                  _ProfileItem(label: '나이', value: '-'),
+                ],
+                const SizedBox(height: 16),
                 // 프로필 수정 링크
                 GestureDetector(
                   onTap: () {
-                    // TODO: 프로필 수정 화면으로 이동
+                    context.push(RoutePaths.petProfile);
                   },
                   child: Text(
                     '프로필 수정',
-                    style: AppTypography.body2.copyWith(
+                    style: AppTypography.sub.copyWith(
                       color: AppColors.primary,
                       decoration: TextDecoration.underline,
                     ),
@@ -86,25 +123,26 @@ class MeScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.gridGap),
-          
+          const SizedBox(height: 32),
+
           // 알림 설정 섹션
-          CardContainer(
+          const SectionHeader(
+            title: '알림 설정',
+            subtitle: '가격 변동과 추천을 알려드려요',
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // H3: 18px
-                Text('알림 설정', style: AppTypography.h3),
-                const SizedBox(height: AppSpacing.gridGap),
                 _SettingItem(
                   title: '가격 알림',
-                  subtitle: '최저가 알림 받기',
+                  subtitle: '최저가일 때 알려드려요',
                   value: true,
                   onChanged: (value) {
                     // TODO: 알림 설정 업데이트
                   },
                 ),
-                const Divider(height: 1),
+                const SizedBox(height: 16),
                 _SettingItem(
                   title: '푸시 알림',
                   subtitle: '앱 푸시 알림 받기',
@@ -116,23 +154,26 @@ class MeScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.gridGap),
-          
-          // 포인트 섹션
-          CardContainer(
+          const SizedBox(height: 32),
+
+          // 포인트 섹션 (카드 제거)
+          const SectionHeader(
+            title: '포인트',
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // H3: 18px
-                Text('포인트', style: AppTypography.h3),
-                const SizedBox(height: AppSpacing.gridGap),
-                // H2: 26px
-                Text('0 P', style: AppTypography.h2),
-                const SizedBox(height: 4),
-                // Body2: muted
+                // 큰 숫자로 표시 (hero 스타일)
+                Text(
+                  '0 P',
+                  style: AppTypography.heroNumber,
+                ),
+                const SizedBox(height: 8),
                 Text(
                   '사료 구매 시 포인트를 적립할 수 있습니다',
-                  style: AppTypography.body2,
+                  style: AppTypography.sub,
                 ),
               ],
             ),
@@ -155,12 +196,20 @@ class _ProfileItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
-          width: 80,
-          child: Text(label, style: AppTypography.caption),
+        Text(
+          label,
+          style: AppTypography.sub.copyWith(
+            color: AppColors.textSub,
+          ),
         ),
-        Text(value, style: AppTypography.body),
+        Text(
+          value,
+          style: AppTypography.body.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }
@@ -187,17 +236,25 @@ class _SettingItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Body: 16px
-              Text(title, style: AppTypography.body),
+              Text(
+                title,
+                style: AppTypography.body.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 4),
-              // Caption: 13px
-              Text(subtitle, style: AppTypography.caption),
+              Text(
+                subtitle,
+                style: AppTypography.sub,
+              ),
             ],
           ),
         ),
+        const SizedBox(width: 16),
         Switch(
           value: value,
           onChanged: onChanged,
+          activeColor: AppColors.primary,
         ),
       ],
     );

@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../../../app/theme/app_colors.dart';
-import '../../../../../app/theme/app_typography.dart';
-import '../../../../../app/theme/app_radius.dart';
-import '../../../../../app/theme/app_spacing.dart';
-import '../../../../../ui/widgets/card_container.dart';
+import '../../../../../ui/theme/app_colors.dart';
+import '../../../../../ui/theme/app_typography.dart';
+import '../../../../../ui/components/metric_row.dart';
 import '../../../../data/models/recommendation_dto.dart';
 
-/// 추천 Top1 카드 (로딩/데이터 상태)
+/// 추천 사료 섹션 (토스 스타일 - 카드 없음)
+/// 텍스트 기반 섹션으로 구성
 class RecommendationCard extends StatelessWidget {
   final RecommendationItemDto? topRecommendation;
   final bool isLoading;
   final String? petName;
+  final VoidCallback? onWhyRecommended;
 
   const RecommendationCard({
     super.key,
     this.topRecommendation,
     this.isLoading = false,
     this.petName,
+    this.onWhyRecommended,
   });
 
   @override
@@ -26,137 +27,118 @@ class RecommendationCard extends StatelessWidget {
           ? '$petName에게 딱 맞는 사료 찾는 중...'
           : '분석 중...';
       
-      return CardContainer(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loadingText,
-              style: AppTypography.h3,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _buildSkeleton(),
-          ],
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            loadingText,
+            style: AppTypography.body,
+          ),
+          const SizedBox(height: 16),
+          _buildSkeleton(),
+        ],
       );
     }
 
     if (topRecommendation == null) {
-      return CardContainer(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '추천 준비 중',
-              style: AppTypography.h3,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              '곧 맞춤 추천을 드릴게요!',
-              style: AppTypography.body2.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '추천 준비 중',
+            style: AppTypography.body,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '곧 맞춤 추천을 드릴게요!',
+            style: AppTypography.sub,
+          ),
+        ],
       );
     }
 
     final product = topRecommendation!.product;
     final deltaPercent = topRecommendation!.deltaPercent;
+    final currentPrice = topRecommendation!.currentPrice;
+    final avgPrice = topRecommendation!.avgPrice;
 
-    return CardContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 헤더: 브랜드/상품명 + 왜 추천? 버튼
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  '${product.brandName} ${product.productName}',
-                  style: AppTypography.h3,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  // TODO: 추천 근거 상세 모달 표시
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('추천 근거: 알레르기 제외, 나이/체중 반영, 최저가'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  '왜 추천?',
-                  style: AppTypography.small.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
+    // 가격 차이 계산 (평균 대비)
+    final priceDiff = avgPrice - currentPrice;
+    final priceDiffPercent = avgPrice > 0 
+        ? ((priceDiff / avgPrice) * 100).abs()
+        : 0.0;
+    final isCheaper = priceDiff > 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 상품명
+        Text(
+          '${product.brandName} ${product.productName}',
+          style: AppTypography.body,
+        ),
+        const SizedBox(height: 12),
+        
+        // 가격 (강조)
+        Text(
+          '${_formatPrice(currentPrice)}원',
+          style: AppTypography.priceNumeric.copyWith(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: AppSpacing.md),
-          
-          // 가격 정보
-          Row(
-            children: [
-              Text(
-                '${topRecommendation!.currentPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
-                style: AppTypography.body.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+        ),
+        const SizedBox(height: 12),
+        
+        // MetricRow: 평균 대비
+        if (deltaPercent != null && avgPrice > 0)
+          MetricRow(
+            label: '평균 대비',
+            valueText: isCheaper
+                ? '-${priceDiffPercent.toStringAsFixed(1)}%'
+                : '+${priceDiffPercent.toStringAsFixed(1)}%',
+            valueColor: isCheaper ? AppColors.positive : AppColors.negative,
+            helperText: '최근 14일 기준',
+          ),
+        
+        // '왜 추천?' 링크
+        if (onWhyRecommended != null) ...[
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: onWhyRecommended,
+            child: Text(
+              '왜 추천?',
+              style: AppTypography.sub.copyWith(
+                color: AppColors.primary,
+                decoration: TextDecoration.underline,
               ),
-              if (deltaPercent != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  deltaPercent < 0 
-                    ? '${deltaPercent.toStringAsFixed(1)}% ↓'
-                    : '+${deltaPercent.toStringAsFixed(1)}% ↑',
-                  style: AppTypography.body2.copyWith(
-                    color: deltaPercent < 0 
-                      ? AppColors.positiveGreen 
-                      : AppColors.dangerRed,
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
         ],
-      ),
+      ],
+    );
+  }
+
+  String _formatPrice(int price) {
+    return price.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
     );
   }
 
   Widget _buildSkeleton() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          height: 16,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.divider,
-            borderRadius: BorderRadius.circular(AppRadius.small),
-          ),
+          height: 20,
+          width: 200,
+          color: AppColors.divider.withOpacity(0.3),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: 8),
         Container(
           height: 16,
-          width: 200,
-          decoration: BoxDecoration(
-            color: AppColors.divider,
-            borderRadius: BorderRadius.circular(AppRadius.small),
-          ),
+          width: 150,
+          color: AppColors.divider.withOpacity(0.3),
         ),
       ],
     );

@@ -2,6 +2,7 @@
 class RoutePaths {
   // 인증/온보딩
   static const String onboarding = '/onboarding';
+  static const String onboardingV2 = '/onboarding_v2'; // Test route for new onboarding
   static const String petProfile = '/pet-profile';
   
   // 메인 탭

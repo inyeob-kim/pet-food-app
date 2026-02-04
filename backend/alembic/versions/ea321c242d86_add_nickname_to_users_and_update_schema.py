@@ -30,6 +30,22 @@ def upgrade() -> None:
     sa.Column('display_name', sa.String(length=50), nullable=False),
     sa.PrimaryKeyConstraint('code')
     )
+    # Insert initial allergen codes data
+    op.execute("""
+        INSERT INTO allergen_codes (code, display_name) VALUES
+        ('BEEF', '소고기'),
+        ('CHICKEN', '닭고기'),
+        ('PORK', '돼지고기'),
+        ('DUCK', '오리고기'),
+        ('LAMB', '양고기'),
+        ('FISH', '생선'),
+        ('EGG', '계란'),
+        ('DAIRY', '유제품'),
+        ('WHEAT', '밀/글루텐'),
+        ('CORN', '옥수수'),
+        ('SOY', '콩')
+        ON CONFLICT (code) DO NOTHING
+    """)
     op.create_table('claim_codes',
     sa.Column('code', sa.String(length=30), nullable=False),
     sa.Column('display_name', sa.String(length=50), nullable=False),
@@ -40,6 +56,22 @@ def upgrade() -> None:
     sa.Column('display_name', sa.String(length=50), nullable=False),
     sa.PrimaryKeyConstraint('code')
     )
+    # Insert initial health concern codes data
+    op.execute("""
+        INSERT INTO health_concern_codes (code, display_name) VALUES
+        ('ALLERGY', '알레르기'),
+        ('DIGESTIVE', '장/소화'),
+        ('DENTAL', '치아/구강'),
+        ('OBESITY', '비만'),
+        ('RESPIRATORY', '호흡기'),
+        ('SKIN', '피부/털'),
+        ('JOINT', '관절'),
+        ('EYE', '눈/눈물'),
+        ('KIDNEY', '신장/요로'),
+        ('HEART', '심장'),
+        ('SENIOR', '노령')
+        ON CONFLICT (code) DO NOTHING
+    """)
     op.create_table('product_allergens',
     sa.Column('product_id', sa.UUID(), nullable=False),
     sa.Column('allergen_code', sa.String(length=30), nullable=False),

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/app_colors.dart';
-import '../../app/theme/app_typography.dart';
-import '../../app/theme/app_spacing.dart';
-import '../../app/theme/app_radius.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 import '../icons/app_icons.dart';
 
-/// iOS 스타일 Bottom Tab Bar (DESIGN_GUIDE.md 기반)
+/// 토스 스타일 Bottom Tab Bar (가볍고 안정적)
 class AppBottomTabBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -18,56 +16,50 @@ class AppBottomTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.pagePaddingHorizontal,
-        0,
-        AppSpacing.pagePaddingHorizontal,
-        8,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(
+          top: BorderSide(
+            color: AppColors.divider.withOpacity(0.3), // 매우 연한 divider
+            width: 0.5,
+          ),
+        ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.card + 10),
+      child: SafeArea(
+        top: false,
         child: Container(
           height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.92),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.textPrimary.withValues(alpha: 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _TabItem(
-                icon: AppIcons.home(isActive: currentIndex == 0),
+                icon: AppIcons.home(isActive: currentIndex == 0, size: 23),
                 label: '홈',
                 isActive: currentIndex == 0,
                 onTap: () => onTap(0),
               ),
               _TabItem(
-                icon: AppIcons.favorite(isActive: currentIndex == 1),
+                icon: AppIcons.favorite(isActive: currentIndex == 1, size: 23),
                 label: '관심',
                 isActive: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
               _TabItem(
-                icon: AppIcons.search(isActive: currentIndex == 2),
+                icon: AppIcons.search(isActive: currentIndex == 2, size: 23),
                 label: '검색',
                 isActive: currentIndex == 2,
                 onTap: () => onTap(2),
               ),
               _TabItem(
-                icon: AppIcons.gift(isActive: currentIndex == 3),
+                icon: AppIcons.gift(isActive: currentIndex == 3, size: 23),
                 label: '혜택',
                 isActive: currentIndex == 3,
                 onTap: () => onTap(3),
               ),
               _TabItem(
-                icon: AppIcons.person(isActive: currentIndex == 4),
+                icon: AppIcons.person(isActive: currentIndex == 4, size: 23),
                 label: '마이',
                 isActive: currentIndex == 4,
                 onTap: () => onTap(4),
@@ -80,7 +72,7 @@ class AppBottomTabBar extends StatelessWidget {
   }
 }
 
-/// 탭 아이템
+/// 탭 아이템 (토스 스타일 - 배경/버블 효과 없음)
 class _TabItem extends StatelessWidget {
   final Widget icon;
   final String label;
@@ -100,23 +92,19 @@ class _TabItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedScale(
-              scale: isActive ? 1.0 : 0.95,
-              duration: const Duration(milliseconds: 150),
-              child: icon,
-            ),
-            const SizedBox(height: 3),
+            icon, // AnimatedScale 제거 (배경/버블 효과 금지)
+            const SizedBox(height: 2),
             Text(
               label,
-              style: AppTypography.caption.copyWith(
-                fontSize: 10, // 약간 줄여서 오버플로우 방지
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
+              style: AppTypography.sub.copyWith(
+                fontSize: 11,
+                color: isActive ? AppColors.primary : AppColors.textSub,
+                fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

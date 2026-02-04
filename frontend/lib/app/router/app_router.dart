@@ -4,16 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'route_paths.dart';
 import '../../ui/widgets/bottom_nav_shell.dart';
-import '../../features/onboarding/presentation/screens/onboarding_wrapper.dart';
 import '../../features/onboarding/presentation/screens/splash_screen.dart';
 import '../../features/onboarding/data/repositories/onboarding_repository.dart';
 import '../../features/pet_profile/presentation/screens/pet_profile_screen.dart';
-import '../../features/home/presentation/screens/home_screen.dart';
-import '../../features/watch/presentation/screens/watch_screen.dart';
-import '../../features/benefits/presentation/screens/benefits_screen.dart';
-import '../../features/market/presentation/screens/market_screen.dart';
-import '../../features/me/presentation/screens/me_screen.dart';
-import '../../features/product_detail/presentation/screens/product_detail_screen.dart';
+import '../../features/home/presentation/screens/figma_home_screen.dart';
+import '../../features/watch/presentation/screens/figma_watch_screen.dart';
+import '../../features/benefits/presentation/screens/figma_benefits_screen.dart';
+import '../../features/market/presentation/screens/figma_market_screen.dart';
+import '../../features/me/presentation/screens/figma_my_screen.dart';
+import '../../features/product_detail/presentation/screens/figma_product_detail_screen.dart';
+import '../../onboarding_v2/onboarding_flow.dart';
 
 // 루트 네비게이터 키 (바텀 탭 밖의 페이지용) - 전역으로 선언하여 접근 가능하게
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -55,11 +55,11 @@ GoRouter _createRouter(Ref ref) {
       return null; // 리다이렉트 불필요
     },
     routes: [
-      // 온보딩 라우트
+      // 온보딩 라우트 (V2)
       GoRoute(
         path: RoutePaths.onboarding,
         name: RoutePaths.onboarding,
-        builder: (context, state) => const OnboardingWrapper(),
+        builder: (context, state) => const OnboardingFlowV2(),
       ),
       // 스플래시 스크린 (온보딩 완료 후)
       GoRoute(
@@ -86,7 +86,7 @@ GoRouter _createRouter(Ref ref) {
               GoRoute(
                 path: RoutePaths.home,
                 name: RoutePaths.home,
-                builder: (context, state) => const HomeScreen(),
+                builder: (context, state) => const FigmaHomeScreen(),
               ),
             ],
           ),
@@ -97,7 +97,7 @@ GoRouter _createRouter(Ref ref) {
               GoRoute(
                 path: RoutePaths.watch,
                 name: RoutePaths.watch,
-                builder: (context, state) => const WatchScreen(),
+                builder: (context, state) => const FigmaWatchScreen(),
               ),
             ],
           ),
@@ -108,7 +108,7 @@ GoRouter _createRouter(Ref ref) {
               GoRoute(
                 path: RoutePaths.market,
                 name: RoutePaths.market,
-                builder: (context, state) => const MarketScreen(),
+                builder: (context, state) => const FigmaMarketScreen(),
               ),
             ],
           ),
@@ -119,7 +119,7 @@ GoRouter _createRouter(Ref ref) {
               GoRoute(
                 path: RoutePaths.benefits,
                 name: RoutePaths.benefits,
-                builder: (context, state) => const BenefitsScreen(),
+                builder: (context, state) => const FigmaBenefitsScreen(),
               ),
             ],
           ),
@@ -130,7 +130,7 @@ GoRouter _createRouter(Ref ref) {
               GoRoute(
                 path: RoutePaths.me,
                 name: RoutePaths.me,
-                builder: (context, state) => const MeScreen(),
+                builder: (context, state) => const FigmaMyScreen(),
               ),
             ],
           ),
@@ -143,7 +143,7 @@ GoRouter _createRouter(Ref ref) {
         name: RoutePaths.productDetail,
         builder: (context, state) {
           final productId = state.pathParameters['id']!;
-          return ProductDetailScreen(productId: productId);
+          return FigmaProductDetailScreen(productId: productId);
         },
       ),
     ],
