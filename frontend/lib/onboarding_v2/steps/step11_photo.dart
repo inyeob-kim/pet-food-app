@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../onboarding_shell.dart';
-import '../../theme_v2/app_colors.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_typography.dart';
+import '../../theme_v2/app_colors.dart' as v2;
 
 /// Step 11: Photo - matches React Step11Photo
 class Step11Photo extends StatefulWidget {
@@ -74,7 +75,7 @@ class _Step11PhotoState extends State<Step11Photo> {
               height: 256,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColorsV2.primary, width: 2),
+                border: Border.all(color: AppColors.primary, width: 2),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
@@ -90,10 +91,10 @@ class _Step11PhotoState extends State<Step11Photo> {
                 width: double.infinity,
                 height: 256,
                 decoration: BoxDecoration(
-                  color: AppColorsV2.background,
+                  color: const Color(0xFFF7F8FA),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColorsV2.divider,
+                    color: v2.AppColorsV2.divider,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
@@ -111,20 +112,20 @@ class _Step11PhotoState extends State<Step11Photo> {
                       child: const Icon(
                         Icons.upload,
                         size: 28,
-                        color: AppColorsV2.primary,
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       '사진을 선택해주세요',
-                      style: AppTypographyV2.body.copyWith(
+                      style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '탭하여 사진을 선택하세요',
-                      style: AppTypographyV2.sub,
+                      style: AppTypography.small,
                     ),
                   ],
                 ),

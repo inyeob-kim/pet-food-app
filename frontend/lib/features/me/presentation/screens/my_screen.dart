@@ -4,8 +4,8 @@ import '../../../../../data/mock/figma_mock_data.dart';
 import '../../../../../app/theme/app_typography.dart';
 
 /// Figma 디자인 기반 My Screen
-class FigmaMyScreen extends StatelessWidget {
-  const FigmaMyScreen({super.key});
+class MyScreen extends StatelessWidget {
+  const MyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

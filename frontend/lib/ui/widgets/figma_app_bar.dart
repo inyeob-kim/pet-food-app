@@ -47,8 +47,10 @@ class FigmaAppBar extends StatelessWidget implements PreferredSizeWidget {
           Expanded(
             child: Text(
               title,
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left,
               style: AppTypography.body.copyWith(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
                 color: const Color(0xFF111827),
               ),
             ),

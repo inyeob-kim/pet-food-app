@@ -57,10 +57,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   constraints: const BoxConstraints(),
                 ),
               if (showBackButton) const SizedBox(width: 8),
-              // 타이틀 (H2: 26px, letter-spacing: -0.5px)
+              // 타이틀 (더 크고 굵게)
               Text(
                 title,
-                style: AppTypography.h2,
+                style: AppTypography.h2.copyWith(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const Spacer(),
               // 알림 아이콘만

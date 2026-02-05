@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../onboarding_shell.dart';
 import '../widgets/selection_card.dart';
 import '../widgets/toss_text_input.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Step 4: Age - matches React Step4Age
 class Step04Age extends StatelessWidget {
@@ -55,7 +55,7 @@ class Step04Age extends StatelessWidget {
               children: [
                 Text(
                   '생년월일 알아요',
-                  style: AppTypographyV2.body.copyWith(
+                  style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -79,7 +79,7 @@ class Step04Age extends StatelessWidget {
               children: [
                 Text(
                   '대략 나이만',
-                  style: AppTypographyV2.body.copyWith(
+                  style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -159,7 +159,7 @@ class Step04Age extends StatelessWidget {
           children: [
             Text(
               birthdate.isEmpty ? '생년월일을 선택해주세요' : birthdate,
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 color: birthdate.isEmpty
                     ? const Color(0xFF6B7280)
                     : const Color(0xFF111827),

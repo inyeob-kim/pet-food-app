@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../onboarding_shell.dart';
 import '../widgets/toss_text_input.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Step 7: Weight - matches React Step7Weight
 class Step07Weight extends StatelessWidget {
@@ -23,7 +23,7 @@ class Step07Weight extends StatelessWidget {
   });
 
   bool get isValid {
-    final weight = double.tryParse(value);
+    final weight = double.tryParse(value.trim());
     return weight != null && weight >= 0.1 && weight <= 99.9;
   }
 
@@ -44,7 +44,7 @@ class Step07Weight extends StatelessWidget {
         children: [
           Text(
             '몸무게 (kg)',
-            style: AppTypographyV2.sub.copyWith(
+            style: AppTypography.small.copyWith(
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -58,7 +58,7 @@ class Step07Weight extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '0.1~99.9kg 사이의 값을 입력해주세요',
-            style: AppTypographyV2.sub,
+            style: AppTypography.small,
           ),
         ],
       ),

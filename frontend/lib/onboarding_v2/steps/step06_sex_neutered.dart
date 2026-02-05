@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../onboarding_shell.dart';
 import '../widgets/selection_card.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Step 6: Sex & Neutered - matches React Step6SexNeutered
 class Step06SexNeutered extends StatelessWidget {
@@ -43,7 +43,7 @@ class Step06SexNeutered extends StatelessWidget {
           // Sex Section
           Text(
             '성별',
-            style: AppTypographyV2.sub.copyWith(
+            style: AppTypography.small.copyWith(
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -54,7 +54,7 @@ class Step06SexNeutered extends StatelessWidget {
             emoji: '♂️',
             child: Text(
               '남아',
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -66,7 +66,7 @@ class Step06SexNeutered extends StatelessWidget {
             emoji: '♀️',
             child: Text(
               '여아',
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -75,7 +75,7 @@ class Step06SexNeutered extends StatelessWidget {
           // Neutered Section
           Text(
             '중성화',
-            style: AppTypographyV2.sub.copyWith(
+            style: AppTypography.small.copyWith(
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -85,7 +85,7 @@ class Step06SexNeutered extends StatelessWidget {
             onTap: () => onUpdate({'neutered': true}),
             child: Text(
               '했어요',
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -96,7 +96,7 @@ class Step06SexNeutered extends StatelessWidget {
             onTap: () => onUpdate({'neutered': false}),
             child: Text(
               '안 했어요',
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -107,7 +107,7 @@ class Step06SexNeutered extends StatelessWidget {
             onTap: () => onUpdate({'neutered': null}),
             child: Text(
               '잘 모르겠어요',
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),

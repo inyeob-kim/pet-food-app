@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../onboarding_shell.dart';
-import '../../theme_v2/app_colors.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_typography.dart';
+import '../../theme_v2/app_colors.dart' as v2;
 
 /// Step 8: BCS - matches React Step8BCS
 class Step08BCS extends StatelessWidget {
@@ -46,15 +47,15 @@ class Step08BCS extends StatelessWidget {
             children: [
               Text(
                 '$value',
-                style: AppTypographyV2.hero.copyWith(
-                  color: AppColorsV2.primary,
+                style: AppTypography.h1Mobile.copyWith(
+                  color: AppColors.primary,
                 ),
               ),
               Text(
                 getBCSLabel(value),
-                style: AppTypographyV2.body.copyWith(
+                style: AppTypography.body.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColorsV2.textSub,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -63,9 +64,9 @@ class Step08BCS extends StatelessWidget {
           // Slider
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColorsV2.primary,
-              inactiveTrackColor: AppColorsV2.divider,
-              thumbColor: AppColorsV2.primary,
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: v2.AppColorsV2.divider,
+              thumbColor: AppColors.primary,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
               trackHeight: 4,
             ),
@@ -80,8 +81,8 @@ class Step08BCS extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('마른 편', style: AppTypographyV2.small),
-              Text('통통한 편', style: AppTypographyV2.small),
+              Text('마른 편', style: AppTypography.small),
+              Text('통통한 편', style: AppTypography.small),
             ],
           ),
         ],

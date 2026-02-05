@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../onboarding_shell.dart';
 import '../widgets/toss_text_input.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Step 2: Pet Name - matches React Step2PetName
 class Step02PetName extends StatelessWidget {
@@ -40,7 +40,7 @@ class Step02PetName extends StatelessWidget {
         children: [
           Text(
             '이름',
-            style: AppTypographyV2.sub.copyWith(
+            style: AppTypography.small.copyWith(
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -54,7 +54,7 @@ class Step02PetName extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '1~20자',
-            style: AppTypographyV2.sub,
+            style: AppTypography.small,
           ),
         ],
       ),

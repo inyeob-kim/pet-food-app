@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../onboarding_shell.dart';
 import '../widgets/selection_card.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Step 3: Species - matches React Step3Species
 class Step03Species extends StatelessWidget {
@@ -41,7 +41,7 @@ class Step03Species extends StatelessWidget {
             emoji: '🐶',
             child: Text(
               '강아지',
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -53,7 +53,7 @@ class Step03Species extends StatelessWidget {
             emoji: '🐱',
             child: Text(
               '고양이',
-              style: AppTypographyV2.body.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),

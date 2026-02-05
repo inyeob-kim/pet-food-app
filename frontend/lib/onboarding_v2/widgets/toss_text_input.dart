@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../theme_v2/app_colors.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Text input component matching React implementation
 class TossTextInput extends StatelessWidget {
@@ -62,14 +62,23 @@ class _TossTextInputStatefulState extends State<_TossTextInputStateful> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.value);
+    _controller = TextEditingController(text: widget.value ?? '');
   }
 
   @override
   void didUpdateWidget(_TossTextInputStateful oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // 외부에서 값이 변경되었을 때만 컨트롤러 업데이트
+    // 사용자가 직접 입력 중이 아닐 때만 동기화 (커서 위치 보존)
     if (widget.value != oldWidget.value && widget.value != _controller.text) {
+      final selection = _controller.selection;
       _controller.text = widget.value ?? '';
+      // 커서 위치 복원 (가능한 경우)
+      if (selection.isValid && selection.end <= _controller.text.length) {
+        _controller.selection = selection;
+      } else {
+        _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+      }
     }
   }
 
@@ -84,10 +93,10 @@ class _TossTextInputStatefulState extends State<_TossTextInputStateful> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: _hasFocus ? AppColorsV2.surface : AppColorsV2.background,
+        color: _hasFocus ? Colors.white : const Color(0xFFF7F8FA),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _hasFocus ? AppColorsV2.primary : Colors.transparent,
+          color: _hasFocus ? AppColors.primary : Colors.transparent,
           width: 2,
         ),
       ),
@@ -99,19 +108,24 @@ class _TossTextInputStatefulState extends State<_TossTextInputStateful> {
         },
         child: TextField(
           controller: _controller,
-          onChanged: widget.onChanged,
+          onChanged: (value) {
+            setState(() {}); // Force rebuild to update counter
+            widget.onChanged?.call(value);
+          },
           maxLength: widget.maxLength,
           keyboardType: widget.keyboardType,
-          style: AppTypographyV2.body,
+          style: AppTypography.body,
           decoration: InputDecoration(
             hintText: widget.placeholder,
-            hintStyle: AppTypographyV2.body.copyWith(
-              color: AppColorsV2.textSub,
+            hintStyle: AppTypography.body.copyWith(
+              color: AppColors.textSecondary,
             ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            counterText: widget.counterText ?? (widget.maxLength != null ? null : ''),
-            counterStyle: AppTypographyV2.small,
+            // 기본 counter 숨기기 (우리가 커스텀 counter를 사용하므로)
+            counterText: widget.counterText ?? (widget.maxLength != null ? '' : null),
+            counterStyle: AppTypography.small,
+            // 커스텀 counter를 suffixIcon으로 표시
             suffixIcon: widget.maxLength != null && widget.counterText == null
                 ? Padding(
                     padding: const EdgeInsets.only(right: 16),
@@ -119,7 +133,9 @@ class _TossTextInputStatefulState extends State<_TossTextInputStateful> {
                       widthFactor: 1.0,
                       child: Text(
                         '${_controller.text.length}/${widget.maxLength}',
-                        style: AppTypographyV2.small,
+                        style: AppTypography.small.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   )

@@ -30,8 +30,10 @@ class FigmaProductTile extends StatelessWidget {
         onTap: onTap,
         child: SizedBox(
           width: 140,
+          height: 200,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Image
               AspectRatio(
@@ -81,33 +83,37 @@ class FigmaProductTile extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               // Brand
               Text(
                 product.brand,
                 style: AppTypography.small.copyWith(
                   color: const Color(0xFF6B7280),
-                  fontSize: 11,
+                  fontSize: 10,
+                  height: 1.0,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 1),
               // Name
-              Text(
-                product.name,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF111827),
-                  height: 1.2,
+              Expanded(
+                child: Text(
+                  product.name,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF111827),
+                    height: 1.1,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               // Price
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (discount > 0) ...[
                     Text(
@@ -115,18 +121,20 @@ class FigmaProductTile extends StatelessWidget {
                       style: AppTypography.small.copyWith(
                         color: const Color(0xFFEF4444),
                         fontWeight: FontWeight.w600,
-                        fontSize: 11,
+                        fontSize: 10,
+                        height: 1.0,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                   ],
                   Flexible(
                     child: Text(
                       '${PriceFormatter.format(product.price)}원',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF111827),
+                        height: 1.0,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -145,6 +153,7 @@ class FigmaProductTile extends StatelessWidget {
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Image
           AspectRatio(
@@ -194,33 +203,35 @@ class FigmaProductTile extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           // Brand
           Text(
             product.brand,
             style: AppTypography.small.copyWith(
               color: const Color(0xFF6B7280),
-              fontSize: 12,
+              fontSize: 10,
+              height: 1.0,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           // Name
           Text(
             product.name,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: Color(0xFF111827),
-              height: 1.2,
+              height: 1.1,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           // Price
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (discount > 0) ...[
                 Text(
@@ -228,18 +239,20 @@ class FigmaProductTile extends StatelessWidget {
                   style: AppTypography.small.copyWith(
                     color: const Color(0xFFEF4444),
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    fontSize: 10,
+                    height: 1.0,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
               ],
               Flexible(
                 child: Text(
                   '${PriceFormatter.format(product.price)}원',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF111827),
+                    height: 1.0,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

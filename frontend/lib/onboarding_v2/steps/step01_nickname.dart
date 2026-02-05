@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../onboarding_shell.dart';
 import '../widgets/toss_text_input.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Step 1: Nickname - matches React Step1Nickname
 class Step01Nickname extends StatelessWidget {
@@ -27,18 +27,23 @@ class Step01Nickname extends StatelessWidget {
     return OnboardingShell(
       currentStep: currentStep,
       totalSteps: totalSteps,
-      emoji: '😊',
-      title: '안녕하세요 😊',
+      emoji: '', // 이모지 제거
+      title: '안녕하세요',
       subtitle: '헤이제노에서 쓸 닉네임만 먼저 정해볼까요?',
       ctaText: '다음',
       ctaDisabled: !isValid,
       onCTAClick: onNext,
+      leadingWidget: Image.asset(
+        'assets/images/logo/heygeno-logo.png',
+        height: 80,
+        fit: BoxFit.contain,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '닉네임',
-            style: AppTypographyV2.sub.copyWith(
+            style: AppTypography.small.copyWith(
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -52,7 +57,7 @@ class Step01Nickname extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '2~12자',
-            style: AppTypographyV2.sub,
+            style: AppTypography.small,
           ),
         ],
       ),

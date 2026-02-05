@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../onboarding_shell.dart';
 import '../widgets/pill_chip.dart';
 import '../widgets/toss_text_input.dart';
-import '../../theme_v2/app_typography.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Step 10: Food Allergies - matches React Step10FoodAllergies
 class Step10Allergy extends StatelessWidget {
@@ -91,7 +91,7 @@ class Step10Allergy extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               '기타 재료를 입력해주세요',
-              style: AppTypographyV2.sub.copyWith(
+              style: AppTypography.small.copyWith(
                 fontWeight: FontWeight.w500,
               ),
             ),

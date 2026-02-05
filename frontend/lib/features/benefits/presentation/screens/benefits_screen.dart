@@ -1,250 +1,273 @@
 import 'package:flutter/material.dart';
-import '../../../../../ui/widgets/app_scaffold.dart';
-import '../../../../../ui/theme/app_colors.dart';
-import '../../../../../ui/theme/app_typography.dart';
-import '../../../../../ui/components/section_header.dart';
+import '../../../../../ui/widgets/figma_app_bar.dart';
+import '../../../../../ui/widgets/figma_primary_button.dart';
+import '../../../../../app/theme/app_typography.dart';
 
-/// 혜택 화면 (토스 스타일 - 정돈된 리워드)
+/// Figma 디자인 기반 Benefits Screen
 class BenefitsScreen extends StatelessWidget {
   const BenefitsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 임시 미션 데이터 (나중에 컨트롤러로 이동)
     final missions = [
-      _MissionData(
-        id: '1',
-        title: '알림 설정하기',
-        description: '가격 변동 알림을 받아보세요',
-        points: 100,
-        icon: Icons.notifications_outlined,
-        isCompleted: false,
-        onTap: () {
-          // TODO: 알림 설정 화면으로 이동
-        },
+      MissionData(
+        id: 1,
+        title: '제품 3개 관심 추가',
+        reward: 100,
+        completed: true,
+        current: 3,
+        total: 3,
       ),
-      _MissionData(
-        id: '2',
-        title: '첫 추천 확인하기',
-        description: '맞춤 추천 사료를 확인해보세요',
-        points: 50,
-        icon: Icons.recommend_outlined,
-        isCompleted: false,
-        onTap: () {
-          // TODO: 홈 화면으로 이동
-        },
+      MissionData(
+        id: 2,
+        title: '프로필 완성',
+        reward: 200,
+        completed: true,
+        current: 1,
+        total: 1,
       ),
-      _MissionData(
-        id: '3',
-        title: '프로필 완성하기',
-        description: '반려동물 정보를 입력하세요',
-        points: 200,
-        icon: Icons.pets_outlined,
-        isCompleted: false,
-        onTap: () {
-          // TODO: 프로필 화면으로 이동
-        },
+      MissionData(
+        id: 3,
+        title: '친구에게 공유',
+        reward: 500,
+        completed: false,
+        current: 0,
+        total: 1,
+      ),
+      MissionData(
+        id: 4,
+        title: '리뷰 작성',
+        reward: 300,
+        completed: false,
+        current: 0,
+        total: 1,
+      ),
+      MissionData(
+        id: 5,
+        title: '첫 구매하기',
+        reward: 1000,
+        completed: false,
+        current: 0,
+        total: 1,
       ),
     ];
 
-    return AppScaffold(
-      appBar: AppBar(
-        title: Text('혜택', style: AppTypography.title),
-        elevation: 0,
-        backgroundColor: AppColors.bg,
-        surfaceTintColor: AppColors.bg,
-      ),
-      backgroundColor: AppColors.bg,
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 80),
-        children: [
-          // 상단 Hero 포인트 영역 (카드 없이)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('내 포인트', style: AppTypography.title),
-                const SizedBox(height: 12),
-                // Hero 스타일 포인트
-                Text(
-                  '0 P',
-                  style: AppTypography.heroNumber,
-                ),
-                const SizedBox(height: 8),
-                // 보조 문장 sub
-                Text(
-                  '미션을 완료하면 포인트가 쌓여요',
-                  style: AppTypography.sub,
-                ),
-              ],
-            ),
-          ),
+    final totalPoints = 1850;
+    final earnedPoints = missions
+        .where((m) => m.completed)
+        .fold(0, (sum, m) => sum + m.reward);
+    final availablePoints = missions.fold(0, (sum, m) => sum + m.reward) - earnedPoints;
 
-          // 미션 섹션 헤더
-          const SectionHeader(
-            title: '미션',
-            subtitle: '완료하면 포인트를 받을 수 있어요',
-          ),
-
-          // 미션 리스트 (ListTile 스타일)
-          ...missions.map((mission) => _MissionTile(mission: mission)),
-          
-          const SizedBox(height: 32),
-        ],
-      ),
-    );
-  }
-}
-
-/// 미션 데이터 모델
-class _MissionData {
-  final String id;
-  final String title;
-  final String description;
-  final int points;
-  final IconData icon;
-  final bool isCompleted;
-  final VoidCallback onTap;
-
-  _MissionData({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.points,
-    required this.icon,
-    this.isCompleted = false,
-    required this.onTap,
-  });
-}
-
-/// 미션 리스트 타일 (ListTile 스타일)
-class _MissionTile extends StatelessWidget {
-  final _MissionData mission;
-
-  const _MissionTile({required this.mission});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          // 좌측: 아이콘(작게)
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.primarySoft,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              mission.icon,
-              size: 20,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          
-          // 가운데: 미션명 / 보조설명
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        mission.title,
-                        style: AppTypography.body.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    if (mission.isCompleted) ...[
-                      Icon(
-                        Icons.check_circle,
-                        size: 16,
-                        color: AppColors.positive,
-                      ),
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.positive.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '완료',
-                          style: AppTypography.sub.copyWith(
-                            fontSize: 11,
-                            color: AppColors.positive,
-                            fontWeight: FontWeight.w600,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const FigmaAppBar(title: '혜택'),
+            Expanded(
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 24),
+                      // Hero Point Section
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.card_giftcard,
+                            size: 24,
+                            color: Color(0xFF2563EB),
                           ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '내 포인트',
+                            style: AppTypography.body.copyWith(
+                              color: const Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        totalPoints.toString().replaceAllMapped(
+                          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+                          (match) => '${match[1]},',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '추가로 ${availablePoints.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match[1]},')} 포인트 획득 가능',
+                        style: AppTypography.body.copyWith(
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Mission List
+                      Text(
+                        '미션을 완료하여 포인트 획득',
+                        style: AppTypography.body.copyWith(
+                          color: const Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...missions.map((mission) => _buildMissionCard(mission)),
+                      const SizedBox(height: 32),
+                      // Points Usage
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '포인트 사용 방법',
+                              style: AppTypography.body.copyWith(
+                                color: const Color(0xFF111827),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '100 포인트 = 다음 구매 시 100원 할인',
+                              style: AppTypography.small.copyWith(
+                                color: const Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMissionCard(MissionData mission) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: mission.completed
+            ? const Color(0xFFF0FDF4)
+            : const Color(0xFFF7F8FA),
+        borderRadius: BorderRadius.circular(18),
+        border: mission.completed
+            ? Border.all(
+                color: const Color(0xFF16A34A).withOpacity(0.2),
+                width: 1,
+              )
+            : null,
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          mission.title,
+                          style: AppTypography.body.copyWith(
+                            color: mission.completed
+                                ? const Color(0xFF6B7280)
+                                : const Color(0xFF111827),
+                            decoration: mission.completed
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
+                        if (mission.completed) ...[
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.check_circle,
+                            size: 20,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${mission.current}/${mission.total} 완료',
+                      style: AppTypography.small.copyWith(
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  mission.description,
-                  style: AppTypography.sub,
-                ),
-              ],
-            ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '+${mission.reward}',
+                    style: AppTypography.body.copyWith(
+                      color: mission.completed
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFF2563EB),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '포인트',
+                    style: AppTypography.small.copyWith(
+                      color: const Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          
-          // 우측: CTA 버튼(작게, radius 12~14)
-          if (!mission.isCompleted)
-            SizedBox(
-              height: 36,
-              child: ElevatedButton(
-                onPressed: mission.onTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13), // 12~14 범위
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  '${mission.points}P 받기',
-                  style: AppTypography.sub.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: AppColors.divider,
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                '완료됨',
-                style: AppTypography.sub.copyWith(
-                  color: AppColors.textSub,
-                  fontSize: 13,
-                ),
+          if (!mission.completed) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FigmaPrimaryButton(
+                text: '미션 시작',
+                variant: ButtonVariant.small,
+                onPressed: () {},
               ),
             ),
+          ],
         ],
       ),
     );
   }
+}
+
+class MissionData {
+  final int id;
+  final String title;
+  final int reward;
+  final bool completed;
+  final int current;
+  final int total;
+
+  MissionData({
+    required this.id,
+    required this.title,
+    required this.reward,
+    required this.completed,
+    required this.current,
+    required this.total,
+  });
 }
