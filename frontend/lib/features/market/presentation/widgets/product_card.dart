@@ -47,9 +47,10 @@ class ProductCard extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
+              // 이미지 높이를 약간 줄여서 텍스트 영역 확보
               return SizedBox(
                 width: width,
-                height: width, // 1:1 비율
+                height: width * 0.85, // 1:0.85 비율로 조정
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: data.imageUrl != null
@@ -65,62 +66,66 @@ class ProductCard extends StatelessWidget {
               );
             },
           ),
-          // 텍스트 영역 (Padding top 10)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 브랜드명
-                Text(
-                  data.brandName,
-                  style: AppTypography.caption.copyWith(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
+          // 텍스트 영역 (Padding top 8로 줄임)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 브랜드명
+                  Text(
+                    data.brandName,
+                    style: AppTypography.caption.copyWith(
+                      color: Colors.grey.shade600,
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                // 제품명
-                Text(
-                  data.productName,
-                  style: AppTypography.body2.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    height: 1.2, // line height 줄임
+                  const SizedBox(height: 2),
+                  // 제품명
+                  Expanded(
+                    child: Text(
+                      data.productName,
+                      style: AppTypography.body2.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        height: 1.2, // line height 줄임
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                // 가격 (검정 bold, 파란색 금지)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
+                  const SizedBox(height: 2),
+                  // 가격 (검정 bold, 파란색 금지)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
                       Text(
                         PriceFormatter.formatWithCurrency(data.price),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
-                          fontSize: 16,
+                          fontSize: 15,
                         ),
                       ),
-                    if (data.discountRate != null && data.discountRate! > 0) ...[
-                      const SizedBox(width: 6),
-                      Text(
-                        '-${data.discountRate!.toInt()}%',
-                        style: TextStyle(
-                          color: AppColors.dangerRed,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                      if (data.discountRate != null && data.discountRate! > 0) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '-${data.discountRate!.toInt()}%',
+                          style: TextStyle(
+                            color: AppColors.dangerRed,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],

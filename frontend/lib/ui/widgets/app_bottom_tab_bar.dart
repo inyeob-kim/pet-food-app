@@ -17,7 +17,7 @@ class AppBottomTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Colors.white,
         border: Border(
           top: BorderSide(
             color: AppColors.divider.withOpacity(0.3), // 매우 연한 divider
@@ -38,7 +38,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.home,
                   size: 24,
                   color: currentIndex == 0 
-                      ? AppColors.primary 
+                      ? AppColors.textMain 
                       : AppColors.textSub,
                 ),
                 label: '홈',
@@ -50,7 +50,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.favorite,
                   size: 24,
                   color: currentIndex == 1 
-                      ? AppColors.primary 
+                      ? AppColors.textMain 
                       : AppColors.textSub,
                 ),
                 label: '관심',
@@ -62,7 +62,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.shopping_bag,
                   size: 24,
                   color: currentIndex == 2 
-                      ? AppColors.primary 
+                      ? AppColors.textMain 
                       : AppColors.textSub,
                 ),
                 label: '마켓',
@@ -74,7 +74,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.card_giftcard,
                   size: 24,
                   color: currentIndex == 3 
-                      ? AppColors.primary 
+                      ? AppColors.textMain 
                       : AppColors.textSub,
                 ),
                 label: '혜택',
@@ -86,7 +86,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.person,
                   size: 24,
                   color: currentIndex == 4 
-                      ? AppColors.primary 
+                      ? AppColors.textMain 
                       : AppColors.textSub,
                 ),
                 label: '마이',
@@ -132,7 +132,7 @@ class _TabItem extends StatelessWidget {
               label,
               style: AppTypography.sub.copyWith(
                 fontSize: 11,
-                color: isActive ? AppColors.primary : AppColors.textSub,
+                color: isActive ? AppColors.textMain : AppColors.textSub,
                 fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
               ),
               maxLines: 1,

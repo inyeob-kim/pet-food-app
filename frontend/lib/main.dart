@@ -8,7 +8,6 @@ DTO 모델의 fromJson/toJson 메서드를 생성하기 위해 위 명령어를 
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -20,7 +19,8 @@ Future<void> main() async {
   // .env 파일 로드 (파일이 없어도 에러가 나지 않도록 처리)
   if (!kIsWeb) {
     // 네이티브 플랫폼에서만 파일 시스템에서 로드
-    // 웹에서는 Env 클래스의 try-catch로 기본값 사용
+    // iOS/Android 앱 빌드 시 assets에 포함된 .env 파일은
+    // flutter_dotenv가 자동으로 찾지 않으므로 파일 시스템에서 로드
     try {
       await dotenv.load(fileName: ".env");
     } catch (e) {
@@ -29,15 +29,8 @@ Future<void> main() async {
       debugPrint("Warning: .env file not found. Using default values. Error: $e");
     }
   } else {
-    // 웹에서는 assets에서 로드 시도
-    try {
-      final String envString = await rootBundle.loadString('.env');
-      // dotenv를 문자열로 초기화 (패키지 API 확인 필요)
-      // 일단 웹에서는 기본값 사용
-      debugPrint("Web platform: Using default values from Env class");
-    } catch (e) {
-      debugPrint("Warning: .env file not found in assets. Using default values.");
-    }
+    // 웹에서는 assets에서 로드 시도 (현재는 기본값 사용)
+    debugPrint("Web platform: Using default values from Env class.");
   }
   
   runApp(

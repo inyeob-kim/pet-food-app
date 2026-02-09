@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../ui/widgets/figma_app_bar.dart';
+import '../../../../../ui/widgets/figma_primary_button.dart';
 import '../../../../../ui/widgets/match_score_badge.dart';
+import '../../../../../ui/widgets/card_container.dart';
 import '../../../../../app/theme/app_typography.dart';
-import '../../../../../app/router/route_paths.dart';
+import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/utils/price_formatter.dart';
 import '../../../../../core/widgets/loading.dart';
 import '../../../../../core/widgets/empty_state.dart';
@@ -81,212 +83,203 @@ class _MyScreenState extends ConsumerState<MyScreen> {
               child: ScrollConfiguration(
                 behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 24),
                       // Greeting
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  petSummary != null
-                                      ? '안녕하세요, ${petSummary!.name}님'
-                                      : '안녕하세요',
-                                  style: AppTypography.h2.copyWith(
-                                    color: const Color(0xFF111827),
-                                  ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: CardContainer(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      petSummary != null
+                                          ? '안녕하세요, ${petSummary!.name}님'
+                                          : '안녕하세요',
+                                      style: AppTypography.h2.copyWith(
+                                        color: const Color(0xFF111827),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '오늘도 건강한 하루 보내세요',
+                                      style: AppTypography.small.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '오늘도 건강한 하루 보내세요',
-                                  style: AppTypography.small.copyWith(
-                                    color: const Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F8FA),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.edit,
-                              size: 20,
-                              color: Color(0xFF6B7280),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      // Health Summary Pill
-                      if (petSummary != null) _buildHealthSummary(petSummary),
-                      const SizedBox(height: 32),
-                      // NEW: Recent Recommendation History
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '최근 추천 히스토리',
-                            style: AppTypography.body.copyWith(
-                              color: const Color(0xFF111827),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {},
-                            child: Text(
-                              '전체보기',
-                              style: AppTypography.small.copyWith(
-                                color: const Color(0xFF6B7280),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      if (state.recentRecommendations.isNotEmpty)
-                        ..._buildRecentRecommendations(state.recentRecommendations),
-                      const SizedBox(height: 32),
-                      // Profile Info List
-                      if (petSummary != null) ...[
-                        Text(
-                          '프로필 정보',
-                          style: AppTypography.small.copyWith(
-                            color: const Color(0xFF6B7280),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInfoItem(
-                          '종류',
-                          petSummary!.species == 'DOG' ? '강아지' : '고양이',
-                        ),
-                        const SizedBox(height: 4),
-                        _buildInfoItem('나이', petSummary!.ageSummary),
-                        const SizedBox(height: 4),
-                        _buildInfoItem(
-                          '체중',
-                          '${petSummary!.weightKg.toStringAsFixed(1)}kg',
-                        ),
-                      ],
-                      const SizedBox(height: 32),
-                      // Notification Settings
-                      Text(
-                        '설정',
-                        style: AppTypography.small.copyWith(
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...settings.map((setting) => _buildSettingItem(setting)),
-                      const SizedBox(height: 32),
-                      // Point Summary Section
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFFEFF6FF),
-                              Color(0xFFF7F8FA),
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF7F8FA),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  size: 20,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(18),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      ),
+                      const SizedBox(height: 16),
+                      // Health Summary Pill
+                      if (petSummary != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildHealthSummary(petSummary),
+                        ),
+                      const SizedBox(height: 16),
+                      // NEW: Recent Recommendation History
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '사용 가능 포인트',
-                                  style: AppTypography.body.copyWith(
-                                    color: const Color(0xFF111827),
-                                  ),
-                                ),
-                                Text(
-                                  '${state.totalPoints.toLocaleString()}P',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
                             Text(
-                              '다음 구매 시 할인받으세요',
-                              style: AppTypography.small.copyWith(
-                                color: const Color(0xFF6B7280),
+                              '최근 추천 히스토리',
+                              style: AppTypography.body.copyWith(
+                                color: const Color(0xFF111827),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 44,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2563EB),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: Text(
-                                  '혜택 보기',
-                                  style: AppTypography.body.copyWith(
-                                    color: Colors.white,
-                                  ),
+                            GestureDetector(
+                              onTap: () {},
+                              child: Text(
+                                '전체보기',
+                                style: AppTypography.small.copyWith(
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      // Logout
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            // TODO: 로그아웃 기능 구현
-                          },
-                          borderRadius: BorderRadius.circular(18),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                      const SizedBox(height: 16),
+                      if (state.recentRecommendations.isNotEmpty)
+                        ..._buildRecentRecommendations(state.recentRecommendations),
+                      const SizedBox(height: 16),
+                      // Profile Info List
+                      if (petSummary != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: CardContainer(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.logout,
-                                  size: 20,
-                                  color: Color(0xFFEF4444),
-                                ),
-                                const SizedBox(width: 8),
                                 Text(
-                                  '로그아웃',
+                                  '프로필 정보',
                                   style: AppTypography.body.copyWith(
-                                    color: const Color(0xFFEF4444),
+                                    color: const Color(0xFF111827),
+                                    fontWeight: FontWeight.w600,
                                   ),
+                                ),
+                                const SizedBox(height: 16),
+                                _buildInfoItem(
+                                  '종류',
+                                  petSummary!.species == 'DOG' ? '강아지' : '고양이',
+                                ),
+                                const SizedBox(height: 12),
+                                _buildInfoItem('나이', petSummary!.ageSummary),
+                                const SizedBox(height: 12),
+                                _buildInfoItem(
+                                  '체중',
+                                  '${petSummary!.weightKg.toStringAsFixed(1)}kg',
                                 ),
                               ],
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                      ],
+                      // Notification Settings
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: CardContainer(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '설정',
+                                style: AppTypography.body.copyWith(
+                                  color: const Color(0xFF111827),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ...settings.map((setting) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _buildSettingItem(setting),
+                              )),
+                            ],
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: 16),
+                      // Point Summary Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: CardContainer(
+                          padding: const EdgeInsets.all(20),
+                          backgroundColor: const Color(0xFFEFF6FF),
+                          showBorder: false,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '사용 가능 포인트',
+                                    style: AppTypography.body.copyWith(
+                                      color: const Color(0xFF111827),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${state.totalPoints.toLocaleString()}P',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '다음 구매 시 할인받으세요',
+                                style: AppTypography.small.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FigmaPrimaryButton(
+                                  text: '혜택 보기',
+                                  onPressed: () {},
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                     ],
                   ),
                 ),
@@ -299,16 +292,10 @@ class _MyScreenState extends ConsumerState<MyScreen> {
   }
 
   Widget _buildHealthSummary(petSummary) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF16A34A).withOpacity(0.2),
-          width: 1,
-        ),
-      ),
+    return CardContainer(
+      padding: const EdgeInsets.all(20),
+      backgroundColor: const Color(0xFFF0FDF4),
+      showBorder: true,
       child: Column(
         children: [
           Row(
@@ -431,17 +418,13 @@ class _MyScreenState extends ConsumerState<MyScreen> {
 
   List<Widget> _buildRecentRecommendations(List<RecentRecommendationData> recommendations) {
     return recommendations.map((recommendation) {
-      return GestureDetector(
-        onTap: () {
-          context.push('/products/${recommendation.productId}');
-        },
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7F8FA),
-            borderRadius: BorderRadius.circular(18),
-          ),
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+        child: CardContainer(
+          padding: const EdgeInsets.all(16),
+          onTap: () {
+            context.push('/products/${recommendation.productId}');
+          },
           child: Row(
             children: [
               Container(
@@ -515,33 +498,23 @@ class _MyScreenState extends ConsumerState<MyScreen> {
   }
 
   Widget _buildInfoItem(String label, String value) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: AppTypography.body.copyWith(
-                  color: const Color(0xFF6B7280),
-                ),
-              ),
-              Text(
-                value,
-                style: AppTypography.body.copyWith(
-                  color: const Color(0xFF111827),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary,
           ),
         ),
-      ),
+        Text(
+          value,
+          style: AppTypography.body.copyWith(
+            color: const Color(0xFF111827),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
@@ -557,14 +530,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
       iconColor = const Color(0xFF6B7280);
     }
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+    return Row(
             children: [
               Container(
                 width: 32,
@@ -614,10 +580,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                   color: Color(0xFF6B7280),
                 ),
             ],
-          ),
-        ),
-      ),
-    );
+          );
   }
 }
 
