@@ -578,3 +578,89 @@ async def save_parsed(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"parsed 데이터 저장 중 오류가 발생했습니다: {str(e)}"
         )
+
+
+@router.post("/products/{product_id}/ingredient/analyze-and-save", response_model=IngredientProfileRead)
+async def analyze_and_save_ingredients(
+    product_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    AI를 사용하여 성분 텍스트를 분석하고 parsed 컬럼에 저장
+    
+    1. product_id로 성분 정보 조회
+    2. ingredients_text가 없으면 에러
+    3. AI 분석 수행
+    4. parsed 컬럼에 저장
+    5. version 증가
+    
+    Returns:
+        업데이트된 IngredientProfileRead
+    """
+    try:
+        # 1. 성분 정보 조회
+        profile = await AdminService.get_ingredient_profile(product_id, db)
+        if not profile:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="성분 정보가 등록되지 않은 상품입니다. 먼저 성분 정보를 등록하세요."
+            )
+        
+        if not profile.ingredients_text or not profile.ingredients_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="원재료 텍스트가 없습니다. 먼저 성분 정보를 입력하세요."
+            )
+        
+        # 2. Product에서 species 가져오기
+        from sqlalchemy import select
+        from app.models.product import Product
+        product_result = await db.execute(
+            select(Product).where(Product.id == product_id)
+        )
+        product = product_result.scalar_one_or_none()
+        
+        if product is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="상품을 찾을 수 없습니다."
+            )
+        
+        species = product.species.value if product.species else None
+        
+        # 3. AI 분석 수행
+        logger.info(f"AI 성분 분석 시작: product_id={product_id}, species={species}")
+        try:
+            parsed = await analyze_ingredients_with_ai(
+                ingredients_text=profile.ingredients_text,
+                additives_text=profile.additives_text or "",
+                species=species
+            )
+            logger.info(f"AI 성분 분석 완료: product_id={product_id}")
+        except ValueError as e:
+            logger.error(f"AI 분석 실패: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"AI 분석 실패: {str(e)}"
+            )
+        
+        # 4. parsed 저장
+        profile.parsed = parsed
+        profile.version += 1
+        from datetime import datetime
+        profile.updated_at = datetime.now().isoformat()
+        
+        await AdminService._commit_or_rollback(db, "Failed to save parsed data")
+        await db.refresh(profile)
+        
+        logger.info(f"parsed 데이터 저장 완료: product_id={product_id}, version={profile.version}")
+        return IngredientProfileRead.model_validate(profile)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"analyze-and-save 실패: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"성분 분석 및 저장 중 오류가 발생했습니다: {str(e)}"
+        )

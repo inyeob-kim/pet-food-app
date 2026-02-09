@@ -83,13 +83,13 @@ class AppBottomTabBar extends StatelessWidget {
               ),
               _TabItem(
                 icon: Icon(
-                  Icons.person,
+                  Icons.more_horiz,
                   size: 24,
                   color: currentIndex == 4 
                       ? AppColors.textMain 
                       : AppColors.textSub,
                 ),
-                label: '마이',
+                label: '더보기',
                 isActive: currentIndex == 4,
                 onTap: () => onTap(4),
               ),

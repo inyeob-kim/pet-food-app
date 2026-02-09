@@ -1165,6 +1165,18 @@
                 return await response.json();
             },
 
+            async analyzeAndSaveIngredients(productId) {
+                const response = await fetch(`${API_BASE}/admin/products/${productId}/ingredient/analyze-and-save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'AI 분석 및 저장에 실패했습니다.');
+                }
+                return await response.json();
+            },
+
             async getNutritionFacts(productId) {
                 const response = await fetch(`${API_BASE}/admin/products/${productId}/nutrition`);
                 if (response.status === 404) return null;
@@ -1460,7 +1472,10 @@
                 return `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3>성분 정보</h3>
-                        <button class="btn-primary" onclick="handlers.editIngredient('${product.id}')">수정</button>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary" onclick="handlers.analyzeAndSaveIngredients('${product.id}')" style="background: #6366f1; color: white;">🤖 AI 분석</button>
+                            <button class="btn-primary" onclick="handlers.editIngredient('${product.id}')">수정</button>
+                        </div>
                     </div>
                     <div id="ingredientContent" class="loading">로딩 중...</div>
                 `;
@@ -1719,6 +1734,23 @@
                         container.innerHTML = '<div class="empty-state"><p style="font-size: 14px; color: var(--muted);">등록된 성분 정보가 없습니다.</p><p style="font-size: 13px; color: var(--muted); margin-top: 8px;">수정 버튼을 클릭하여 등록하세요.</p></div>';
                         return;
                     }
+                    
+                    // parsed 데이터 포맷팅
+                    let parsedHtml = '<tr><th>AI 분석 결과</th><td>';
+                    if (data.parsed) {
+                        try {
+                            const parsed = typeof data.parsed === 'string' ? JSON.parse(data.parsed) : data.parsed;
+                            parsedHtml += '<div style="background: #f8f9fa; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; max-height: 400px; overflow-y: auto;">';
+                            parsedHtml += '<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">' + JSON.stringify(parsed, null, 2) + '</pre>';
+                            parsedHtml += '</div>';
+                        } catch (e) {
+                            parsedHtml += '<span style="color: var(--muted);">파싱 오류</span>';
+                        }
+                    } else {
+                        parsedHtml += '<span style="color: var(--muted);">AI 분석 결과가 없습니다. AI 분석 버튼을 클릭하세요.</span>';
+                    }
+                    parsedHtml += '</td></tr>';
+                    
                     container.innerHTML = `
                         <table class="table">
                             <tr><th>원재료</th><td>${data.ingredients_text || '-'}</td></tr>
@@ -1726,6 +1758,7 @@
                             <tr><th>출처</th><td>${data.source || '-'}</td></tr>
                             <tr><th>버전</th><td>v${data.version || 1}</td></tr>
                             <tr><th>최종 수정일</th><td>${utils.formatDate(data.updated_at)}</td></tr>
+                            ${parsedHtml}
                         </table>
                     `;
                 } catch (error) {
@@ -1890,6 +1923,28 @@
                     const data = await api.getIngredientProfile(productId);
                     this.showIngredientModal(productId, data);
                 } catch (error) {
+                    utils.showAlert(error.message, 'error');
+                }
+            },
+
+            async analyzeAndSaveIngredients(productId) {
+                if (!utils.confirmAction('AI를 사용하여 성분 텍스트를 분석하고 저장하시겠습니까?\n\n원재료 텍스트가 있어야 분석이 가능합니다.')) return;
+                
+                const container = document.getElementById('ingredientContent');
+                const originalContent = container.innerHTML;
+                
+                try {
+                    container.innerHTML = '<div class="loading">AI 분석 중...</div>';
+                    utils.showAlert('AI 분석을 시작합니다...', 'info');
+                    
+                    const result = await api.analyzeAndSaveIngredients(productId);
+                    
+                    utils.showAlert(`AI 분석 완료! 버전 v${result.version}로 저장되었습니다.`, 'success');
+                    
+                    // 성분 정보 다시 로드
+                    await this.loadIngredientData(productId);
+                } catch (error) {
+                    container.innerHTML = originalContent;
                     utils.showAlert(error.message, 'error');
                 }
             },

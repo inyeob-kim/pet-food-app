@@ -3,13 +3,15 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from sqlalchemy import select
+import logging
+import time
 
 from app.db.session import get_db
 from app.schemas.product import ProductRead, RecommendationResponse
 from app.services.product_service import ProductService
 from app.models.offer import ProductOffer
 
-
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -26,7 +28,18 @@ async def get_recommendations(
     db: AsyncSession = Depends(get_db)
 ):
     """추천 상품 목록 조회"""
-    return await ProductService.get_recommendations(pet_id, db)
+    start_time = time.time()
+    logger.info(f"[Products API] 📥 추천 요청 수신: pet_id={pet_id}")
+    
+    try:
+        result = await ProductService.get_recommendations(pet_id, db)
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.info(f"[Products API] ✅ 추천 응답 반환: pet_id={pet_id}, items={len(result.items)}개, 소요시간={duration_ms}ms")
+        return result
+    except Exception as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.error(f"[Products API] ❌ 추천 처리 실패: pet_id={pet_id}, error={str(e)}, 소요시간={duration_ms}ms", exc_info=True)
+        raise
 
 
 @router.get("/{product_id}", response_model=ProductRead)

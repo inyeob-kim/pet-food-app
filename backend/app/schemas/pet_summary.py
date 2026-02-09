@@ -14,5 +14,10 @@ class PetSummaryResponse(BaseModel):
     weight_kg: float
     health_concerns: List[str] = []  # 빈 배열 = "특이사항 없음"
     photo_url: Optional[str] = None
+    breed_code: Optional[str] = None  # 품종 코드
+    is_neutered: Optional[bool] = None  # 중성화 여부
+    sex: Optional[str] = None  # 'MALE' | 'FEMALE' | 'UNKNOWN'
+    food_allergies: List[str] = []  # 음식 알레르기 코드 리스트
+    other_allergies: Optional[str] = None  # 기타 알레르기 텍스트
 
     model_config = {"from_attributes": True}

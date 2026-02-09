@@ -10,7 +10,7 @@ from app.schemas.pet import PetCreate, PetRead
 from app.schemas.pet_summary import PetSummaryResponse
 from app.services.pet_service import PetService
 from app.services.user_service import UserService
-from app.models.pet import PetHealthConcern
+from app.models.pet import PetHealthConcern, PetFoodAllergy, PetOtherAllergy
 
 router = APIRouter()
 
@@ -82,6 +82,25 @@ async def get_primary_pet(
     health_concerns = [row[0] for row in result.all()]
     logger.info(f"[Pets API] Health concerns: {health_concerns}")
     
+    # Food allergies 조회
+    result = await db.execute(
+        select(PetFoodAllergy.allergen_code).where(
+            PetFoodAllergy.pet_id == pet.id
+        )
+    )
+    food_allergies = [row[0] for row in result.all()]
+    logger.info(f"[Pets API] Food allergies: {food_allergies}")
+    
+    # Other allergies 조회
+    result = await db.execute(
+        select(PetOtherAllergy.other_text).where(
+            PetOtherAllergy.pet_id == pet.id
+        )
+    )
+    other_allergy_row = result.first()
+    other_allergies = other_allergy_row[0] if other_allergy_row else None
+    logger.info(f"[Pets API] Other allergies: {other_allergies}")
+    
     return PetSummaryResponse(
         id=pet.id,
         name=pet.name,
@@ -91,6 +110,11 @@ async def get_primary_pet(
         weight_kg=float(pet.weight_kg),
         health_concerns=health_concerns,
         photo_url=pet.photo_url,
+        breed_code=pet.breed_code,
+        is_neutered=pet.is_neutered,
+        sex=pet.sex.value if pet.sex else None,
+        food_allergies=food_allergies,
+        other_allergies=other_allergies,
     )
 
 

@@ -61,7 +61,7 @@ class HomeController extends StateNotifier<HomeState> {
   HomeController(this._productRepository, this._petService, this._ref)
       : super(HomeState(stateType: HomeStateType.loading));
 
-  /// 홈 화면 초기화 (primary pet 조회 + 추천 로드)
+  /// 홈 화면 초기화 (primary pet 조회만, 추천은 버튼 클릭 시 로드)
   Future<void> initialize() async {
     state = state.copyWith(stateType: HomeStateType.loading);
     print('[HomeController] initialize() 시작');
@@ -84,15 +84,13 @@ class HomeController extends StateNotifier<HomeState> {
       // 2. Pet ID를 provider에 저장
       _ref.read(currentPetIdProvider.notifier).state = petSummary.petId;
 
-      // 3. B 상태: pet 존재 → 추천 로드
+      // 3. B 상태: pet 존재 (추천은 버튼 클릭 시 로드)
       state = state.copyWith(
         stateType: HomeStateType.hasPet,
         petSummary: petSummary,
-        isLoadingRecommendations: true,
+        isLoadingRecommendations: false,  // 초기에는 로딩하지 않음
+        recommendations: null,  // 초기에는 추천 없음
       );
-
-      // 4. 추천 로드
-      await _loadRecommendations(petSummary.petId);
     } catch (e) {
       final failure = e is Exception
           ? handleException(e)
@@ -106,13 +104,30 @@ class HomeController extends StateNotifier<HomeState> {
 
   /// 추천 데이터 로드
   Future<void> _loadRecommendations(String petId) async {
+    final startTime = DateTime.now();
+    print('[HomeController] 📡 추천 데이터 로드 시작: petId=$petId');
+    state = state.copyWith(isLoadingRecommendations: true); // 로딩 상태 시작
+    
     try {
+      print('[HomeController] 📞 ProductRepository.getRecommendations() 호출');
       final recommendations = await _productRepository.getRecommendations(petId);
+      final duration = DateTime.now().difference(startTime);
+      print('[HomeController] ✅ 추천 데이터 로드 완료: ${recommendations.items.length}개 상품, 소요시간=${duration.inMilliseconds}ms');
+      print('[HomeController] 📊 추천 상품 요약:');
+      for (var i = 0; i < recommendations.items.length && i < 3; i++) {
+        final item = recommendations.items[i];
+        print('[HomeController]   ${i + 1}. ${item.product.brandName} ${item.product.productName} (점수: ${item.matchScore.toStringAsFixed(1)}, 안전: ${item.safetyScore.toStringAsFixed(1)}, 적합: ${item.fitnessScore.toStringAsFixed(1)})');
+      }
+      
       state = state.copyWith(
         recommendations: recommendations,
         isLoadingRecommendations: false,
       );
-    } catch (e) {
+      print('[HomeController] ✅ 상태 업데이트 완료: isLoadingRecommendations=false');
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      print('[HomeController] ❌ 추천 데이터 로드 실패: error=$e, 소요시간=${duration.inMilliseconds}ms');
+      print('[HomeController] ❌ StackTrace: $stackTrace');
       final failure = e is Exception
           ? handleException(e)
           : ServerFailure('추천 데이터를 불러오는데 실패했습니다.');
@@ -121,7 +136,27 @@ class HomeController extends StateNotifier<HomeState> {
         error: failure.message,
         // 추천 실패해도 홈은 표시 (pet은 있으므로)
       );
+      print('[HomeController] ⚠️ 상태 업데이트: isLoadingRecommendations=false, error=${failure.message}');
     }
+  }
+
+  /// 추천 로드 (버튼 클릭 시 호출)
+  Future<void> loadRecommendations() async {
+    print('[HomeController] 🎯 loadRecommendations() 호출됨');
+    final petSummary = state.petSummary;
+    if (petSummary == null) {
+      print('[HomeController] ⚠️ petSummary가 null입니다. 추천을 로드할 수 없습니다.');
+      return;
+    }
+    
+    // 이미 로딩 중이면 중복 호출 방지
+    if (state.isLoadingRecommendations) {
+      print('[HomeController] ⏸️ 이미 로딩 중입니다. 중복 호출 방지.');
+      return;
+    }
+    
+    print('[HomeController] ▶️ _loadRecommendations() 호출: petId=${petSummary.petId}');
+    await _loadRecommendations(petSummary.petId);
   }
 
   /// 추천 새로고침

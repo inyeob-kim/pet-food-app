@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../storage/secure_storage.dart';
 import '../storage/storage_keys.dart';
 
@@ -13,11 +14,32 @@ class DeviceUidService {
   /// Device UID 가져오기 (없으면 생성)
   /// 
   /// 내부 동작:
-  /// 1) secureStorage.read('device_uid')
-  /// 2) 없으면 UUID v4 생성
-  /// 3) secureStorage.write('device_uid', uid)
-  /// 4) return uid
+  /// 1) 디버그 모드에서 .env의 DEVICE_UID 확인 (선택사항)
+  /// 2) secureStorage.read('device_uid')
+  /// 3) 없으면 UUID v4 생성
+  /// 4) secureStorage.write('device_uid', uid)
+  /// 5) return uid
   static Future<String> getOrCreate() async {
+    // 디버그 모드에서 .env의 고정 UID 사용 (개발용)
+    // .env에 DEVICE_UID가 설정되어 있으면 항상 우선 사용
+    if (kDebugMode) {
+      try {
+        final devUid = dotenv.get('DEVICE_UID', fallback: '');
+        if (devUid.isNotEmpty) {
+          // .env의 값을 SecureStorage에도 저장하여 일관성 유지
+          // 기존 값과 다르면 덮어쓰기 (개발용 고정 UID 우선)
+          final existing = await SecureStorage.read(StorageKeys.deviceUid);
+          if (existing != devUid) {
+            await SecureStorage.write(StorageKeys.deviceUid, devUid);
+            print('[DeviceUidService] 개발용 고정 UID 사용: ${devUid.substring(0, 8)}... (기존: ${existing?.substring(0, 8) ?? "없음"})');
+          }
+          return devUid;
+        }
+      } catch (e) {
+        // .env에 DEVICE_UID가 없으면 기존 로직 사용
+      }
+    }
+
     // 기존 UID 확인
     final existingUid = await SecureStorage.read(StorageKeys.deviceUid);
     if (existingUid != null && existingUid.isNotEmpty) {

@@ -17,6 +17,7 @@ class RoutePaths {
   
   // 상세 화면
   static const String productDetail = '/products/:id';
+  static const String petProfileDetail = '/pet-profile-detail';
   
   /// 경로에서 productId 추출
   static String productDetailPath(String productId) => '/products/$productId';

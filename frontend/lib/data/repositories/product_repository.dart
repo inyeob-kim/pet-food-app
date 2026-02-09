@@ -35,17 +35,38 @@ class ProductRepository {
 
   /// 추천 상품 목록 조회
   Future<RecommendationResponseDto> getRecommendations(String petId) async {
+    final startTime = DateTime.now();
+    print('[ProductRepository] 🌐 API 호출 시작: GET ${Endpoints.productRecommendations}?pet_id=$petId');
+    
     try {
       final response = await _apiClient.get(
         Endpoints.productRecommendations,
         queryParameters: {'pet_id': petId},
       );
 
-      return RecommendationResponseDto.fromJson(response.data as Map<String, dynamic>);
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ✅ API 응답 수신: statusCode=${response.statusCode}, 소요시간=${duration.inMilliseconds}ms');
+      
+      final data = response.data as Map<String, dynamic>;
+      final itemsCount = (data['items'] as List?)?.length ?? 0;
+      print('[ProductRepository] 📦 응답 데이터: pet_id=${data['pet_id']}, items=$itemsCount개');
+      
+      final result = RecommendationResponseDto.fromJson(data);
+      print('[ProductRepository] ✅ DTO 변환 완료: ${result.items.length}개 추천 상품');
+      
+      return result;
     } on DioException catch (e) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ DioException 발생: type=${e.type}, message=${e.message}, 소요시간=${duration.inMilliseconds}ms');
+      if (e.response != null) {
+        print('[ProductRepository] ❌ 응답 상세: statusCode=${e.response?.statusCode}, data=${e.response?.data}');
+      }
       _handleDioException(e);
       rethrow;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ 예외 발생: error=$e, 소요시간=${duration.inMilliseconds}ms');
+      print('[ProductRepository] ❌ StackTrace: $stackTrace');
       throw ServerException('추천 상품을 불러오는데 실패했습니다: ${e.toString()}');
     }
   }

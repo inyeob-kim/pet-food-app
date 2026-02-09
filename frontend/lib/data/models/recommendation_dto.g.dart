@@ -17,6 +17,13 @@ RecommendationItemDto _$RecommendationItemDtoFromJson(
   avgPrice: (json['avg_price'] as num).toInt(),
   deltaPercent: (json['delta_percent'] as num?)?.toDouble(),
   isNewLow: json['is_new_low'] as bool,
+  matchScore: (json['match_score'] as num).toDouble(),
+  safetyScore: (json['safety_score'] as num).toDouble(),
+  fitnessScore: (json['fitness_score'] as num).toDouble(),
+  matchReasons: (json['match_reasons'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  explanation: json['explanation'] as String?,
 );
 
 Map<String, dynamic> _$RecommendationItemDtoToJson(
@@ -30,6 +37,11 @@ Map<String, dynamic> _$RecommendationItemDtoToJson(
   'avg_price': instance.avgPrice,
   'delta_percent': instance.deltaPercent,
   'is_new_low': instance.isNewLow,
+  'match_score': instance.matchScore,
+  'safety_score': instance.safetyScore,
+  'fitness_score': instance.fitnessScore,
+  'match_reasons': instance.matchReasons,
+  'explanation': instance.explanation,
 };
 
 RecommendationResponseDto _$RecommendationResponseDtoFromJson(

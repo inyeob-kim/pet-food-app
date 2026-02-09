@@ -14,7 +14,9 @@ import '../../features/benefits/presentation/screens/benefits_screen.dart';
 import '../../features/market/presentation/screens/market_screen.dart';
 import '../../features/me/presentation/screens/my_screen.dart';
 import '../../features/product_detail/presentation/screens/product_detail_screen.dart';
+import '../../features/pet_profile/presentation/screens/pet_profile_detail_screen.dart';
 import '../../onboarding_v2/onboarding_flow.dart';
+import '../../data/models/pet_summary_dto.dart';
 
 // 루트 네비게이터 키 (바텀 탭 밖의 페이지용) - 전역으로 선언하여 접근 가능하게
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -40,6 +42,11 @@ GoRouter _createRouter(Ref ref) {
       
       // 초기 스플래시 화면은 리다이렉트하지 않음 (자체적으로 처리)
       if (location == RoutePaths.initialSplash) {
+        return null;
+      }
+
+      // 상세 페이지는 온보딩 체크 제외
+      if (location.startsWith('/products/') || location == RoutePaths.petProfileDetail) {
         return null;
       }
 
@@ -158,6 +165,14 @@ GoRouter _createRouter(Ref ref) {
         builder: (context, state) {
           final productId = state.pathParameters['id']!;
           return ProductDetailScreen(productId: productId);
+        },
+      ),
+      GoRoute(
+        path: RoutePaths.petProfileDetail,
+        name: RoutePaths.petProfileDetail,
+        builder: (context, state) {
+          final petSummary = state.extra as PetSummaryDto;
+          return PetProfileDetailScreen(petSummary: petSummary);
         },
       ),
     ],

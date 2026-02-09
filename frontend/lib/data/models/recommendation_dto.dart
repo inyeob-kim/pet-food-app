@@ -18,6 +18,15 @@ class RecommendationItemDto {
   final double? deltaPercent;
   @JsonKey(name: 'is_new_low')
   final bool isNewLow;
+  @JsonKey(name: 'match_score')
+  final double matchScore;
+  @JsonKey(name: 'safety_score')
+  final double safetyScore;
+  @JsonKey(name: 'fitness_score')
+  final double fitnessScore;
+  @JsonKey(name: 'match_reasons')
+  final List<String>? matchReasons;
+  final String? explanation;
 
   RecommendationItemDto({
     required this.product,
@@ -26,6 +35,11 @@ class RecommendationItemDto {
     required this.avgPrice,
     this.deltaPercent,
     required this.isNewLow,
+    required this.matchScore,
+    required this.safetyScore,
+    required this.fitnessScore,
+    this.matchReasons,
+    this.explanation,
   });
 
   factory RecommendationItemDto.fromJson(Map<String, dynamic> json) => _$RecommendationItemDtoFromJson(json);

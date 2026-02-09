@@ -61,6 +61,11 @@ class RecommendationItem(BaseModel):
     avg_price: int = Field(..., description="평균 가격")
     delta_percent: Optional[float] = Field(None, description="평균 대비 변동률 (%)")
     is_new_low: bool = Field(..., description="최저가 여부")
+    match_score: float = Field(..., description="총점")
+    safety_score: float = Field(..., description="안전성 점수")
+    fitness_score: float = Field(..., description="적합성 점수")
+    match_reasons: Optional[List[str]] = Field(None, description="추천 이유 리스트 (기술적)")
+    explanation: Optional[str] = Field(None, description="추천 이유 자연어 설명")
 
 
 class RecommendationResponse(BaseModel):

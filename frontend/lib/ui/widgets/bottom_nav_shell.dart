@@ -13,10 +13,10 @@ class BottomNavShell extends StatelessWidget {
   });
 
   /// 탭 인덱스를 브랜치 인덱스로 매핑
-  /// BottomNavigationBar: [0: 홈, 1: 관심, 2: 검색, 3: 혜택, 4: 마이]
-  /// Branches: [0: 홈, 1: 관심, 2: 마켓, 3: 혜택, 4: 마이]
+  /// BottomNavigationBar: [0: 홈, 1: 관심, 2: 검색, 3: 혜택, 4: 더보기]
+  /// Branches: [0: 홈, 1: 관심, 2: 마켓, 3: 혜택, 4: 더보기]
   /// 탭 인덱스와 브랜치 인덱스가 1:1로 매핑됨
-  static const int _branchCount = 5; // 브랜치 개수: 홈, 관심, 마켓, 혜택, 마이
+  static const int _branchCount = 5; // 브랜치 개수: 홈, 관심, 마켓, 혜택, 더보기
   
   void _onTabTapped(int tabIndex, BuildContext context) {
     // 범위 체크
