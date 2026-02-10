@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { FeatureCards } from './FeatureCards';
-import { Footer } from './Footer';
-import { HeroSection } from './HeroSection';
-import { HowItWorks } from './HowItWorks';
+import { useState, useEffect } from 'react';
 import { Navigation } from './Navigation';
-import { PointRewards } from './PointRewards';
-import { PriceAlertSignup } from './PriceAlertSignup';
+import { HeroSection } from './HeroSection';
+import { FeatureCards } from './FeatureCards';
+import { MultiPlatformSection } from './MultiPlatformSection';
+import { RecommendationCriteria } from './RecommendationCriteria';
+import { PointsTable } from './PointsTable';
+import { BenefitsUsage } from './BenefitsUsage';
+import { TrustSection } from './TrustSection';
 import { SocialProof } from './SocialProof';
+import { EmailSignup } from './EmailSignup';
+import { Footer } from './Footer';
 
 export function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
@@ -20,14 +23,17 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFE8D6] via-[#FFD4B3] to-[#FFC49B] text-[#5C4033] overflow-x-hidden">
+    <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
       <Navigation scrolled={scrolled} />
       <HeroSection />
       <FeatureCards />
-      <PointRewards />
-      <HowItWorks />
+      <MultiPlatformSection />
+      <RecommendationCriteria />
+      <PointsTable />
+      <BenefitsUsage />
+      <TrustSection />
       <SocialProof />
-      <PriceAlertSignup />
+      <EmailSignup />
       <Footer />
     </div>
   );

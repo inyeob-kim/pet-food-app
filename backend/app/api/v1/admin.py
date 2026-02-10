@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import logging
 from pydantic import BaseModel
+from datetime import datetime
 
 from app.db.session import get_db
 from app.schemas.product import ProductRead, ProductCreate, ProductUpdate
@@ -16,8 +17,14 @@ from app.schemas.admin import (
     ProductListRead, ProductListResponse, ProductImagesUpdate,
     OfferRead, OfferCreate, OfferUpdate
 )
+from app.schemas.campaign import (
+    CampaignRead, CampaignCreate, CampaignUpdate,
+    CampaignToggleRequest, CampaignSimulateRequest, CampaignSimulateResponse,
+    RewardRead, ImpressionRead
+)
 from app.services.product_service import ProductService
 from app.services.admin_service import AdminService
+from app.services.campaign_service import CampaignService
 from app.services.ingredient_ai_service import analyze_ingredients_with_ai
 
 logger = logging.getLogger(__name__)
@@ -664,3 +671,267 @@ async def analyze_and_save_ingredients(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"성분 분석 및 저장 중 오류가 발생했습니다: {str(e)}"
         )
+
+
+# ========== Campaign 관리 ==========
+@router.get("/campaigns", response_model=list[CampaignRead])
+async def get_campaigns(
+    key: Optional[str] = Query(None, description="키 검색"),
+    kind: Optional[str] = Query(None, description="종류 (EVENT/NOTICE/AD)"),
+    placement: Optional[str] = Query(None, description="노출 위치"),
+    template: Optional[str] = Query(None, description="템플릿"),
+    enabled: Optional[bool] = Query(None, description="활성화 여부"),
+    db: AsyncSession = Depends(get_db)
+):
+    """캠페인 목록 조회 (필터링)"""
+    campaigns = await CampaignService.get_campaigns(
+        db=db,
+        key=key,
+        kind=kind,
+        placement=placement,
+        template=template,
+        enabled=enabled
+    )
+    
+    now = datetime.utcnow()
+    result = []
+    for campaign in campaigns:
+        campaign_dict = {
+            "id": campaign.id,
+            "key": campaign.key,
+            "kind": campaign.kind,
+            "placement": campaign.placement,
+            "template": campaign.template,
+            "priority": campaign.priority,
+            "is_enabled": campaign.is_enabled,
+            "start_at": campaign.start_at,
+            "end_at": campaign.end_at,
+            "content": campaign.content,
+            "rules": [rule.rule for rule in campaign.rules],
+            "actions": [
+                {
+                    "trigger": action.trigger,
+                    "action_type": action.action_type,
+                    "action": action.action
+                }
+                for action in campaign.actions
+            ],
+            "status": CampaignService._calculate_status(campaign, now),
+            "created_at": campaign.created_at,
+            "updated_at": campaign.updated_at
+        }
+        result.append(campaign_dict)
+    
+    return result
+
+
+@router.get("/campaigns/{campaign_id}", response_model=CampaignRead)
+async def get_campaign(
+    campaign_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """캠페인 상세 조회"""
+    campaign = await CampaignService.get_campaign_by_id(db, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="캠페인을 찾을 수 없습니다"
+        )
+    
+    now = datetime.utcnow()
+    return {
+        "id": campaign.id,
+        "key": campaign.key,
+        "kind": campaign.kind,
+        "placement": campaign.placement,
+        "template": campaign.template,
+        "priority": campaign.priority,
+        "is_enabled": campaign.is_enabled,
+        "start_at": campaign.start_at,
+        "end_at": campaign.end_at,
+        "content": campaign.content,
+        "rules": [rule.rule for rule in campaign.rules],
+        "actions": [
+            {
+                "trigger": action.trigger,
+                "action_type": action.action_type,
+                "action": action.action
+            }
+            for action in campaign.actions
+        ],
+        "status": CampaignService._calculate_status(campaign, now),
+        "created_at": campaign.created_at,
+        "updated_at": campaign.updated_at
+    }
+
+
+@router.post("/campaigns", response_model=CampaignRead, status_code=status.HTTP_201_CREATED)
+async def create_campaign(
+    data: CampaignCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """캠페인 생성"""
+    campaign = await CampaignService.create_campaign(db, data)
+    
+    now = datetime.utcnow()
+    return {
+        "id": campaign.id,
+        "key": campaign.key,
+        "kind": campaign.kind,
+        "placement": campaign.placement,
+        "template": campaign.template,
+        "priority": campaign.priority,
+        "is_enabled": campaign.is_enabled,
+        "start_at": campaign.start_at,
+        "end_at": campaign.end_at,
+        "content": campaign.content,
+        "rules": [rule.rule for rule in campaign.rules],
+        "actions": [
+            {
+                "trigger": action.trigger,
+                "action_type": action.action_type,
+                "action": action.action
+            }
+            for action in campaign.actions
+        ],
+        "status": CampaignService._calculate_status(campaign, now),
+        "created_at": campaign.created_at,
+        "updated_at": campaign.updated_at
+    }
+
+
+@router.put("/campaigns/{campaign_id}", response_model=CampaignRead)
+async def update_campaign(
+    campaign_id: UUID,
+    data: CampaignUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """캠페인 수정 (전체 교체 전략)"""
+    campaign = await CampaignService.update_campaign(db, campaign_id, data)
+    
+    now = datetime.utcnow()
+    return {
+        "id": campaign.id,
+        "key": campaign.key,
+        "kind": campaign.kind,
+        "placement": campaign.placement,
+        "template": campaign.template,
+        "priority": campaign.priority,
+        "is_enabled": campaign.is_enabled,
+        "start_at": campaign.start_at,
+        "end_at": campaign.end_at,
+        "content": campaign.content,
+        "rules": [rule.rule for rule in campaign.rules],
+        "actions": [
+            {
+                "trigger": action.trigger,
+                "action_type": action.action_type,
+                "action": action.action
+            }
+            for action in campaign.actions
+        ],
+        "status": CampaignService._calculate_status(campaign, now),
+        "created_at": campaign.created_at,
+        "updated_at": campaign.updated_at
+    }
+
+
+@router.post("/campaigns/{campaign_id}/toggle", response_model=CampaignRead)
+async def toggle_campaign(
+    campaign_id: UUID,
+    data: CampaignToggleRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """캠페인 토글 (idempotent)"""
+    campaign = await CampaignService.toggle_campaign(db, campaign_id, data.is_enabled)
+    
+    now = datetime.utcnow()
+    return {
+        "id": campaign.id,
+        "key": campaign.key,
+        "kind": campaign.kind,
+        "placement": campaign.placement,
+        "template": campaign.template,
+        "priority": campaign.priority,
+        "is_enabled": campaign.is_enabled,
+        "start_at": campaign.start_at,
+        "end_at": campaign.end_at,
+        "content": campaign.content,
+        "rules": [rule.rule for rule in campaign.rules],
+        "actions": [
+            {
+                "trigger": action.trigger,
+                "action_type": action.action_type,
+                "action": action.action
+            }
+            for action in campaign.actions
+        ],
+        "status": CampaignService._calculate_status(campaign, now),
+        "created_at": campaign.created_at,
+        "updated_at": campaign.updated_at
+    }
+
+
+@router.post("/campaigns/simulate", response_model=CampaignSimulateResponse)
+async def simulate_campaign(
+    data: CampaignSimulateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """시뮬레이션 (운영 검증용)"""
+    result = await CampaignService.simulate_campaign(
+        db=db,
+        user_id=data.user_id,
+        trigger=data.trigger.value,
+        context=data.context
+    )
+    return result
+
+
+@router.get("/rewards", response_model=list[RewardRead])
+async def get_rewards(
+    user_id: Optional[UUID] = Query(None, description="유저 ID"),
+    campaign_id: Optional[UUID] = Query(None, description="캠페인 ID"),
+    db: AsyncSession = Depends(get_db)
+):
+    """리워드 조회"""
+    rewards = await CampaignService.get_rewards(db, user_id=user_id, campaign_id=campaign_id)
+    
+    result = []
+    for reward in rewards:
+        result.append({
+            "id": reward.id,
+            "user_id": reward.user_id,
+            "campaign_id": reward.campaign_id,
+            "campaign_key": reward.campaign.key if reward.campaign else "",
+            "status": reward.status,
+            "granted_at": reward.granted_at,
+            "idempotency_key": reward.idempotency_key,
+            "created_at": reward.created_at
+        })
+    
+    return result
+
+
+@router.get("/impressions", response_model=list[ImpressionRead])
+async def get_impressions(
+    user_id: Optional[UUID] = Query(None, description="유저 ID"),
+    campaign_id: Optional[UUID] = Query(None, description="캠페인 ID"),
+    db: AsyncSession = Depends(get_db)
+):
+    """노출 조회"""
+    impressions = await CampaignService.get_impressions(db, user_id=user_id, campaign_id=campaign_id)
+    
+    result = []
+    for impression in impressions:
+        result.append({
+            "id": impression.id,
+            "user_id": impression.user_id,
+            "campaign_id": impression.campaign_id,
+            "campaign_key": impression.campaign.key if impression.campaign else "",
+            "seen_count": impression.seen_count,
+            "suppress_until": impression.suppress_until,
+            "last_seen_at": impression.last_seen_at,
+            "first_seen_at": impression.first_seen_at
+        })
+    
+    return result

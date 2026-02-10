@@ -19,6 +19,14 @@ from app.models.tracking import Tracking, TrackingStatus
 from app.models.alert import Alert, AlertEvent, AlertRuleType, AlertEventStatus
 from app.models.outbound_click import OutboundClick, ClickSource
 from app.models.recommendation import RecommendationRun, RecommendationItem, RecStrategy
+from app.models.campaign import (
+    Campaign, CampaignRule, CampaignAction, 
+    UserCampaignImpression, UserCampaignReward,
+    CampaignKind, CampaignPlacement, CampaignTemplate,
+    CampaignTrigger, CampaignActionType, RewardStatus
+)
+from app.models.point import PointWallet, PointLedger
+from app.models.referral import ReferralCode, Referral, ReferralStatus
 
 __all__ = [
     "User",
@@ -39,4 +47,10 @@ __all__ = [
     "AlertEvent", "AlertRuleType", "AlertEventStatus",
     "OutboundClick", "ClickSource",
     "RecommendationRun", "RecommendationItem", "RecStrategy",
+    "Campaign", "CampaignRule", "CampaignAction",
+    "UserCampaignImpression", "UserCampaignReward",
+    "CampaignKind", "CampaignPlacement", "CampaignTemplate",
+    "CampaignTrigger", "CampaignActionType", "RewardStatus",
+    "PointWallet", "PointLedger",
+    "ReferralCode", "Referral", "ReferralStatus",
 ]
