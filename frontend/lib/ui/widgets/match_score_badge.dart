@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/theme/app_colors.dart';
 
 /// Match Score Badge component matching React implementation
 class MatchScoreBadge extends StatelessWidget {
@@ -12,15 +13,15 @@ class MatchScoreBadge extends StatelessWidget {
   });
 
   Color _getBackgroundColor() {
-    if (score >= 90) return const Color(0xFFF0FDF4); // Green
-    if (score >= 80) return const Color(0xFFEFF6FF); // Blue
-    return const Color(0xFFF7F8FA); // Gray
+    if (score >= 90) return AppColors.petGreenLight; // Pet Green 배경
+    if (score >= 80) return AppColors.primarySoft; // Teal 배경
+    return AppColors.background; // 배경색
   }
 
   Color _getTextColor() {
-    if (score >= 90) return const Color(0xFF16A34A); // Green
-    if (score >= 80) return const Color(0xFF2563EB); // Blue
-    return const Color(0xFF6B7280); // Gray
+    if (score >= 90) return AppColors.petGreen; // 상태/안심용
+    if (score >= 80) return AppColors.primaryBlue; // 결정/이동용 (Calm Blue 통일)
+    return AppColors.textSecondary; // 보조 텍스트
   }
 
   EdgeInsets _getPadding() {

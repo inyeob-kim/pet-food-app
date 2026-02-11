@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../ui/widgets/top_bar.dart';
+import '../../../../../ui/widgets/app_top_bar.dart';
 import '../../../../../ui/widgets/card_container.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../app/theme/app_colors.dart';
@@ -20,6 +20,8 @@ class BenefitsScreen extends ConsumerStatefulWidget {
 }
 
 class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +29,12 @@ class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(benefitsControllerProvider.notifier).refresh();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -62,10 +70,12 @@ class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const TopBar(title: '혜택'),
+            AppTopBar(title: '혜택'),
             Expanded(
               child: CupertinoScrollbar(
+                controller: _scrollController,
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: Column(

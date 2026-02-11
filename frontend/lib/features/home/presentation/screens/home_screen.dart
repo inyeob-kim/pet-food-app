@@ -16,11 +16,11 @@ import '../../../../../core/widgets/empty_state.dart';
 import '../../../../../domain/services/onboarding_service.dart';
 import '../../../../../features/onboarding/data/repositories/onboarding_repository.dart';
 import '../controllers/home_controller.dart';
+import '../../../../../ui/widgets/app_top_bar.dart';
+import '../../../../../core/constants/pet_constants.dart';
 import '../widgets/icon_text_row.dart';
 import '../widgets/status_signal_card.dart';
 import '../widgets/pet_avatar.dart';
-import '../widgets/pet_constants.dart';
-import '../../../../../ui/widgets/top_bar.dart';
 
 /// Toss-style 판단 UI Home Screen
 /// 실제 API 데이터를 사용하여 Pet 프로필 및 추천 상품 표시
@@ -47,7 +47,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     
     // 화면 진입 시 데이터 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(homeControllerProvider.notifier).initialize();
+      if (mounted) {
+        ref.read(homeControllerProvider.notifier).initialize();
+      }
     });
     
     // 스크롤 리스너 추가
@@ -62,41 +64,94 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
+    if (!mounted || !_scrollController.hasClients) return;
     
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    final isAtBottom = currentScroll >= maxScroll - 50; // 50px 여유
-    
-    if (isAtBottom != _isScrolledToBottom) {
-      setState(() {
-        _isScrolledToBottom = isAtBottom;
-      });
+    try {
+      final isAtBottom = _scrollController.position.pixels >= 
+          _scrollController.position.maxScrollExtent - 50;
+      
+      if (isAtBottom != _isScrolledToBottom) {
+        setState(() => _isScrolledToBottom = isAtBottom);
+      }
+    } catch (_) {
+      // ScrollController가 dispose된 경우 무시
     }
   }
 
-  void _toggleRecommendation() {
-    print('[HomeScreen] 🔘 "딱 맞는 사료 보기" 버튼 클릭');
+  /// 추천 자동 펼치기 처리
+  void _handleAutoExpandRecommendation(HomeState state) {
+    if (_hasAutoExpanded || !state.hasPet) return;
+    
+    final topRecommendation = state.recommendations?.items.firstOrNull;
+    if (topRecommendation == null || 
+        state.isLoadingRecommendations || 
+        _isRecommendationExpanded) return;
+    
+    _hasAutoExpanded = true;
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      
+      setState(() => _isRecommendationExpanded = true);
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        try {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent * 0.3,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } catch (_) {}
+      });
+    });
+  }
+
+  // UPDATED: Dynamic recommendation card with freshness logic - 동적 추천 토글
+  void _toggleRecommendation({bool forceRefresh = false}) {
+    print('[HomeScreen] 🔘 "딱 맞는 사료 보기" 버튼 클릭: forceRefresh=$forceRefresh');
     final state = ref.read(homeControllerProvider);
     final recommendations = state.recommendations;
     final topRecommendation = recommendations?.items.isNotEmpty == true
         ? recommendations!.items[0]
         : null;
     
-    print('[HomeScreen] 현재 상태: recommendations=${recommendations?.items.length ?? 0}개, isLoading=${state.isLoadingRecommendations}, expanded=$_isRecommendationExpanded');
+    print('[HomeScreen] 현재 상태: recommendations=${recommendations?.items.length ?? 0}개, isLoading=${state.isLoadingRecommendations}, expanded=$_isRecommendationExpanded, hasRecent=${state.hasRecentRecommendation}');
     
-    // 추천이 없고 로딩 중이 아니면 추천 로드
+    // UPDATED: Dynamic recommendation card with freshness logic - 최근 추천이 있으면 바로 표시, 없으면 로드
     if (topRecommendation == null && !state.isLoadingRecommendations) {
       final petSummary = state.petSummary;
       if (petSummary != null) {
         print('[HomeScreen] ✅ 추천 로드 시작: petId=${petSummary.petId}, petName=${petSummary.name}');
-        // 추천 로드 시작
-        ref.read(homeControllerProvider.notifier).loadRecommendations();
+        // 추천 로드 시작 (force 파라미터 전달)
+        ref.read(homeControllerProvider.notifier).loadRecommendations(force: forceRefresh);
         // 로딩 중이면 펼치지 않음
         return;
       } else {
         print('[HomeScreen] ⚠️ petSummary가 null입니다. 추천을 로드할 수 없습니다.');
       }
+    }
+    
+    // 최근 추천이 있고 펼쳐지지 않았으면 바로 펼치기 (로딩 없이)
+    if (state.hasRecentRecommendation && topRecommendation != null && !_isRecommendationExpanded) {
+      print('[HomeScreen] 💾 최근 추천이 있어서 바로 표시 (API 호출 없음)');
+      setState(() {
+        _isRecommendationExpanded = true;
+      });
+      // 펼칠 때 스크롤 애니메이션
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        try {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent * 0.3,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } catch (e) {
+          print('[HomeScreen] 스크롤 애니메이션 실패: $e');
+        }
+      });
+      return;
     }
     
     // 추천이 있거나 이미 펼쳐진 상태면 토글
@@ -109,12 +164,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // 펼칠 때 스크롤 위치 조정
       if (_isRecommendationExpanded) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent * 0.3,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
+          if (mounted && _scrollController.hasClients) {
+            try {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent * 0.3,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            } catch (e) {
+              // ScrollController가 dispose된 경우 무시
+            }
           }
         });
       }
@@ -125,58 +184,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(homeControllerProvider);
     
-    // ref.listen을 build 내에서 사용하되, 리스너 내부에서 _hasAutoExpanded 플래그로 중복 실행 방지
-    // (한 번만 자동 펼치기)
+    // ref.listen은 부수 효과(네비게이션, 다이얼로그 등)만 처리
+    // setState는 ref.watch로만 처리 (위젯 트리 재구성 중 setState 호출 방지)
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
-      // 이미 자동 펼침이 완료되었으면 리스너 로직 실행하지 않음
-      if (_hasAutoExpanded) return;
-      
-      final recommendations = next.recommendations;
-      final topRecommendation = recommendations?.items.isNotEmpty == true
-          ? recommendations!.items[0]
-          : null;
-      
-      // 추천이 로드 완료되고, 아직 펼치지 않았으면 자동 펼치기
-      if (topRecommendation != null && 
-          !next.isLoadingRecommendations && 
-          !_isRecommendationExpanded) {
-        _hasAutoExpanded = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            setState(() {
-              _isRecommendationExpanded = true;
-            });
-            // 스크롤 위치 조정
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent * 0.3,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            }
-          }
-        });
+      // 펫이 변경된 경우 플래그만 리셋 (setState 호출하지 않음)
+      if (previous?.petSummary?.petId != next.petSummary?.petId) {
+        _hasAutoExpanded = false;
+        _isRecommendationExpanded = false;
       }
     });
 
+    // 위젯 트리 구조 통일: 모든 상태에서 동일한 Scaffold 구조 사용
+    // _scrollController를 항상 사용하여 unmount/mount 시 안전성 확보
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 상단 고정 탭 (알림 아이콘 포함)
+            AppTopBar(title: '헤이제노'),
+            // 스크롤 가능한 콘텐츠 (항상 동일한 구조)
+            Expanded(
+              child: CupertinoScrollbar(
+                controller: _scrollController,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(), // iOS 스타일 바운스
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: _buildBodyContent(context, state),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// 상태에 따른 본문 콘텐츠 빌드
+  Widget _buildBodyContent(BuildContext context, HomeState state) {
     // 로딩 상태
     if (state.isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: const Center(child: LoadingWidget()),
+      return const SizedBox(
+        height: 400, // 최소 높이 보장
+        child: Center(child: LoadingWidget()),
       );
     }
 
     // Pet 없음 상태
     if (state.isNoPet) {
-      return _buildNoPetState(context);
+      return _buildNoPetStateContent(context);
     }
 
     // 에러 상태
     if (state.isError) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: EmptyStateWidget(
+      return SizedBox(
+        height: 400, // 최소 높이 보장
+        child: EmptyStateWidget(
           title: state.error ?? '오류가 발생했습니다',
           buttonText: '다시 시도',
           onButtonPressed: () => ref.read(homeControllerProvider.notifier).initialize(),
@@ -192,44 +258,96 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : null;
 
     if (petSummary == null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF7F8FA),
-        body: const Center(child: LoadingWidget()),
+      return const SizedBox(
+        height: 400, // 최소 높이 보장
+        child: Center(child: LoadingWidget()),
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
+    // 정상 상태: 펫 정보와 추천 표시
+    // 추천 자동 펼치기 처리 (build 메서드 내에서 안전하게 호출)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleAutoExpandRecommendation(state);
+    });
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.md),
+        // 1️⃣ 펫 선택 + 상태 요약 (카드) - 이미 애니메이션 포함
+        _buildPetSummaryHeader(context, petSummary, state),
+        // 홈 콘텐츠 - 애니메이션 포함
+        _buildHomeContent(context, petSummary, state, topRecommendation),
+      ],
+    );
+  }
+  
+  /// Pet 없음 상태 콘텐츠 (위젯 트리 구조 통일을 위해 별도 메서드로 분리)
+  Widget _buildNoPetStateContent(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: ref.read(onboardingServiceProvider).isOnboardingCompleted(),
+      builder: (context, snapshot) {
+        final isOnboardingCompleted = snapshot.data ?? false;
+        
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 상단 고정 탭 (알림 아이콘 포함)
-            const TopBar(title: '헤이제노'),
-            // 스크롤 가능한 콘텐츠
-            Expanded(
-              child: CupertinoScrollbar(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(), // iOS 스타일 바운스
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: AppSpacing.md),
-                        // 1️⃣ 펫 선택 + 상태 요약 (카드) - 이미 애니메이션 포함
-                        _buildPetSummaryHeader(context, petSummary, state),
-                        // 홈 콘텐츠 - 애니메이션 포함
-                        _buildHomeContent(context, petSummary, state, topRecommendation),
-                      ],
-                    ),
+            const SizedBox(height: 100),
+            // 아이콘
+            Icon(
+              Icons.favorite_border,
+              size: 64,
+              color: AppColors.iconMuted,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            // 제목
+            Text(
+              isOnboardingCompleted
+                  ? '프로필을 불러올 수 없습니다'
+                  : '프로필을 만들어주세요',
+              style: AppTypography.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            // 설명
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              isOnboardingCompleted
+                  ? '프로필 정보를 다시 불러오는 중입니다'
+                  : '반려동물 정보를 입력하면 맞춤 추천을 받을 수 있어요',
+              style: AppTypography.body2,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            // 프로필 다시 불러오기 버튼
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (isOnboardingCompleted) {
+                    // 프로필 다시 불러오기
+                    ref.read(homeControllerProvider.notifier).initialize();
+                  } else {
+                    // 프로필 만들기 (온보딩으로 이동)
+                    context.push(RoutePaths.petProfile);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
+                ),
+                child: Text(
+                  isOnboardingCompleted ? '다시 불러오기' : '프로필 만들기',
+                  style: AppTypography.button,
                 ),
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -311,7 +429,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2563EB),
+                      color: AppColors.primaryBlue, // 결정/이동용 (Calm Blue 통일)
                     ),
                   ),
                 ),
@@ -870,12 +988,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                side: const BorderSide(color: Color(0xFF16A34A)),
+                side: BorderSide(color: AppColors.petGreen), // 상태/안심용
               ),
               child: Text(
                 '지금 등록하기',
                 style: AppTypography.button.copyWith(
-                  color: const Color(0xFF16A34A),
+                  color: AppColors.petGreen, // 상태/안심용
                 ),
               ),
             ),
@@ -1063,27 +1181,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             );
           },
         ),
+        // UPDATED: Always show recommendation card regardless of hasCurrentFood
+        // Dynamic content based on current food registration status
+        const SizedBox(height: AppSpacing.lg),
+        // 추천 카드 (항상 표시)
+        TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOut,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.scale(
+                scale: 0.95 + (0.05 * value),
+                child: _buildRecommendationCard(context, petSummary, state, topRecommendation),
+              ),
+            );
+          },
+        ),
         if (hasCurrentFood) ...[
           const SizedBox(height: AppSpacing.lg),
           // 가격/소진 상태 신호 카드
           _buildStatusSignalCards(petSummary, state),
-          const SizedBox(height: AppSpacing.lg),
-          // 추천 카드 (조건 충족 시만 노출)
-          if (_shouldShowRecommendationCard(petSummary, state, topRecommendation))
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOut,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.scale(
-                    scale: 0.95 + (0.05 * value),
-                    child: _buildRecommendationCard(context, petSummary, state, topRecommendation),
-                  ),
-                );
-              },
-            ),
         ],
         
         const SizedBox(height: AppSpacing.md),
@@ -1137,46 +1256,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   /// 추천 카드 표시 여부 판단
+  // UPDATED: Always show recommendation card regardless of hasCurrentFood
+  // Goal: Reduce entry barrier, show core value immediately
   bool _shouldShowRecommendationCard(petSummary, state, topRecommendation) {
-    // 현재 급여 사료가 등록되어 있어야 함
-    final hasCurrentFood = false; // TODO: 실제 값으로 변경
-    
-    if (!hasCurrentFood) {
-      return false; // 미등록 시 추천 카드 숨김
-    }
-    
-    // 추천 카드 표시 조건:
-    // 1. 나이 단계 변경 감지 (TODO: 이전 나이 단계와 비교)
-    // 2. 건강 고민 변경 감지 (TODO: 이전 건강 고민과 비교)
-    // 3. 안전성 점수 낮음 (TODO: 현재 사료의 안전성 점수 확인)
-    // 4. 추천이 이미 로드되어 있고 표시 가능한 경우
-    
-    // 임시로 추천이 있고 펼쳐진 경우만 표시
-    if (topRecommendation != null && _isRecommendationExpanded) {
-      return true;
-    }
-    
-    // TODO: 실제 조건 확인 로직 구현
-    // 예시:
-    // final hasAgeStageChanged = _checkAgeStageChanged(petSummary);
-    // final hasHealthConcernsChanged = _checkHealthConcernsChanged(petSummary);
-    // final hasLowSafetyScore = _checkLowSafetyScore(petSummary);
-    // return hasAgeStageChanged || hasHealthConcernsChanged || hasLowSafetyScore;
-    
-    return false;
+    // 항상 추천 카드 표시 (hasCurrentFood 조건 제거)
+    return true;
   }
 
   /// 추천 카드 위젯
+  // UPDATED: Always show recommendation card regardless of hasCurrentFood
+  // Dynamic content based on current food registration status
+  // Goal: Reduce entry barrier, show core value immediately
+  // DESIGN_GUIDE: CardContainer 사용, Shadow 없음, Border로 구분, h3 타이틀
   Widget _buildRecommendationCard(
     BuildContext context,
     petSummary,
     state,
     topRecommendation,
   ) {
+    // TODO: 현재 급여 사료 API 연동 후 실제 값으로 변경
+    final hasCurrentFood = false; // 임시로 false
+    
+    // 로딩 중일 때
     if (state.isLoadingRecommendations) {
       return CardContainer(
+        isHomeStyle: true,
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Lottie.asset(
               'assets/animations/paw_loading.json',
@@ -1190,61 +1297,212 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               '${petSummary.name}에게 딱 맞는 사료 찾는 중...',
               style: AppTypography.body.copyWith(
-                color: const Color(0xFF6B7280),
+                color: AppColors.textSecondary,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
       );
     }
     
-    if (topRecommendation == null) {
-      return const SizedBox.shrink();
-    }
+    final recommendations = state.recommendations;
+    final hasRecommendations = recommendations != null && recommendations.items.isNotEmpty;
+    final hasRecent = state.hasRecentRecommendation;
     
+    // DESIGN_GUIDE: CardContainer 사용, isHomeStyle: true, Shadow 없음
     return CardContainer(
       isHomeStyle: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // DESIGN_GUIDE: 카드 타이틀은 h3 사용
           Text(
-            '지금 먹는 사료보다\n${petSummary.name}에게 더 잘 맞는 사료가 있어요',
+            hasCurrentFood 
+                ? "현재 사료 vs 맞춤 추천 비교" 
+                : "우리 애에게 딱 맞는 사료 찾아보기",
             style: AppTypography.h3.copyWith(
-              color: const Color(0xFF0F172A),
-              height: 1.3,
-              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: AppSpacing.lg), // 카드 간
-          SizedBox(
-            width: double.infinity,
-            child: CupertinoButton(
-              onPressed: () {
-                // 추천 상세 보기
-                _toggleRecommendation();
-              },
-              color: Colors.transparent,
-              padding: EdgeInsets.zero,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.md),
+          
+          // UPDATED: Dynamic content based on current food registration status
+          if (!hasCurrentFood) ...[
+            // 현재 사료 미등록 시: 추천 받기 유도 UI
+            Text(
+              "알레르기, 나이, 건강 고민만 알려주세요!\n바로 맞춤 사료 추천해드릴게요.",
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            
+            // 추천 결과 미리보기 (이미 로드된 경우)
+            if (hasRecommendations && recommendations.items.isNotEmpty) ...[
+              ...recommendations.items.take(2).map((item) => Container(
+                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: AppColors.petGreen, // 상태/안심용
-                    width: 1.5,
-                  ),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.divider,
+                    width: 1,
+                  ),
                 ),
-                child: Text(
-                  '비교해보기',
-                  style: AppTypography.button.copyWith(
-                    color: AppColors.primaryBlue, // 결정/비교용
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${item.product.brandName} ${item.product.productName}',
+                            style: AppTypography.body.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            '${item.matchScore.toStringAsFixed(1)}점',
+                            style: AppTypography.body.copyWith(
+                              color: AppColors.petGreen, // 상태/안심용
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            
+            // DESIGN_GUIDE: 결정/이동 버튼은 PrimaryBlue, CupertinoButton 사용
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: CupertinoButton(
+                  onPressed: () {
+                    // 추천 페이지로 이동
+                    context.push('/recommendation');
+                  },
+                  color: AppColors.primaryBlue, // 결정/이동용
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  padding: EdgeInsets.zero,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.recommend, size: 20, color: Colors.white),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        "지금 추천받기",
+                        style: AppTypography.button.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ] else ...[
+            // UPDATED: Dynamic content based on current food registration status
+            // 현재 사료 등록 시: 기존 미리보기 로직
+            if (hasRecommendations && recommendations.items.isNotEmpty) ...[
+              ...recommendations.items.take(2).map((item) => Container(
+                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.divider,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${item.product.brandName} ${item.product.productName}',
+                            style: AppTypography.body.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            '${item.matchScore.toStringAsFixed(1)}점',
+                            style: AppTypography.body.copyWith(
+                              color: AppColors.petGreen, // 상태/안심용
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            
+            // DESIGN_GUIDE: 결정/이동 버튼은 PrimaryBlue, OutlinedButton 사용
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: CupertinoButton(
+                onPressed: () {
+                  final shouldForce = !hasRecent || !hasRecommendations;
+                  _toggleRecommendation(forceRefresh: shouldForce);
+                },
+                color: Colors.transparent,
+                padding: EdgeInsets.zero,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.primaryBlue, // 결정/이동용
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.compare_arrows,
+                        size: 18,
+                        color: AppColors.primaryBlue,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        hasRecommendations && hasRecent 
+                            ? "더 보기" 
+                            : "비교해보기",
+                        style: AppTypography.button.copyWith(
+                          color: AppColors.primaryBlue, // 결정/이동용
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -1579,8 +1837,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: Icons.arrow_downward,
                   title: '지금 먹는 사료가',
                   subtitle: '최근 30일 중 가장 싸요',
-                  backgroundColor: const Color(0xFFEFF6FF),
-                  iconColor: const Color(0xFF2563EB),
+                  backgroundColor: AppColors.primarySoft, // Teal 배경
+                  iconColor: AppColors.primaryBlue, // 결정/이동용 (Calm Blue 통일)
                 ),
               ),
             );
@@ -1756,12 +2014,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                side: const BorderSide(color: Color(0xFF16A34A)),
+                side: BorderSide(color: AppColors.primaryBlue), // 결정/이동용 (Calm Blue 통일)
               ),
               child: Text(
                 '비교해보기',
                 style: AppTypography.button.copyWith(
-                  color: const Color(0xFF16A34A),
+                  color: AppColors.primaryBlue, // 결정/이동용 (Calm Blue 통일)
                 ),
               ),
             ),
@@ -1854,15 +2112,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: const Color(0xFF16A34A), // 초록색
+            color: AppColors.petGreen, // 상태/안심용
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.petGreen.withOpacity(0.3), // 상태/안심용
-                blurRadius: 4,
-                spreadRadius: 1,
-              ),
-            ],
+            // DESIGN_GUIDE: Shadow 제거, Border로 구분
           ),
         ),
         Expanded(

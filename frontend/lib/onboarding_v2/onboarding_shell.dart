@@ -46,6 +46,7 @@ class _OnboardingShellState extends State<OnboardingShell>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -77,6 +78,7 @@ class _OnboardingShellState extends State<OnboardingShell>
   @override
   void dispose() {
     _animationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -126,7 +128,9 @@ class _OnboardingShellState extends State<OnboardingShell>
             // Scrollable Content
             Expanded(
               child: CupertinoScrollbar(
+                controller: _scrollController,
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     AppSpacing.lg,

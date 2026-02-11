@@ -54,10 +54,16 @@ class RecommendationResponseDto {
   @JsonKey(name: 'pet_id')
   final String petId;
   final List<RecommendationItemDto> items;
+  @JsonKey(name: 'is_cached', defaultValue: false)
+  final bool isCached;
+  @JsonKey(name: 'last_recommended_at')
+  final DateTime? lastRecommendedAt;
 
   RecommendationResponseDto({
     required this.petId,
     required this.items,
+    this.isCached = false,
+    this.lastRecommendedAt,
   });
 
   factory RecommendationResponseDto.fromJson(Map<String, dynamic> json) => _$RecommendationResponseDtoFromJson(json);

@@ -28,8 +28,12 @@ USER_PROMPT_TEMPLATE = """펫 정보:
 추천 이유 (기술적):
 {technical_reasons}
 
+사용자 선호도:
+{user_prefs_text}
+
 위 정보를 바탕으로, 이 사료가 왜 이 펫에게 추천되는지 자연스럽고 친절하게 설명해줘.
-설명은 1-2문장으로 간결하게 작성하고, 펫 이름을 사용해서 친근하게 설명해줘."""
+설명은 1-2문장으로 간결하게 작성하고, 펫 이름을 사용해서 친근하게 설명해줘.
+사용자 선호도가 있으면 그것도 자연스럽게 언급해줘."""
 
 
 class RecommendationExplanationService:
@@ -47,7 +51,8 @@ class RecommendationExplanationService:
         allergies: List[str],
         brand_name: str,
         product_name: str,
-        technical_reasons: List[str]
+        technical_reasons: List[str],
+        user_prefs: dict = None
     ) -> str:
         """
         추천 이유를 자연어로 생성
@@ -94,6 +99,30 @@ class RecommendationExplanationService:
             # 품종 텍스트
             breed_text = pet_breed or "정보 없음"
             
+            # UPDATED: Customization support - 사용자 선호도 텍스트 생성
+            user_prefs_text = "없음"
+            if user_prefs:
+                weights_preset = user_prefs.get("weights_preset", "BALANCED")
+                hard_exclude = user_prefs.get("hard_exclude_allergens", [])
+                soft_avoid = user_prefs.get("soft_avoid_ingredients", [])
+                max_price = user_prefs.get("max_price_per_kg")
+                
+                preset_kr = {
+                    "SAFE": "안전 우선",
+                    "BALANCED": "균형",
+                    "VALUE": "가성비 우선"
+                }.get(weights_preset, weights_preset)
+                
+                prefs_parts = [f"모드: {preset_kr}"]
+                if hard_exclude:
+                    prefs_parts.append(f"제외 알레르겐: {', '.join(hard_exclude)}")
+                if soft_avoid:
+                    prefs_parts.append(f"피하고 싶은 성분: {', '.join(soft_avoid)}")
+                if max_price:
+                    prefs_parts.append(f"최대 가격: {max_price}원/kg")
+                
+                user_prefs_text = ", ".join(prefs_parts) if prefs_parts else "없음"
+            
             prompt = USER_PROMPT_TEMPLATE.format(
                 pet_name=pet_name,
                 pet_species=species_kr,
@@ -105,7 +134,8 @@ class RecommendationExplanationService:
                 allergies=allergies_text,
                 brand_name=brand_name,
                 product_name=product_name,
-                technical_reasons=reasons_text
+                technical_reasons=reasons_text,
+                user_prefs_text=user_prefs_text
             )
             
             client = get_openai_client()

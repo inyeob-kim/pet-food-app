@@ -30,6 +30,7 @@ from app.models.campaign import (
 )
 from app.models.point import PointWallet, PointLedger
 from app.models.referral import ReferralCode, Referral, ReferralStatus
+from app.models.user_reco_prefs import UserRecoPrefs
 
 __all__ = [
     "User",
@@ -57,4 +58,5 @@ __all__ = [
     "CampaignTrigger", "CampaignActionType", "RewardStatus",
     "PointWallet", "PointLedger",
     "ReferralCode", "Referral", "ReferralStatus",
+    "UserRecoPrefs",
 ]

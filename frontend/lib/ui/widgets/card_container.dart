@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_spacing.dart';
+import '../../app/theme/app_colors.dart';
 
 /// 카드 컨테이너 위젯 (DESIGN_GUIDE.md 스타일)
 class CardContainer extends StatelessWidget {
@@ -33,8 +34,8 @@ class CardContainer extends StatelessWidget {
         : (padding ?? const EdgeInsets.all(AppSpacing.lg));
     
     final effectiveBackgroundColor = isHomeStyle
-        ? (backgroundColor ?? Colors.white)
-        : (backgroundColor ?? const Color(0xFFFFFFFF));
+        ? (backgroundColor ?? AppColors.surface)
+        : (backgroundColor ?? AppColors.surface);
     
     final effectiveBorderRadius = BorderRadius.circular(12);
     
@@ -44,10 +45,10 @@ class CardContainer extends StatelessWidget {
         color: effectiveBackgroundColor,
         borderRadius: effectiveBorderRadius,
         border: showBorder ? Border.all(
-          color: borderColor ?? const Color(0xFFF1F3F5),
+          color: borderColor ?? AppColors.divider,
           width: borderWidth ?? 1,
         ) : null,
-        // shadow 제거
+        // shadow 제거 (DESIGN_GUIDE 준수)
       ),
       child: child,
     );

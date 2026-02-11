@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../ui/widgets/top_bar.dart';
+import '../../../../../ui/widgets/app_top_bar.dart';
 import '../../../../../ui/widgets/figma_pill_chip.dart';
 import '../../../../../ui/widgets/figma_empty_state.dart';
 import '../../../../../app/theme/app_typography.dart';
@@ -22,6 +22,8 @@ class WatchScreen extends ConsumerStatefulWidget {
 }
 
 class _WatchScreenState extends ConsumerState<WatchScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +31,12 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(watchControllerProvider.notifier).loadTrackingProducts();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,7 +48,7 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const TopBar(title: '찜한 사료'),
+            AppTopBar(title: '찜한 사료'),
             Expanded(
               child: _buildBody(state),
             ),

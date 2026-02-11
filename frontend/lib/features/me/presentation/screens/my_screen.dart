@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../ui/widgets/top_bar.dart';
+import '../../../../../ui/widgets/app_top_bar.dart';
 import '../../../../../ui/widgets/match_score_badge.dart';
 import '../../../../../ui/widgets/card_container.dart';
+import '../../../../../ui/widgets/figma_section_header.dart';
+import '../../../../../ui/widgets/setting_item.dart';
+import '../../../../../ui/widgets/toggle_switch.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../app/theme/app_spacing.dart';
@@ -16,11 +19,8 @@ import '../../../../../core/widgets/loading.dart';
 import '../../../../../core/widgets/empty_state.dart';
 import '../../../../../core/widgets/loading_dialog.dart';
 import '../../../../../core/widgets/modal_bottom_sheet_wrapper.dart';
-import '../../../../../ui/widgets/setting_item.dart';
-import '../../../../../ui/widgets/toggle_switch.dart';
-import '../../../../../ui/widgets/section_header.dart';
+import '../../../../../core/constants/pet_constants.dart';
 import '../../../../../features/home/presentation/widgets/pet_avatar.dart';
-import '../../../../../features/home/presentation/widgets/pet_constants.dart';
 import '../../../../../data/models/pet_summary_dto.dart';
 import '../../../../../app/router/route_paths.dart';
 import '../../../../../domain/services/pet_service.dart';
@@ -36,6 +36,13 @@ class MyScreen extends ConsumerStatefulWidget {
 }
 
 class _MyScreenState extends ConsumerState<MyScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
   bool _notificationEnabled = true; // 알림 설정 상태
 
   @override
@@ -125,10 +132,12 @@ class _MyScreenState extends ConsumerState<MyScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const TopBar(title: '더보기'),
+            AppTopBar(title: '더보기'),
             Expanded(
               child: CupertinoScrollbar(
+                controller: _scrollController,
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: Column(
@@ -144,10 +153,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SectionHeader(
+                            FigmaSectionHeader(
                               title: '최근 추천 히스토리',
-                              actionText: state.recentRecommendations.isNotEmpty ? '전체보기' : null,
-                              onActionTap: state.recentRecommendations.isNotEmpty
+                              onViewAll: state.recentRecommendations.isNotEmpty
                                   ? () {
                                       // TODO: 전체 추천 히스토리 화면으로 이동
                                     }
@@ -315,7 +323,6 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 PetAvatar(
                   species: pet.species,
                   size: 36,
-                  backgroundColor: AppColors.petGreen.withOpacity(0.1),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -520,8 +527,8 @@ class _MyScreenState extends ConsumerState<MyScreen> {
     }
 
     return SettingItem.withAutoColors(
+      title: setting.label,
       icon: setting.icon,
-      label: setting.label,
       onTap: setting.onTap,
       trailing: trailing,
     );
@@ -602,32 +609,19 @@ class _MyScreenState extends ConsumerState<MyScreen> {
 
     try {
       // Primary pet 설정
-      final petService = ref.read(petServiceProvider);
-      await petService.setPrimaryPet(targetPet.petId);
-
+      await ref.read(petServiceProvider).setPrimaryPet(targetPet.petId);
+      
       // 화면 새로고침
       await ref.read(myControllerProvider.notifier).refresh();
-      ref.read(homeControllerProvider.notifier).initialize();
+      await ref.read(homeControllerProvider.notifier).initialize();
 
-      // 로딩 닫기
-      if (mounted) {
-        LoadingDialog.hide(context);
-      }
-
-      // 성공 메시지
-      if (mounted) {
-        SnackBarHelper.showSuccess(context, '${targetPet.name}로 전환되었습니다');
-      }
+      if (!mounted) return;
+      LoadingDialog.hide(context);
+      SnackBarHelper.showSuccess(context, '${targetPet.name}로 전환되었습니다');
     } catch (e) {
-      // 로딩 닫기
-      if (mounted) {
-        LoadingDialog.hide(context);
-      }
-
-      // 에러 메시지
-      if (mounted) {
-        SnackBarHelper.showError(context, '아이 전환에 실패했습니다: ${e.toString()}');
-      }
+      if (!mounted) return;
+      LoadingDialog.hide(context);
+      SnackBarHelper.showError(context, '아이 전환에 실패했습니다: ${e.toString()}');
     }
   }
 
@@ -636,9 +630,8 @@ class _MyScreenState extends ConsumerState<MyScreen> {
     final textController = TextEditingController();
     
     ModalBottomSheetWrapper.show(
-      context,
-      title: '기능 요청하기',
-      child: Padding(
+      context: context,
+      builder: (context) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,

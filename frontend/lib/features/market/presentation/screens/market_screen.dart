@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../ui/widgets/top_bar.dart';
+import '../../../../../ui/widgets/app_top_bar.dart';
 import '../../../../../ui/widgets/figma_search_bar.dart';
 import '../../../../../ui/widgets/figma_section_header.dart';
 import '../../../../../ui/widgets/figma_pill_chip.dart';
@@ -21,6 +21,8 @@ class MarketScreen extends ConsumerStatefulWidget {
 }
 
 class _MarketScreenState extends ConsumerState<MarketScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +30,12 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(marketControllerProvider.notifier).refresh();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -44,7 +52,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           child: Column(
             children: [
               // TopBar
-              const TopBar(title: '사료마켓'),
+              AppTopBar(title: '사료마켓'),
               // Search Bar
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
@@ -85,7 +93,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       child: RefreshIndicator(
         onRefresh: () => ref.read(marketControllerProvider.notifier).refresh(),
         child: CupertinoScrollbar(
+          controller: _scrollController,
           child: SingleChildScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

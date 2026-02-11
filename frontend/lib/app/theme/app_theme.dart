@@ -9,7 +9,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.light(
-        primary: AppColors.primary,
+        primary: AppColors.primaryBlue, // Calm Blue 통일
         surface: AppColors.surface,
         background: AppColors.background,
         error: AppColors.error,
@@ -42,7 +42,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg,
@@ -54,13 +54,13 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.fabBackground,
+        backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
         foregroundColor: Colors.white,
         elevation: 2,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.background,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: AppColors.primaryBlue, // Calm Blue 통일
         unselectedItemColor: AppColors.iconMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
@@ -105,7 +105,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg,
@@ -117,7 +117,7 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.fabBackground,
+        backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
         foregroundColor: Colors.white,
         elevation: 2,
       ),

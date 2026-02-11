@@ -2,10 +2,11 @@
 from typing import Optional, List, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, desc
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime, timedelta
 import json
 import logging
 import time
@@ -13,6 +14,7 @@ import time
 from app.models.product import Product, ProductIngredientProfile, ProductNutritionFacts
 from app.models.pet import Pet, PetHealthConcern, PetFoodAllergy, PetOtherAllergy
 from app.models.recommendation import RecommendationRun, RecommendationItem, RecStrategy
+from app.models.user_reco_prefs import UserRecoPrefs
 from app.schemas.product import ProductRead, ProductCreate, ProductUpdate, RecommendationResponse, RecommendationItem as RecommendationItemSchema
 from app.schemas.pet_summary import PetSummaryResponse
 from app.models.offer import Merchant, ProductOffer
@@ -62,6 +64,112 @@ class ProductService:
         start_time = time.time()
         logger.info(f"[ProductService] 🎯 추천 요청 시작: pet_id={pet_id}")
         
+        # UPDATED: Caching & User Prefs for recommendation freshness - 캐싱 체크
+        cache_threshold = datetime.utcnow() - timedelta(days=7)
+        latest_run_result = await db.execute(
+            select(RecommendationRun)
+            .where(RecommendationRun.pet_id == pet_id)
+            .order_by(desc(RecommendationRun.created_at))
+            .limit(1)
+        )
+        latest_run = latest_run_result.scalar_one_or_none()
+        
+        if latest_run and latest_run.created_at >= cache_threshold:
+            # 캐싱된 추천 반환 (7일 이내)
+            logger.info(f"[ProductService] 💾 캐싱된 추천 사용: run_id={latest_run.id}, created_at={latest_run.created_at}")
+            
+            # RecommendationItem들 조회
+            items_result = await db.execute(
+                select(RecommendationItem)
+                .where(RecommendationItem.run_id == latest_run.id)
+                .order_by(RecommendationItem.rank.asc())
+                .limit(10)
+            )
+            db_items = items_result.scalars().all()
+            
+            # Product 정보 eager load
+            product_ids = [item.product_id for item in db_items]
+            products_result = await db.execute(
+                select(Product)
+                .options(
+                    selectinload(Product.offers),
+                    selectinload(Product.ingredient_profile),
+                    selectinload(Product.nutrition_facts)
+                )
+                .where(Product.id.in_(product_ids))
+            )
+            products = {p.id: p for p in products_result.scalars().all()}
+            
+            # RecommendationItemSchema로 변환
+            recommendation_items = []
+            for db_item in db_items:
+                product = products.get(db_item.product_id)
+                if not product:
+                    continue
+                
+                # Primary offer 찾기
+                primary_offer = None
+                for offer in product.offers:
+                    if offer.is_primary and offer.is_active:
+                        primary_offer = offer
+                        break
+                
+                if not primary_offer:
+                    for offer in product.offers:
+                        if offer.is_active:
+                            primary_offer = offer
+                            break
+                
+                if not primary_offer:
+                    offer_merchant = Merchant.COUPANG
+                    current_price = 0
+                    avg_price = 0
+                    delta_percent = None
+                    is_new_low = False
+                else:
+                    offer_merchant = primary_offer.merchant
+                    current_price = 0
+                    avg_price = 0
+                    delta_percent = None
+                    is_new_low = False
+                
+                # score_components에서 점수 추출
+                score_components = db_item.score_components or {}
+                safety_score = score_components.get("safety_score", 0.0)
+                fitness_score = score_components.get("fitness_score", 0.0)
+                total_score = float(db_item.score)
+                
+                # 저장된 explanation은 없으므로 None (히스토리에서는 제외했었음)
+                # 하지만 캐싱된 경우라도 explanation을 저장했다면 사용 가능
+                explanation = None
+                
+                recommendation_items.append(
+                    RecommendationItemSchema(
+                        product=ProductRead.model_validate(product),
+                        offer_merchant=offer_merchant,
+                        current_price=current_price,
+                        avg_price=avg_price,
+                        delta_percent=delta_percent,
+                        is_new_low=is_new_low,
+                        match_score=total_score,
+                        safety_score=safety_score,
+                        fitness_score=fitness_score,
+                        match_reasons=db_item.reasons or [],
+                        explanation=explanation,  # 캐싱된 경우 explanation은 재생성하지 않음
+                    )
+                )
+            
+            # 캐싱된 응답 반환
+            return RecommendationResponse(
+                pet_id=pet_id,
+                items=recommendation_items,
+                is_cached=True,
+                last_recommended_at=latest_run.created_at
+            )
+        
+        # 캐싱되지 않은 경우: 풀 스코링 진행
+        logger.info(f"[ProductService] 🔄 새로운 추천 계산 시작 (캐시 없음 또는 만료)")
+        
         # 1. 펫 프로필 조회
         pet = await db.get(Pet, pet_id)
         if pet is None:
@@ -73,6 +181,30 @@ class ProductService:
         # PetSummaryResponse 생성
         pet_summary = await ProductService._build_pet_summary(pet, db)
         logger.info(f"[ProductService] 펫 프로필: {pet_summary.name}, 종류={pet_summary.species}, 나이={pet_summary.age_stage}")
+        
+        # ADDED: User Prefs Customization - 사용자 선호도 불러오기
+        user_id = pet.user_id
+        user_prefs_result = await db.execute(
+            select(UserRecoPrefs).where(UserRecoPrefs.user_id == user_id)
+        )
+        user_prefs_obj = user_prefs_result.scalars().first()
+        
+        # 기본 선호도 설정
+        default_prefs = {
+            "weights_preset": "BALANCED",
+            "hard_exclude_allergens": [],
+            "soft_avoid_ingredients": [],
+            "max_price_per_kg": None,
+            "sort_preference": "default",
+            "health_concern_priority": False,
+        }
+        
+        if user_prefs_obj and user_prefs_obj.prefs:
+            user_prefs = {**default_prefs, **user_prefs_obj.prefs}
+        else:
+            user_prefs = default_prefs
+        
+        logger.info(f"[ProductService] 사용자 선호도: {user_prefs.get('weights_preset', 'BALANCED')} 모드")
         
         # 2. parsed JSON이 있는 활성 상품 조회 (eager load)
         result = await db.execute(
@@ -94,7 +226,12 @@ class ProductService:
         
         if not products:
             logger.warning("[ProductService] 추천 가능한 상품 없음 (parsed JSON이 있는 상품 없음)")
-            return RecommendationResponse(pet_id=pet_id, items=[])
+            return RecommendationResponse(
+                pet_id=pet_id, 
+                items=[],
+                is_cached=False,
+                last_recommended_at=None
+            )
         
         # 3. 각 상품에 대해 스코링
         scored_products: List[Tuple[Product, float, float, float, List[str]]] = []
@@ -117,9 +254,9 @@ class ProductService:
                 
                 ingredients_text = product.ingredient_profile.ingredients_text or ""
                 
-                # 안전성 점수 계산
+                # ADDED: User Prefs Customization - 안전성 점수 계산 (user_prefs 전달)
                 safety_score, safety_reasons = RecommendationScoringService.calculate_safety_score(
-                    pet_summary, product, parsed, ingredients_text
+                    pet_summary, product, parsed, ingredients_text, user_prefs
                 )
                 logger.debug(f"[ProductService] [{idx}/{len(products)}] 안전성 점수: {safety_score:.1f}, 이유: {safety_reasons[:2] if safety_reasons else []}")
                 
@@ -128,9 +265,9 @@ class ProductService:
                     logger.debug(f"[ProductService] [{idx}/{len(products)}] ❌ 안전성 0점으로 제외")
                     continue
                 
-                # 적합성 점수 계산
+                # ADDED: User Prefs Customization - 적합성 점수 계산 (user_prefs 전달)
                 fitness_score, fitness_reasons, age_penalty = RecommendationScoringService.calculate_fitness_score(
-                    pet_summary, product, parsed, product.nutrition_facts
+                    pet_summary, product, parsed, product.nutrition_facts, user_prefs
                 )
                 logger.debug(f"[ProductService] [{idx}/{len(products)}] 적합성 점수: {fitness_score:.1f}, 나이 패널티: {age_penalty:.1f}, 이유: {fitness_reasons[:2] if fitness_reasons else []}")
                 
@@ -139,10 +276,19 @@ class ProductService:
                     logger.debug(f"[ProductService] [{idx}/{len(products)}] ❌ 적합성 0점으로 제외")
                     continue
                 
-                # 총점 계산
+                # ADDED: User Prefs Customization - 총점 계산 (user_prefs 전달)
                 total_score = RecommendationScoringService.calculate_total_score(
-                    safety_score, fitness_score, age_penalty
+                    safety_score, fitness_score, age_penalty, user_prefs
                 )
+                
+                # ADDED: User Prefs Customization - max_price_per_kg 페널티 적용
+                max_price_per_kg = user_prefs.get("max_price_per_kg")
+                if max_price_per_kg is not None and product.price_per_kg is not None:
+                    price_per_kg = float(product.price_per_kg)
+                    if price_per_kg > max_price_per_kg:
+                        total_score -= 30.0
+                        all_reasons.append(f"가격 제한 초과 ({price_per_kg:.0f}원/kg > {max_price_per_kg}원/kg)")
+                
                 logger.debug(f"[ProductService] [{idx}/{len(products)}] 총점: {total_score:.1f} (안전: {safety_score:.1f}, 적합: {fitness_score:.1f})")
                 
                 # 총점이 -1이면 제외 (안전성 0점)
@@ -163,11 +309,29 @@ class ProductService:
         
         if not scored_products:
             logger.warning("[ProductService] 추천 가능한 상품 없음 (모든 상품이 필터링됨)")
-            return RecommendationResponse(pet_id=pet_id, items=[])
+            return RecommendationResponse(
+                pet_id=pet_id, 
+                items=[],
+                is_cached=False,
+                last_recommended_at=None
+            )
         
-        # 4. 정렬 (총점 내림차순, 동점 시 안전성 점수 내림차순)
+        # ADDED: User Prefs Customization - 정렬 (사용자 선호도 반영)
         logger.info(f"[ProductService] 🔄 상품 정렬 시작: {len(scored_products)}개")
-        scored_products.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        sort_preference = user_prefs.get("sort_preference", "default")
+        
+        if sort_preference == "price_asc":
+            # total desc → price asc
+            def sort_key(x):
+                product, total_score, safety_score, fitness_score, reasons = x
+                price_per_kg = float(product.price_per_kg) if product.price_per_kg is not None else float('inf')
+                return (-total_score, price_per_kg)  # 총점 내림차순, 가격 오름차순
+            
+            scored_products.sort(key=sort_key)
+            logger.info(f"[ProductService] 가격 우선 정렬 적용됨")
+        else:
+            # 기본 정렬: 총점 내림차순, 동점 시 안전성 점수 내림차순
+            scored_products.sort(key=lambda x: (x[1], x[2]), reverse=True)
         
         # 5. 상위 10개 선택
         top_products = scored_products[:10]
@@ -210,7 +374,7 @@ class ProductService:
                 delta_percent = None
                 is_new_low = False
             
-            # LLM으로 추천 이유 설명 생성
+            # ADDED: User Prefs Customization - LLM으로 추천 이유 설명 생성 (user_prefs 전달)
             explanation = None
             try:
                 explanation_start = time.time()
@@ -225,7 +389,8 @@ class ProductService:
                     allergies=pet_summary.food_allergies or [],
                     brand_name=product.brand_name,
                     product_name=product.product_name,
-                    technical_reasons=reasons
+                    technical_reasons=reasons,
+                    user_prefs=user_prefs
                 )
                 explanation_duration_ms = int((time.time() - explanation_start) * 1000)
                 logger.debug(f"[ProductService] [{idx}/{len(top_products)}] ✅ LLM 설명 생성 완료: 소요시간={explanation_duration_ms}ms, 길이={len(explanation) if explanation else 0}자")
@@ -272,12 +437,15 @@ class ProductService:
                 "other_allergies": pet_summary.other_allergies,
             }
             
-            # RecommendationRun 생성
+            # ADDED: User Prefs Customization - RecommendationRun 생성 (prefs_snapshot 포함)
             recommendation_run = RecommendationRun(
                 user_id=pet.user_id,
                 pet_id=pet_id,
                 strategy=RecStrategy.RULE_V1,
-                context=context
+                context={
+                    **context,
+                    "prefs_snapshot": user_prefs  # 사용자 선호도 스냅샷 저장
+                }
             )
             db.add(recommendation_run)
             await db.flush()  # run_id를 얻기 위해 flush
@@ -306,9 +474,12 @@ class ProductService:
             logger.error(f"[ProductService] ❌ 추천 히스토리 저장 실패: {str(e)}", exc_info=True)
             # 히스토리 저장 실패해도 추천 결과는 반환
         
+        # UPDATED: Caching & User Prefs for recommendation freshness - 응답에 캐싱 정보 포함
         return RecommendationResponse(
             pet_id=pet_id,
             items=recommendation_items,
+            is_cached=False,
+            last_recommended_at=datetime.utcnow() if recommendation_items else None
         )
     
     @staticmethod

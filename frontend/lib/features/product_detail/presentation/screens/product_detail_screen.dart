@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../app/theme/app_colors.dart';
+import '../../../../../app/theme/app_radius.dart';
+import '../../../../../app/theme/app_spacing.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../core/utils/price_formatter.dart';
 import '../../../../../core/widgets/empty_state.dart';
@@ -99,12 +102,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             width: double.infinity,
                             height: 320,
                             child: Container(
-                              color: const Color(0xFFF7F8FA),
+                              color: AppColors.background,
                               child: const Center(
                                 child: Icon(
                                   Icons.image_outlined,
                                   size: 64,
-                                  color: Color(0xFF6B7280),
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ),
@@ -119,7 +122,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                 onTap: () => ref
                                     .read(productDetailControllerProvider(widget.productId).notifier)
                                     .toggleFavorite(),
-                                borderRadius: BorderRadius.circular(24),
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
                                 child: Container(
                                   width: 48,
                                   height: 48,
@@ -147,7 +150,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSpacing.xl),
                             // Product Info
                             Text(
                               product.brandName,
@@ -155,14 +158,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                 color: const Color(0xFF6B7280),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             Text(
                               product.productName,
                               style: AppTypography.h2.copyWith(
-                                color: const Color(0xFF111827),
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSpacing.xl),
                             // Price Hero - Strongest Visual
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -175,7 +178,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   style: const TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF111827),
+                                    color: AppColors.textPrimary,
                                     letterSpacing: -0.5,
                                   ),
                                 ),
@@ -191,7 +194,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               ],
                             ),
                             if (state.averagePrice != null) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppSpacing.sm),
                               Text(
                                 '평균 ${PriceFormatter.formatWithCurrency(state.averagePrice!)}',
                                 style: AppTypography.body.copyWith(
@@ -199,13 +202,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                 ),
                               ),
                             ],
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSpacing.xl),
                             // Price Comparison Message
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF2F2),
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(AppRadius.md),
                                 border: Border.all(
                                   color: const Color(0xFFEF4444).withOpacity(0.2),
                                   width: 1,
@@ -219,7 +222,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                     size: 20,
                                     color: Color(0xFFEF4444),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: AppSpacing.sm),
                                   Expanded(
                                     child: Text(
                                       '💰 평균 대비 ${state.averagePrice != null && state.currentPrice != null && state.averagePrice! > state.currentPrice! ? ((state.averagePrice! - state.currentPrice!) / state.averagePrice! * 100).round() : 0}% 저렴해요. 지금이 구매 타이밍입니다!',
@@ -231,20 +234,20 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: AppSpacing.xl + AppSpacing.md),
                             // Price Graph Section
                             Text(
                               '가격 추이',
                               style: AppTypography.body.copyWith(
-                                color: const Color(0xFF111827),
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpacing.lg),
                             Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF7F8FA),
-                                borderRadius: BorderRadius.circular(18),
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(AppRadius.md),
                               ),
                               child: Column(
                                 children: [
@@ -265,7 +268,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                       color: isLatest
-                                                          ? const Color(0xFF2563EB)
+                                                          ? AppColors.primaryBlue
                                                           : const Color(0xFFE5E7EB),
                                                       borderRadius: const BorderRadius.vertical(
                                                         top: Radius.circular(2),
@@ -282,7 +285,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                       }).toList(),
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: AppSpacing.lg),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -310,23 +313,23 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: AppSpacing.xl + AppSpacing.md),
                             // Match Analysis Section - NEW & ENHANCED
                             Text(
                               '맞춤 분석',
                               style: AppTypography.h2.copyWith(
-                                color: const Color(0xFF111827),
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpacing.lg),
                             // Match Score with Bar
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF0FDF4),
-                                borderRadius: BorderRadius.circular(18),
+                                color: AppColors.petGreenLight, // 상태/안심용 배경
+                                borderRadius: BorderRadius.circular(AppRadius.md),
                                 border: Border.all(
-                                  color: const Color(0xFF16A34A).withOpacity(0.2),
+                                  color: AppColors.petGreen.withOpacity(0.2), // 상태/안심용
                                   width: 1,
                                 ),
                               ),
@@ -338,15 +341,15 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                       Text(
                                         '맞춤 점수',
                                         style: AppTypography.body.copyWith(
-                                          color: const Color(0xFF111827),
+                                          color: AppColors.textPrimary,
                                         ),
                                       ),
                                       Text(
                                         '92%', // TODO: 실제 맞춤 점수 API 추가 시 수정
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF16A34A),
+                                          color: AppColors.petGreen, // 상태/안심용
                                         ),
                                       ),
                                     ],
@@ -355,16 +358,16 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   Container(
                                     height: 12,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF16A34A).withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(6),
+                                      color: AppColors.petGreen.withOpacity(0.2), // 상태/안심용
+                                      borderRadius: BorderRadius.circular(AppRadius.sm),
                                     ),
                                     child: FractionallySizedBox(
                                       alignment: Alignment.centerLeft,
                                       widthFactor: 0.92, // TODO: 실제 맞춤 점수 API 추가 시 수정
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF16A34A),
-                                          borderRadius: BorderRadius.circular(6),
+                                          color: AppColors.petGreen, // 상태/안심용
+                                          borderRadius: BorderRadius.circular(AppRadius.sm),
                                         ),
                                       ),
                                     ),
@@ -372,7 +375,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpacing.lg),
                             // Match Reasons List (임시로 제거 - 추후 API에서 제공되면 추가)
                             // TODO: 추천 API에서 matchReasons 제공 시 추가
                             // Nutritional Analysis
@@ -381,10 +384,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               Text(
                                 '영양 성분',
                                 style: AppTypography.body.copyWith(
-                                  color: const Color(0xFF111827),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSpacing.lg),
                               if (state.ingredientAnalysis!.nutritionFacts.containsKey('조단백질'))
                                 _buildNutritionItem(
                                   '단백질',
@@ -402,14 +405,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   '섬유질',
                                   '${state.ingredientAnalysis!.nutritionFacts['조섬유']}%',
                                 ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: AppSpacing.xl),
                             ],
                             // Alert CTA Section
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF3C7),
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(AppRadius.md),
                               ),
                               child: Column(
                                 children: [
@@ -437,7 +440,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                             Text(
                                               '가격 알림 받기',
                                               style: AppTypography.body.copyWith(
-                                                color: const Color(0xFF111827),
+                                                color: AppColors.textPrimary,
                                               ),
                                             ),
                                             const SizedBox(height: 4),
@@ -482,7 +485,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           color: Colors.white,
           border: Border(
             top: BorderSide(
-              color: Color(0xFFF7F8FA),
+              color: AppColors.divider,
               width: 1,
             ),
           ),
@@ -499,7 +502,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7F8FA),
+                        color: AppColors.background,
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Icon(
@@ -509,7 +512,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         size: 24,
                         color: state.isFavorite
                             ? const Color(0xFFEF4444)
-                            : const Color(0xFF111827),
+                            : AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -532,7 +535,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -541,13 +544,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           Text(
             label,
             style: AppTypography.body.copyWith(
-              color: const Color(0xFF111827),
+              color: AppColors.textPrimary,
             ),
           ),
           Text(
             value,
             style: AppTypography.body.copyWith(
-              color: const Color(0xFF2563EB),
+              color: AppColors.primaryBlue,
               fontWeight: FontWeight.w600,
             ),
           ),

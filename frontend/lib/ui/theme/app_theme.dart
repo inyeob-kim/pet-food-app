@@ -13,17 +13,17 @@ class AppTheme {
       fontFamily: 'Pretendard',
       fontFamilyFallback: const ['NotoSansKR', 'Apple SD Gothic Neo', 'Roboto'],
       
-      // ColorScheme (토스 스타일)
+      // ColorScheme (DESIGN_GUIDE v1.1 - Calm Blue)
       colorScheme: ColorScheme.light(
-        primary: AppColors.primary, // #2563EB
+        primary: AppColors.primaryBlue, // #1E4ED8 (Calm Blue)
         surface: AppColors.surface,
-        background: AppColors.background,
+        background: AppColors.background, // #FDF8F3 (Warm Cream)
         error: AppColors.negative, // #EF4444
         onPrimary: Colors.white,
         onSurface: AppColors.textMain,
         onBackground: AppColors.textMain,
         // 추가 색상
-        secondary: AppColors.positive, // #16A34A
+        secondary: AppColors.petGreen, // #10B981 (soft emerald)
         tertiary: AppColors.textSub, // #6B7280
       ),
       
@@ -80,7 +80,7 @@ class AppTheme {
       // Button
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
             horizontal: 20,
@@ -99,7 +99,7 @@ class AppTheme {
       
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
             horizontal: 20,
@@ -139,7 +139,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2), // Calm Blue 통일
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,

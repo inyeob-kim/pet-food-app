@@ -72,4 +72,6 @@ class RecommendationResponse(BaseModel):
     """추천 상품 목록 응답"""
     pet_id: UUID
     items: List[RecommendationItem]
+    is_cached: bool = Field(default=False, description="캐싱된 추천 여부")
+    last_recommended_at: Optional[datetime] = Field(default=None, description="마지막 추천 시각")
 

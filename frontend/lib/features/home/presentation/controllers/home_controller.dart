@@ -22,6 +22,9 @@ class HomeState {
   final RecommendationResponseDto? recommendations;
   final bool isLoadingRecommendations;
   final String? error;
+  // UPDATED: Dynamic recommendation UI to reduce reload fatigue
+  final DateTime? lastRecommendedAt;
+  final bool hasRecentRecommendation;
 
   HomeState({
     HomeStateType? stateType,
@@ -29,12 +32,28 @@ class HomeState {
     this.recommendations,
     this.isLoadingRecommendations = false,
     this.error,
+    this.lastRecommendedAt,
+    this.hasRecentRecommendation = false,
   }) : stateType = stateType ?? HomeStateType.loading;
 
   bool get hasPet => stateType == HomeStateType.hasPet && petSummary != null;
   bool get isNoPet => stateType == HomeStateType.noPet;
   bool get isError => stateType == HomeStateType.error;
   bool get isLoading => stateType == HomeStateType.loading;
+  bool get hasRecommendations => recommendations != null && recommendations!.items.isNotEmpty;
+
+  // UPDATED: Dynamic recommendation UI to reduce reload fatigue - 동적 버튼 텍스트
+  String get recommendationActionText {
+    if (!hasRecommendations) return "지금 추천받기";
+    if (hasRecentRecommendation) return "최근 추천 보기";
+    if (lastRecommendedAt != null) {
+      final daysSince = DateTime.now().difference(lastRecommendedAt!).inDays;
+      if (daysSince <= 14) {
+        return "업데이트된 추천 확인하기";
+      }
+    }
+    return "펫 상태 바뀌었나요? 다시 추천받기";
+  }
 
   HomeState copyWith({
     HomeStateType? stateType,
@@ -42,6 +61,8 @@ class HomeState {
     RecommendationResponseDto? recommendations,
     bool? isLoadingRecommendations,
     String? error,
+    DateTime? lastRecommendedAt,
+    bool? hasRecentRecommendation,
   }) {
     return HomeState(
       stateType: stateType ?? this.stateType,
@@ -49,6 +70,8 @@ class HomeState {
       recommendations: recommendations ?? this.recommendations,
       isLoadingRecommendations: isLoadingRecommendations ?? this.isLoadingRecommendations,
       error: error ?? this.error,
+      lastRecommendedAt: lastRecommendedAt ?? this.lastRecommendedAt,
+      hasRecentRecommendation: hasRecentRecommendation ?? this.hasRecentRecommendation,
     );
   }
 }
@@ -103,27 +126,36 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   /// 추천 데이터 로드
-  Future<void> _loadRecommendations(String petId) async {
+  // UPDATED: Dynamic recommendation UI to reduce reload fatigue - 캐싱 정보 처리 추가
+  Future<void> _loadRecommendations(String petId, {bool force = false}) async {
     final startTime = DateTime.now();
-    print('[HomeController] 📡 추천 데이터 로드 시작: petId=$petId');
+    print('[HomeController] 📡 추천 데이터 로드 시작: petId=$petId, force=$force');
     state = state.copyWith(isLoadingRecommendations: true); // 로딩 상태 시작
     
     try {
       print('[HomeController] 📞 ProductRepository.getRecommendations() 호출');
       final recommendations = await _productRepository.getRecommendations(petId);
       final duration = DateTime.now().difference(startTime);
-      print('[HomeController] ✅ 추천 데이터 로드 완료: ${recommendations.items.length}개 상품, 소요시간=${duration.inMilliseconds}ms');
+      print('[HomeController] ✅ 추천 데이터 로드 완료: ${recommendations.items.length}개 상품, isCached=${recommendations.isCached}, 소요시간=${duration.inMilliseconds}ms');
       print('[HomeController] 📊 추천 상품 요약:');
       for (var i = 0; i < recommendations.items.length && i < 3; i++) {
         final item = recommendations.items[i];
         print('[HomeController]   ${i + 1}. ${item.product.brandName} ${item.product.productName} (점수: ${item.matchScore.toStringAsFixed(1)}, 안전: ${item.safetyScore.toStringAsFixed(1)}, 적합: ${item.fitnessScore.toStringAsFixed(1)})');
       }
       
+      // UPDATED: Dynamic recommendation UI to reduce reload fatigue - 캐싱 정보 기반 상태 업데이트
+      final lastRecommendedAt = recommendations.lastRecommendedAt;
+      final isCached = recommendations.isCached;
+      final hasRecent = isCached || 
+          (lastRecommendedAt != null && DateTime.now().difference(lastRecommendedAt).inDays <= 7);
+      
       state = state.copyWith(
         recommendations: recommendations,
         isLoadingRecommendations: false,
+        lastRecommendedAt: lastRecommendedAt,
+        hasRecentRecommendation: hasRecent,
       );
-      print('[HomeController] ✅ 상태 업데이트 완료: isLoadingRecommendations=false');
+      print('[HomeController] ✅ 상태 업데이트 완료: isLoadingRecommendations=false, hasRecentRecommendation=$hasRecent, lastRecommendedAt=$lastRecommendedAt');
     } catch (e, stackTrace) {
       final duration = DateTime.now().difference(startTime);
       print('[HomeController] ❌ 추천 데이터 로드 실패: error=$e, 소요시간=${duration.inMilliseconds}ms');
@@ -141,8 +173,9 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   /// 추천 로드 (버튼 클릭 시 호출)
-  Future<void> loadRecommendations() async {
-    print('[HomeController] 🎯 loadRecommendations() 호출됨');
+  // UPDATED: Dynamic recommendation UI to reduce reload fatigue - force 파라미터 추가
+  Future<void> loadRecommendations({bool force = false}) async {
+    print('[HomeController] 🎯 loadRecommendations() 호출됨: force=$force');
     final petSummary = state.petSummary;
     if (petSummary == null) {
       print('[HomeController] ⚠️ petSummary가 null입니다. 추천을 로드할 수 없습니다.');
@@ -155,8 +188,15 @@ class HomeController extends StateNotifier<HomeState> {
       return;
     }
     
-    print('[HomeController] ▶️ _loadRecommendations() 호출: petId=${petSummary.petId}');
-    await _loadRecommendations(petSummary.petId);
+    // UPDATED: Dynamic recommendation UI to reduce reload fatigue - 최근 추천이 있고 force가 false면 스킵 가능
+    if (!force && state.hasRecentRecommendation && state.hasRecommendations) {
+      print('[HomeController] 💾 최근 추천이 있어서 API 호출 스킵 (force=false)');
+      // 상태만 업데이트 (이미 recommendations가 있음)
+      return;
+    }
+    
+    print('[HomeController] ▶️ _loadRecommendations() 호출: petId=${petSummary.petId}, force=$force');
+    await _loadRecommendations(petSummary.petId, force: force);
   }
 
   /// 추천 새로고침

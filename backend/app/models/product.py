@@ -25,6 +25,7 @@ class Product(Base, TimestampMixin):
     size_label = Column(String(50), nullable=True)  # 예: "3kg", "5kg"
     species = Column(SQLEnum(PetSpecies), nullable=True)  # DOG/CAT 전용 사료면 지정, 공용이면 NULL
     is_active = Column(Boolean, default=True, nullable=False)
+    price_per_kg = Column(Numeric(10, 2), nullable=True)  # 원/kg 단위 가격 (추천 정렬/필터링용)
 
     __table_args__ = (
         Index('idx_products_active', 'is_active'),

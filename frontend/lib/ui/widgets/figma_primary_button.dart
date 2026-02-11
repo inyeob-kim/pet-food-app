@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 
 /// Figma 디자인 기반 Primary Button 위젯
@@ -27,10 +28,10 @@ class FigmaPrimaryButton extends StatelessWidget {
           onPressed: isDisabled ? null : onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: isDisabled
-                ? const Color(0xFFF7F8FA)
-                : const Color(0xFF2563EB),
+                ? AppColors.background
+                : AppColors.primaryBlue, // Calm Blue 통일
             foregroundColor: isDisabled
-                ? const Color(0xFF6B7280)
+                ? AppColors.textSecondary
                 : Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             shape: RoundedRectangleBorder(
@@ -42,7 +43,7 @@ class FigmaPrimaryButton extends StatelessWidget {
             text,
             style: AppTypography.small.copyWith(
               color: isDisabled
-                  ? const Color(0xFF6B7280)
+                  ? AppColors.textSecondary
                   : Colors.white,
             ),
           ),
@@ -57,8 +58,8 @@ class FigmaPrimaryButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: isDisabled ? null : onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF7F8FA),
-            foregroundColor: const Color(0xFF111827),
+            backgroundColor: AppColors.background,
+            foregroundColor: AppColors.textPrimary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
@@ -94,7 +95,7 @@ class FigmaPrimaryButton extends StatelessWidget {
           text,
           style: AppTypography.body.copyWith(
             color: isDisabled
-                ? const Color(0xFF6B7280)
+                ? AppColors.textSecondary
                 : Colors.white,
           ),
         ),

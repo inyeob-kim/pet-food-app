@@ -72,7 +72,8 @@ class RecommendationScoringService:
         pet: PetSummaryResponse,
         product: Product,
         parsed: dict,
-        ingredients_text: str = ""
+        ingredients_text: str = "",
+        user_prefs: dict = None
     ) -> Tuple[float, List[str]]:
         """
         안전성 점수 계산 (0~100점)
@@ -82,20 +83,54 @@ class RecommendationScoringService:
         """
         reasons = []
         
-        # 1. 알레르기 체크 (50점 만점)
+        # UPDATED: Customization support - 사용자 선호도 적용
+        if user_prefs is None:
+            user_prefs = {}
+        
+        # Hard exclude 알레르겐 합치기 (pet 알레르기 + user_prefs)
+        pet_allergies = set(pet.food_allergies or [])
+        user_hard_exclude = set(user_prefs.get("hard_exclude_allergens", []))
+        combined_hard_exclude = pet_allergies | user_hard_exclude
+        
+        # 1. 알레르기 체크 (50점 만점) - user_prefs 전달
         allergy_score, allergy_reasons = RecommendationScoringService._check_allergies(
-            pet, parsed, ingredients_text
+            pet, parsed, ingredients_text, user_prefs, combined_hard_exclude
         )
         reasons.extend(allergy_reasons)
         
         if allergy_score == 0:
+            if user_hard_exclude:
+                return (0.0, ["Hard excluded due to user setting"])
             return (0.0, ["알레르기 위험으로 제외"])
+        
+        # UPDATED: Customization support - Soft avoid 성분 체크
+        soft_avoid_ingredients = user_prefs.get("soft_avoid_ingredients", [])
+        if soft_avoid_ingredients:
+            ingredients_lower = ingredients_text.lower()
+            for avoid_ingredient in soft_avoid_ingredients:
+                if avoid_ingredient.lower() in ingredients_lower:
+                    allergy_score -= 20.0
+                    reasons.append(f"사용자 설정: {avoid_ingredient} soft avoid 적용 (-20점)")
+                    break  # 첫 번째 매칭만 적용
         
         # 2. 유해 성분 체크 (20점 만점)
         harmful_score, harmful_reasons = RecommendationScoringService._check_harmful_ingredients(
             parsed, ingredients_text
         )
         reasons.extend(harmful_reasons)
+        
+        # UPDATED: Customization support - SAFE 모드일 때 안전성 페널티 강화
+        weights_preset = user_prefs.get("weights_preset", "BALANCED")
+        if weights_preset == "SAFE":
+            # 안전성 관련 페널티 1.2배 강화
+            if allergy_score < 50.0:
+                penalty = (50.0 - allergy_score) * 0.2
+                allergy_score -= penalty
+                reasons.append("안전 우선 모드: 알레르기 페널티 강화")
+            if harmful_score < 20.0:
+                penalty = (20.0 - harmful_score) * 0.2
+                harmful_score -= penalty
+                reasons.append("안전 우선 모드: 유해 성분 페널티 강화")
         
         # 3. 품질 지표 (30점 만점)
         quality_score, quality_reasons = RecommendationScoringService._calculate_quality_score(parsed)
@@ -109,17 +144,21 @@ class RecommendationScoringService:
     def _check_allergies(
         pet: PetSummaryResponse,
         parsed: dict,
-        ingredients_text: str
+        ingredients_text: str,
+        user_prefs: dict = None,
+        combined_hard_exclude: set = None
     ) -> Tuple[float, List[str]]:
         """알레르기 체크 (50점 만점)"""
         score = 50.0
         reasons = []
         
-        # 1. Hard Exclude: food_allergies와 potential_allergens 겹침 체크
-        pet_allergies = set(pet.food_allergies or [])
+        # UPDATED: Customization support - Hard Exclude: pet 알레르기 + user_prefs 합쳐서 체크
+        if combined_hard_exclude is None:
+            combined_hard_exclude = set(pet.food_allergies or [])
+        
         product_allergens = set(parsed.get("potential_allergens", []))
         
-        if pet_allergies & product_allergens:
+        if combined_hard_exclude & product_allergens:
             return (0.0, ["알레르기 성분 포함으로 제외"])
         
         # 2. High Confidence 알레르겐 Penalty
@@ -214,7 +253,8 @@ class RecommendationScoringService:
         pet: PetSummaryResponse,
         product: Product,
         parsed: dict,
-        nutrition_facts: Optional[ProductNutritionFacts] = None
+        nutrition_facts: Optional[ProductNutritionFacts] = None,
+        user_prefs: dict = None
     ) -> Tuple[float, List[str], float]:
         """
         적합성 점수 계산 (0~100점)
@@ -237,15 +277,29 @@ class RecommendationScoringService:
         )
         reasons.extend(age_reasons)
         
-        # 3. 건강 고민 매칭 (30점)
+        # UPDATED: Customization support - 사용자 선호도 적용
+        if user_prefs is None:
+            user_prefs = {}
+        
+        weights_preset = user_prefs.get("weights_preset", "BALANCED")
+        health_concern_priority = user_prefs.get("health_concern_priority", False)
+        
+        # 3. 건강 고민 매칭 (30점) - user_prefs 전달
         health_score, health_reasons = RecommendationScoringService._match_health_concerns(
-            pet, parsed
+            pet, parsed, user_prefs, health_concern_priority
         )
         reasons.extend(health_reasons)
         
         # 4. 품종 특성 매칭 (15점)
         breed_score, breed_reasons = RecommendationScoringService._match_breed(pet, product, parsed)
         reasons.extend(breed_reasons)
+        
+        # UPDATED: Customization support - VALUE 모드일 때 health_score, breed_score 가중치 낮추기
+        if weights_preset == "VALUE":
+            health_score = health_score * 0.8
+            breed_score = breed_score * 0.8
+            if health_score < 30.0 or breed_score < 15.0:
+                reasons.append("가성비 우선 모드: 건강 고민/품종 가중치 감소")
         
         # 5. 영양 적합성 (20점)
         nutrition_score, nutrition_reasons = RecommendationScoringService._calculate_nutritional_fitness(
@@ -379,7 +433,12 @@ class RecommendationScoringService:
         return (score, reasons, penalty)
     
     @staticmethod
-    def _match_health_concerns(pet: PetSummaryResponse, parsed: dict) -> Tuple[float, List[str]]:
+    def _match_health_concerns(
+        pet: PetSummaryResponse, 
+        parsed: dict,
+        user_prefs: dict = None,
+        health_concern_priority: bool = False
+    ) -> Tuple[float, List[str]]:
         """건강 고민 매칭 (30점 만점)"""
         score = 0.0
         reasons = []
@@ -393,6 +452,9 @@ class RecommendationScoringService:
         ingredients_ordered = parsed.get("ingredients_ordered", [])
         search_text = notes + " " + " ".join(ingredients_ordered).lower()
         
+        # UPDATED: Customization support - 건강 고민 우선 모드 가중치
+        health_multiplier = 1.5 if health_concern_priority else 1.0
+        
         for concern in health_concerns:
             if concern not in RecommendationScoringService.HEALTH_CONCERN_WEIGHTS:
                 continue
@@ -404,7 +466,7 @@ class RecommendationScoringService:
             if benefits_tags:
                 benefit_tag = RecommendationScoringService.HEALTH_CONCERN_TO_BENEFITS.get(concern)
                 if benefit_tag and benefit_tag in benefits_tags:
-                    score += base_weight * 1.5
+                    score += base_weight * 1.5 * health_multiplier
                     reasons.append(f"{concern} 건강 고민 매칭 (태그)")
                     matched = True
             
@@ -413,13 +475,16 @@ class RecommendationScoringService:
                 keywords = RecommendationScoringService.HEALTH_CONCERN_KEYWORDS.get(concern, [])
                 for keyword in keywords:
                     if keyword.lower() in search_text:
-                        score += base_weight
+                        score += base_weight * health_multiplier
                         reasons.append(f"{concern} 건강 고민 매칭 (키워드)")
                         matched = True
                         break
         
         # 최대 30점 제한
         score = min(score, 30.0)
+        
+        if health_concern_priority and score > 0:
+            reasons.append("건강 고민 우선 모드: 가중치 1.5배 적용")
         
         return (score, reasons)
     
@@ -602,7 +667,8 @@ class RecommendationScoringService:
     def calculate_total_score(
         safety_score: float,
         fitness_score: float,
-        age_penalty: float = 0.0
+        age_penalty: float = 0.0,
+        user_prefs: dict = None
     ) -> float:
         """
         총점 계산
@@ -611,19 +677,42 @@ class RecommendationScoringService:
             safety_score: 안전성 점수
             fitness_score: 적합성 점수
             age_penalty: 나이 단계 부적합 패널티
+            user_prefs: 사용자 선호도 설정
         
         Returns:
             총점 (0 이상)
         """
+        # UPDATED: Customization support - 사용자 선호도에 따른 동적 가중치
+        if user_prefs is None:
+            user_prefs = {}
+        
+        weights_preset = user_prefs.get("weights_preset", "BALANCED")
+        
         # 안전성 점수가 0이면 즉시 제외
         if safety_score == 0:
             return -1.0
         
-        # 안전성 Hard-Floor 적용
-        if safety_score < 40:
-            total = (safety_score * 0.3) + (fitness_score * 0.1)
-        else:
-            total = (safety_score * 0.6) + (fitness_score * 0.4)
+        # UPDATED: Customization support - weights_preset에 따른 동적 가중치
+        if weights_preset == "SAFE":
+            # 안전 우선: 0.7 * safety + 0.3 * fitness
+            if safety_score < 40:
+                total = (safety_score * 0.4) + (fitness_score * 0.1)
+            else:
+                total = (safety_score * 0.7) + (fitness_score * 0.3)
+        elif weights_preset == "VALUE":
+            # 가성비 우선: 0.5 * safety + 0.5 * fitness
+            if safety_score < 40:
+                total = (safety_score * 0.25) + (fitness_score * 0.15)
+            else:
+                total = (safety_score * 0.5) + (fitness_score * 0.5)
+        else:  # BALANCED (기본)
+            # 안전성 Hard-Floor 적용
+            if safety_score < 40:
+                total = (safety_score * 0.3) + (fitness_score * 0.1)
+            else:
+                total = (safety_score * 0.6) + (fitness_score * 0.4)
+        
+        # Note: max_price_per_kg 페널티는 ProductService에서 적용 (product 정보 필요)
         
         # 나이 단계 부적합 패널티 적용
         total -= age_penalty

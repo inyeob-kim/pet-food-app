@@ -15,6 +15,7 @@ import '../../features/market/presentation/screens/market_screen.dart';
 import '../../features/me/presentation/screens/my_screen.dart';
 import '../../features/product_detail/presentation/screens/product_detail_screen.dart';
 import '../../features/pet_profile/presentation/screens/pet_profile_detail_screen.dart';
+import '../../features/home/presentation/screens/recommendation_screen.dart';
 import '../../features/me/presentation/screens/privacy_settings_screen.dart';
 import '../../features/me/presentation/screens/help_screen.dart';
 import '../../features/me/presentation/screens/contact_screen.dart';
@@ -209,6 +210,12 @@ GoRouter _createRouter(Ref ref) {
           final petSummary = state.extra as PetSummaryDto;
           return PetProfileDetailScreen(petSummary: petSummary);
         },
+      ),
+      // 추천 페이지
+      GoRoute(
+        path: RoutePaths.recommendation,
+        name: RoutePaths.recommendation,
+        builder: (context, state) => const RecommendationScreen(),
       ),
     ],
   );
