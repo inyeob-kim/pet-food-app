@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_typography.dart';
-import '../theme/app_colors.dart';
+
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_typography.dart';
 
 /// 공통 Top Bar 위젯 (쿠팡 스타일)
 class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
@@ -20,25 +21,31 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.headerGreen, // Deep Forest Green (DESIGN_GUIDE v2.1)
+      backgroundColor: Colors.white, // White background (DESIGN_GUIDE v2.2)
       elevation: 0,
       scrolledUnderElevation: 0,
+      shape: const Border(
+        bottom: BorderSide(
+          color: AppColors.line, // #E5E7EB
+          width: 1,
+        ),
+      ),
       title: Text(
         title,
         style: AppTypography.titleLarge.copyWith(
-          color: Colors.white, // 헤더는 흰색 텍스트
+          color: AppColors.textPrimary, // Warm Dark Gray
         ),
       ),
       titleSpacing: 0,
-      iconTheme: const IconThemeData(
-        color: Colors.white, // 헤더 아이콘은 흰색
+      iconTheme: IconThemeData(
+        color: AppColors.textPrimary, // 헤더 아이콘은 Warm Dark Gray
       ),
       actions: actions ??
           [
             // 알림 아이콘
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
-              color: Colors.white, // 흰색
+              color: AppColors.textPrimary, // 다크 차콜
               onPressed: onNotificationTap ?? () {
                 // TODO: 알림 화면 연결
               },
@@ -46,7 +53,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
             // 설정 아이콘
             IconButton(
               icon: const Icon(Icons.settings_outlined),
-              color: Colors.white, // 흰색
+              color: AppColors.textPrimary, // 다크 차콜
               onPressed: onSettingsTap ?? () {
                 // TODO: 설정 화면 연결
               },

@@ -195,7 +195,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                       // Point Summary Section
                       CardContainer(
                         isHomeStyle: true,
-                        backgroundColor: AppColors.primaryBlue.withOpacity(0.05),
+                        backgroundColor: AppColors.primaryCoral.withOpacity(0.05), // Warm Terracotta (DESIGN_GUIDE v2.2)
                         showBorder: false,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +215,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                   style: AppTypography.h3.copyWith(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.primaryBlue, // 결정/정보용
+                                    color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.2)
                                   ),
                                 ),
                               ],

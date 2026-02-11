@@ -55,7 +55,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               AppTopBar(title: '사료마켓'),
               // Search Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+                padding: const EdgeInsets.fromLTRB(18, 28, 18, 16), // DESIGN_GUIDE v2.2: 페이지 Wrap Padding
                 child: const FigmaSearchBar(placeholder: '사료 브랜드나 제품명을 검색하세요'),
               ),
               Expanded(

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_typography.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_radius.dart';
 
-/// Figma 디자인 기반 Pill Chip 위젯
+/// Pill Chip 위젯 (DESIGN_GUIDE.md v2.2)
+/// 
+/// radius pill, padding 6-8 vertical 10-12 horizontal
 class FigmaPillChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -20,23 +24,26 @@ class FigmaPillChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // DESIGN_GUIDE v2.2
           decoration: BoxDecoration(
             color: selected
-                ? const Color(0xFF2563EB)
-                : const Color(0xFFF7F8FA),
-            borderRadius: BorderRadius.circular(999),
+                ? AppColors.primaryCoral // Warm Terracotta 또는 primary
+                : AppColors.surfaceWarm, // 따뜻한 크림
+            borderRadius: BorderRadius.circular(AppRadius.pill), // 완전 둥근 CTA
+            border: selected
+                ? null
+                : Border.all(color: AppColors.line, width: 1),
           ),
           child: Center(
             child: Text(
               label,
-              style: AppTypography.small.copyWith(
+              style: AppTypography.caption.copyWith(
                 color: selected
                     ? Colors.white
-                    : const Color(0xFF111827),
+                    : AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

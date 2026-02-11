@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_typography.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_radius.dart';
 
-/// Figma 디자인 기반 Search Bar 위젯
+/// Search Bar 위젯 (DESIGN_GUIDE.md v2.2)
 class FigmaSearchBar extends StatelessWidget {
   final String? placeholder;
   final ValueChanged<String>? onSearch;
@@ -19,24 +21,28 @@ class FigmaSearchBar extends StatelessWidget {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
-        borderRadius: BorderRadius.circular(18),
+        color: AppColors.surfaceWarm, // 따뜻한 크림
+        borderRadius: BorderRadius.circular(AppRadius.lg), // 16px
+        border: Border.all(
+          color: AppColors.line, // #E5E7EB
+          width: 1,
+        ),
       ),
       child: TextField(
         controller: controller,
         onChanged: onSearch,
         style: AppTypography.body.copyWith(
-          color: const Color(0xFF111827),
+          color: AppColors.textPrimary,
         ),
         decoration: InputDecoration(
           hintText: placeholder,
           hintStyle: AppTypography.body.copyWith(
-            color: const Color(0xFF6B7280),
+            color: AppColors.textSecondary,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search,
             size: 20,
-            color: Color(0xFF6B7280),
+            color: AppColors.textSecondary,
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -44,9 +50,9 @@ class FigmaSearchBar extends StatelessWidget {
             vertical: 12,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: const BorderSide(
-              color: Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(AppRadius.lg), // 16px
+            borderSide: BorderSide(
+              color: AppColors.primaryCoral.withOpacity(0.3), // Warm Terracotta
               width: 2,
             ),
           ),

@@ -197,7 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 위젯 트리 구조 통일: 모든 상태에서 동일한 Scaffold 구조 사용
     // _scrollController를 항상 사용하여 unmount/mount 시 안전성 확보
     return Scaffold(
-      backgroundColor: AppColors.background, // Warm Cream (DESIGN_GUIDE v2.1)
+      backgroundColor: Colors.white, // White (화면 배경)
       body: SafeArea(
         child: Column(
           children: [
@@ -211,7 +211,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   controller: _scrollController,
                   physics: const BouncingScrollPhysics(), // iOS 스타일 바운스
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    padding: const EdgeInsets.fromLTRB(18, 28, 18, 80), // DESIGN_GUIDE v2.2: 페이지 Wrap Padding
                     child: _buildBodyContent(context, state),
                   ),
                 ),
@@ -336,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   backgroundColor: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                   ),
                   elevation: 0, // Shadow 없음
                 ),
@@ -913,7 +913,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ref.read(homeControllerProvider.notifier).loadRecommendations();
                           },
                           color: AppColors.petGreen, // 상태/안심용
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                           padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                           child: Text(
                             '사료 다시 추천받기',
@@ -987,7 +987,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md + 2),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                 ),
                 side: BorderSide(color: AppColors.petGreen), // 상태/안심용
               ),
@@ -1236,7 +1236,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             );
           },
         ),
-        const SizedBox(height: AppSpacing.xl * 4), // 하단 여백
+        const SizedBox(height: AppSpacing.xxxl), // 하단 여백 (48px)
       ],
     );
   }
@@ -1346,7 +1346,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                   border: Border.all(
                     color: AppColors.divider,
                     width: 1,
@@ -1394,7 +1394,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     context.push('/recommendation');
                   },
                   color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                   padding: EdgeInsets.zero,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1422,7 +1422,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                   border: Border.all(
                     color: AppColors.divider,
                     width: 1,
@@ -1478,7 +1478,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                       width: 1.5,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1578,31 +1578,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             // 헤더 배지
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs + 2),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // DESIGN_GUIDE v2.2: Chip padding
               decoration: BoxDecoration(
-                color: AppColors.petGreen.withOpacity(0.1), // 상태/안심용
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.petGreen, // 상태/안심용
+                borderRadius: BorderRadius.circular(AppRadius.pill), // 완전 둥근 CTA
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: AppColors.petGreen, // 상태/안심용
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm), // 텍스트/아이콘 간격
-                  Text(
-                    '현재 급여 중',
-                    style: AppTypography.small.copyWith(
-                      color: AppColors.petGreen, // 상태/안심용
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+              child: Text(
+                '현재 급여 중',
+                style: AppTypography.caption.copyWith(
+                  color: Colors.white, // 흰색 텍스트
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md), // 섹션 그룹 간격
@@ -1702,10 +1688,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: AppSpacing.md), // 섹션 그룹 간격
             // 소진 예상
             Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.lg), // 16px
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.accentWarm.withOpacity(0.1), // Gentle Warm Orange 배경
+                borderRadius: BorderRadius.circular(AppRadius.md), // 12px
               ),
               child: Row(
                 children: [
@@ -1715,10 +1701,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       CupertinoIcons.clock,
                       size: 20,
-                      color: Color(0xFFF97316),
+                      color: AppColors.accentWarm, // Gentle Warm Orange
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm), // 텍스트/아이콘 간격
@@ -1769,7 +1755,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md + 2),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                       ),
                       side: const BorderSide(
                         color: AppColors.petGreen, // 상태/안심용
@@ -1793,11 +1779,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       // TODO: 구매 페이지로 이동
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.petGreen, // 상태/안심용
+                      backgroundColor: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.2)
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md + 2),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24), // DESIGN_GUIDE v2.2
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                       ),
                       elevation: 0,
                     ),
@@ -2013,7 +1999,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md + 2),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                 ),
                 side: BorderSide(color: AppColors.primaryCoral), // Warm Terracotta (DESIGN_GUIDE v2.1)
               ),

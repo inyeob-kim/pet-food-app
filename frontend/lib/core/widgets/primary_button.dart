@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
-import '../theme/app_typography.dart';
+
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_radius.dart';
+import '../../app/theme/app_typography.dart';
 
 /// Primary Button (DESIGN_GUIDE.md v2.1 - Warm Terracotta / Muted Coral)
 /// 
@@ -25,11 +26,11 @@ class PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryCoral, // Warm Terracotta
+          backgroundColor: AppColors.primaryCoral, // Warm Terracotta 또는 primary
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md), // 16px
+            borderRadius: BorderRadius.circular(AppRadius.md), // 12px
           ),
           elevation: 0, // Shadow 없음
         ),

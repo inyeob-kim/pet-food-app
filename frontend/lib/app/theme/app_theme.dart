@@ -1,40 +1,38 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
-import 'app_typography.dart';
 import 'app_radius.dart';
-import 'app_spacing.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.light(
-        primary: AppColors.primaryCoral, // Warm Terracotta / Muted Coral
+        primary: AppColors.primary, // Soft Teal
         surface: AppColors.surface,
-        background: AppColors.background, // Warm Cream
+        background: Colors.white, // White
         error: AppColors.error,
       ),
-      scaffoldBackgroundColor: AppColors.background, // Warm Cream
+      scaffoldBackgroundColor: Colors.white, // White (화면 배경)
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.headerGreen, // Deep Forest Green
+        backgroundColor: Colors.white, // White background
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: Colors.white, // 헤더는 흰색 텍스트
+          color: AppColors.textPrimary, // 따뜻한 다크 차콜
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
         iconTheme: IconThemeData(
-          color: Colors.white, // 헤더 아이콘은 흰색
+          color: AppColors.textPrimary, // 헤더 아이콘은 다크 차콜
         ),
       ),
       cardTheme: CardThemeData(
         elevation: 0, // Shadow 없음
         color: AppColors.surfaceWarm, // 따뜻한 크림
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card), // 16px
+          borderRadius: BorderRadius.circular(AppRadius.card), // 12px
           side: const BorderSide(
-            color: AppColors.borderSoft, // 얇은 회색 border
+            color: AppColors.line, // 얇은 회색 border
             width: 1,
           ),
         ),
@@ -46,14 +44,14 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryCoral, // Warm Terracotta
+          backgroundColor: AppColors.primaryCoral, // Warm Terracotta 또는 primary
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
-            horizontal: 32, // DESIGN_GUIDE v2.1: horizontal 32px
-            vertical: 16, // vertical 16px
+            horizontal: 24, // DESIGN_GUIDE v2.2: horizontal 24px
+            vertical: 12, // vertical 12px
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button), // 16px
+            borderRadius: BorderRadius.circular(AppRadius.button), // 12px
           ),
           elevation: 0, // Shadow 없음
         ),
@@ -64,8 +62,8 @@ class AppTheme {
         elevation: 0, // Shadow 최소화
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.background, // Warm Cream
-        selectedItemColor: AppColors.headerGreen, // Deep Forest Green
+        backgroundColor: Colors.white, // White
+        selectedItemColor: AppColors.primaryCoral, // Warm Terracotta 또는 primary
         unselectedItemColor: AppColors.iconMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0, // Shadow 없음
@@ -84,16 +82,16 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: const Color(0xFF121212),
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.headerGreen, // Deep Forest Green
+        backgroundColor: Colors.white, // White background
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: Colors.white,
+          color: AppColors.textPrimary, // 따뜻한 다크 차콜
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: AppColors.textPrimary, // 헤더 아이콘은 다크 차콜
         ),
       ),
       cardTheme: CardThemeData(

@@ -78,8 +78,8 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               CupertinoButton(
-                color: AppColors.primaryBlue,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.2)
+                borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                 onPressed: () {
                   ref.read(watchControllerProvider.notifier).loadTrackingProducts();
                 },
@@ -174,7 +174,7 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
                             style: AppTypography.h1Mobile.copyWith(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primaryBlue, // 결정/비교용
+                              color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.2)
                             ),
                           ),
                           const SizedBox(width: AppSpacing.sm),

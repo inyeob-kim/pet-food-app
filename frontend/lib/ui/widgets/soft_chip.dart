@@ -19,15 +19,16 @@ class SoftChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // DESIGN_GUIDE v2.2
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.chipBg,
-        borderRadius: BorderRadius.circular(AppRadius.pillRadius),
+        color: backgroundColor ?? AppColors.surfaceWarm,
+        borderRadius: BorderRadius.circular(AppRadius.pill), // 완전 둥근 CTA
       ),
       child: Text(
         label,
         style: AppTypography.caption.copyWith(
           color: textColor ?? AppColors.textSecondary,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

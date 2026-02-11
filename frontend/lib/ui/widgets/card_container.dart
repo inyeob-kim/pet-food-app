@@ -3,11 +3,11 @@ import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 
-/// 카드 컨테이너 위젯 (DESIGN_GUIDE.md v2.1 - The Farmer's Dog 스타일)
+/// 카드 컨테이너 위젯 (DESIGN_GUIDE.md v2.2 - 쌤대신 구조 + 헤이제노 감성)
 /// 
 /// 규칙:
-/// - padding: AppSpacing.lg (24px) 넉넉하게
-/// - borderRadius: AppRadius.md (16px)
+/// - padding: AppSpacing.xl (24px) 넉넉하게
+/// - borderRadius: AppRadius.md (12px)
 /// - backgroundColor: AppColors.surfaceWarm (따뜻한 크림)
 /// - border: 얇은 회색 border (1px, #E5E7EB)
 /// - shadow: 없음
@@ -35,13 +35,13 @@ class CardContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // DESIGN_GUIDE v2.1: padding은 AppSpacing.lg (24px)로 통일
-    final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.lg);
+    // DESIGN_GUIDE v2.2: padding은 AppSpacing.xl (24px)로 통일
+    final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.xl);
     
-    // DESIGN_GUIDE v2.1: backgroundColor는 surfaceWarm (따뜻한 크림)
+    // DESIGN_GUIDE v2.2: 카드 배경은 surfaceWarm (따뜻한 크림)
     final effectiveBackgroundColor = backgroundColor ?? AppColors.surfaceWarm;
     
-    // DESIGN_GUIDE v2.1: borderRadius는 AppRadius.md (16px)
+    // DESIGN_GUIDE v2.2: borderRadius는 AppRadius.md (12px)
     final effectiveBorderRadius = BorderRadius.circular(AppRadius.md);
     
     final content = Container(
@@ -50,7 +50,7 @@ class CardContainer extends StatelessWidget {
         color: effectiveBackgroundColor,
         borderRadius: effectiveBorderRadius,
         border: showBorder ? Border.all(
-          color: borderColor ?? AppColors.borderSoft, // #E5E7EB
+          color: borderColor ?? AppColors.line, // #E5E7EB
           width: borderWidth ?? 1,
         ) : null,
         // shadow 제거 (DESIGN_GUIDE v2.1 준수)
