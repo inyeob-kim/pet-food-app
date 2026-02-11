@@ -9,28 +9,32 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.light(
-        primary: AppColors.primaryBlue, // Calm Blue 통일
+        primary: AppColors.primaryCoral, // Warm Terracotta / Muted Coral
         surface: AppColors.surface,
-        background: AppColors.background,
+        background: AppColors.background, // Warm Cream
         error: AppColors.error,
       ),
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.background, // Warm Cream
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.headerGreen, // Deep Forest Green
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTypography.h2,
+        titleTextStyle: TextStyle(
+          color: Colors.white, // 헤더는 흰색 텍스트
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
         iconTheme: IconThemeData(
-          color: AppColors.iconMuted,
+          color: Colors.white, // 헤더 아이콘은 흰색
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 0,
-        color: AppColors.background,
+        elevation: 0, // Shadow 없음
+        color: AppColors.surfaceWarm, // 따뜻한 크림
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
+          borderRadius: BorderRadius.circular(AppRadius.card), // 16px
           side: const BorderSide(
-            color: AppColors.divider,
+            color: AppColors.borderSoft, // 얇은 회색 border
             width: 1,
           ),
         ),
@@ -42,28 +46,29 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
+          backgroundColor: AppColors.primaryCoral, // Warm Terracotta
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+            horizontal: 32, // DESIGN_GUIDE v2.1: horizontal 32px
+            vertical: 16, // vertical 16px
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
+            borderRadius: BorderRadius.circular(AppRadius.button), // 16px
           ),
+          elevation: 0, // Shadow 없음
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
+        backgroundColor: AppColors.primaryCoral, // Coral
         foregroundColor: Colors.white,
-        elevation: 2,
+        elevation: 0, // Shadow 최소화
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.background,
-        selectedItemColor: AppColors.primaryBlue, // Calm Blue 통일
+        backgroundColor: AppColors.background, // Warm Cream
+        selectedItemColor: AppColors.headerGreen, // Deep Forest Green
         unselectedItemColor: AppColors.iconMuted,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0, // Shadow 없음
       ),
     );
   }
@@ -72,26 +77,30 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.dark(
-        primary: AppColors.primaryLight,
+        primary: AppColors.primaryCoral, // Coral 유지
         surface: const Color(0xFF1E1E1E),
         background: const Color(0xFF121212),
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: const Color(0xFF121212),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF121212),
+        backgroundColor: AppColors.headerGreen, // Deep Forest Green
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTypography.h2,
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
         iconTheme: IconThemeData(
-          color: AppColors.iconMuted,
+          color: Colors.white,
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 0,
+        elevation: 0, // Shadow 없음
         color: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
+          borderRadius: BorderRadius.circular(AppRadius.card), // 16px
           side: const BorderSide(
             color: Color(0xFF2C2C2C),
             width: 1,
@@ -105,28 +114,29 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
+          backgroundColor: AppColors.primaryCoral, // Coral
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+            horizontal: 32,
+            vertical: 16,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
+            borderRadius: BorderRadius.circular(AppRadius.button), // 16px
           ),
+          elevation: 0, // Shadow 없음
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primaryBlue, // Calm Blue 통일
+        backgroundColor: AppColors.primaryCoral, // Coral
         foregroundColor: Colors.white,
-        elevation: 2,
+        elevation: 0, // Shadow 최소화
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1E1E1E),
-        selectedItemColor: AppColors.primaryLight,
+        selectedItemColor: AppColors.primaryCoral, // Coral
         unselectedItemColor: AppColors.iconMuted,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0, // Shadow 없음
       ),
     );
   }

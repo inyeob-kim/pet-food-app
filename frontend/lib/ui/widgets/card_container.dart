@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_radius.dart';
 
-/// 카드 컨테이너 위젯 (DESIGN_GUIDE.md 스타일)
+/// 카드 컨테이너 위젯 (DESIGN_GUIDE.md v2.1 - The Farmer's Dog 스타일)
+/// 
+/// 규칙:
+/// - padding: AppSpacing.lg (24px) 넉넉하게
+/// - borderRadius: AppRadius.md (16px)
+/// - backgroundColor: AppColors.surfaceWarm (따뜻한 크림)
+/// - border: 얇은 회색 border (1px, #E5E7EB)
+/// - shadow: 없음
 class CardContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -19,7 +27,7 @@ class CardContainer extends StatelessWidget {
     this.padding,
     this.backgroundColor,
     this.onTap,
-    this.showBorder = true, // DESIGN_GUIDE: border 기본 사용
+    this.showBorder = true, // DESIGN_GUIDE v2.1: border 기본 사용
     this.isHomeStyle = false, // Home 전용 스타일 (기본값: false)
     this.borderColor,
     this.borderWidth,
@@ -27,17 +35,14 @@ class CardContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Home 전용 스타일 프리셋 적용
-    // 기본 padding은 AppSpacing.lg로 통일
-    final effectivePadding = isHomeStyle 
-        ? (padding ?? const EdgeInsets.all(AppSpacing.lg))
-        : (padding ?? const EdgeInsets.all(AppSpacing.lg));
+    // DESIGN_GUIDE v2.1: padding은 AppSpacing.lg (24px)로 통일
+    final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.lg);
     
-    final effectiveBackgroundColor = isHomeStyle
-        ? (backgroundColor ?? AppColors.surface)
-        : (backgroundColor ?? AppColors.surface);
+    // DESIGN_GUIDE v2.1: backgroundColor는 surfaceWarm (따뜻한 크림)
+    final effectiveBackgroundColor = backgroundColor ?? AppColors.surfaceWarm;
     
-    final effectiveBorderRadius = BorderRadius.circular(12);
+    // DESIGN_GUIDE v2.1: borderRadius는 AppRadius.md (16px)
+    final effectiveBorderRadius = BorderRadius.circular(AppRadius.md);
     
     final content = Container(
       padding: effectivePadding,
@@ -45,10 +50,10 @@ class CardContainer extends StatelessWidget {
         color: effectiveBackgroundColor,
         borderRadius: effectiveBorderRadius,
         border: showBorder ? Border.all(
-          color: borderColor ?? AppColors.divider,
+          color: borderColor ?? AppColors.borderSoft, // #E5E7EB
           width: borderWidth ?? 1,
         ) : null,
-        // shadow 제거 (DESIGN_GUIDE 준수)
+        // shadow 제거 (DESIGN_GUIDE v2.1 준수)
       ),
       child: child,
     );

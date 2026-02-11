@@ -197,7 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 위젯 트리 구조 통일: 모든 상태에서 동일한 Scaffold 구조 사용
     // _scrollController를 항상 사용하여 unmount/mount 시 안전성 확보
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background, // Warm Cream (DESIGN_GUIDE v2.1)
       body: SafeArea(
         child: Column(
           children: [
@@ -333,11 +333,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
+                  backgroundColor: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
+                  elevation: 0, // Shadow 없음
                 ),
                 child: Text(
                   isOnboardingCompleted ? '다시 불러오기' : '프로필 만들기',
@@ -429,7 +430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlue, // 결정/이동용 (Calm Blue 통일)
+                      color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1) (Calm Blue 통일)
                     ),
                   ),
                 ),
@@ -1392,7 +1393,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // 추천 페이지로 이동
                     context.push('/recommendation');
                   },
-                  color: AppColors.primaryBlue, // 결정/이동용
+                  color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   padding: EdgeInsets.zero,
                   child: Row(
@@ -1474,7 +1475,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: AppColors.primaryBlue, // 결정/이동용
+                      color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1485,7 +1486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Icon(
                         Icons.compare_arrows,
                         size: 18,
-                        color: AppColors.primaryBlue,
+                        color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
@@ -1493,7 +1494,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ? "더 보기" 
                             : "비교해보기",
                         style: AppTypography.button.copyWith(
-                          color: AppColors.primaryBlue, // 결정/이동용
+                          color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1838,7 +1839,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   title: '지금 먹는 사료가',
                   subtitle: '최근 30일 중 가장 싸요',
                   backgroundColor: AppColors.primarySoft, // Teal 배경
-                  iconColor: AppColors.primaryBlue, // 결정/이동용 (Calm Blue 통일)
+                  iconColor: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
                 ),
               ),
             );
@@ -2014,12 +2015,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                side: BorderSide(color: AppColors.primaryBlue), // 결정/이동용 (Calm Blue 통일)
+                side: BorderSide(color: AppColors.primaryCoral), // Warm Terracotta (DESIGN_GUIDE v2.1)
               ),
               child: Text(
                 '비교해보기',
                 style: AppTypography.button.copyWith(
-                  color: AppColors.primaryBlue, // 결정/이동용 (Calm Blue 통일)
+                  color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1) (Calm Blue 통일)
                 ),
               ),
             ),

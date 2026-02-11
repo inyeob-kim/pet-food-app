@@ -20,20 +20,25 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.headerGreen, // Deep Forest Green (DESIGN_GUIDE v2.1)
       elevation: 0,
       scrolledUnderElevation: 0,
       title: Text(
         title,
-        style: AppTypography.titleLarge,
+        style: AppTypography.titleLarge.copyWith(
+          color: Colors.white, // 헤더는 흰색 텍스트
+        ),
       ),
       titleSpacing: 0,
+      iconTheme: const IconThemeData(
+        color: Colors.white, // 헤더 아이콘은 흰색
+      ),
       actions: actions ??
           [
             // 알림 아이콘
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
-              color: AppColors.iconPrimary,
+              color: Colors.white, // 흰색
               onPressed: onNotificationTap ?? () {
                 // TODO: 알림 화면 연결
               },
@@ -41,7 +46,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
             // 설정 아이콘
             IconButton(
               icon: const Icon(Icons.settings_outlined),
-              color: AppColors.iconPrimary,
+              color: Colors.white, // 흰색
               onPressed: onSettingsTap ?? () {
                 // TODO: 설정 화면 연결
               },

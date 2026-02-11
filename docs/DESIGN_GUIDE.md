@@ -1,126 +1,114 @@
-# 🎨 헤이제노 디자인 시스템 가이드 v1.1 (Tone Refined, 2026)
+# 🎨 헤이제노 디자인 시스템 가이드 v2.1
 
-> 일상 관리형 펫 서비스에 최적화된 디자인 시스템  
-> **Tone Reference**: Warm Cream + Calm Blue + Soft Natural Accent  
-> **목표**: 안심 · 신뢰 · 따뜻한 돌봄 브랜드
+> The Farmer's Dog Color & Tone Inspired  
+> 따뜻하고 신뢰감 있는 일상 펫 웰니스 앱을 위한 디자인 시스템  
+> **목표**: "우리 아이를 가족처럼 챙기는" 느낌 그대로
 
 ---
 
 ## 📋 목차
 
-0. 헤이제노 디자인 철학  
-1. 헤이제노 전용 컬러 시스템  
+0. 헤이제노 디자인 철학 (The Farmer's Dog 감성 적용)  
+1. 헤이제노 전용 컬러 시스템 (The Farmer's Dog 거의 그대로)  
 2. 이모지 사용 규칙  
 3. 간격 시스템 (AppSpacing)  
 4. AppRadius 가이드  
-5. AppElevation 가이드  
+5. AppElevation & Border 가이드  
 6. CardContainer 규칙  
 7. 홈 화면 전용 UI 원칙  
 8. 애니메이션 원칙  
 9. 컴포넌트 가이드  
-10. 타이포그래피  
-11. 최종 체크리스트  
+10. 최종 체크리스트  
 
 ---
 
-## 0️⃣ 헤이제노 디자인 철학
+## 0️⃣ 헤이제노 디자인 철학 (The Farmer's Dog 감성 적용)
 
-### 헤이제노는 이런 앱이다
+### 앱의 본질
 
-❌ 매번 무언가를 추천하는 앱  
-✅ **지금 상태를 한눈에 보고 안심하는 앱**
+**"우리 아이의 매일을 건강하고 행복하게 지켜주는 조용한 동반자"**
 
-### 핵심 키워드
+### 가장 중요한 감정
 
-- **Manage**: 현재 상태 관리
-- **Reassurance**: 잘하고 있다는 신호
-- **Daily**: 매일 사용하는 도구
-- **Care-first Brand**: 돌봄 중심 브랜드
-- **Comfort & Calm Confidence (2026)**
+- **안심(Reassurance)** + **따뜻함(Warmth)**
 
-### 디자인 원칙
+### 시각적 목표
 
-- 차분하지만 차갑지 않게  
-- 귀엽지만 유치하지 않게  
-- 색으로 감정을 자극하지 말고 **안심을 전달**
+- 집 안 거실처럼 편안한 공간
+- 과하지 않은 자연스러움
+
+### 금지 사항
+
+- ❌ 화려한 효과
+- ❌ 강한 대비
+- ❌ 차가운 톤
+- ❌ 과도한 장식
+
+### 핵심 원칙
+
+- **Warm neutrals가 주인공**
+- 자연에서 온 듯한 깊은 그린 + muted 따뜻한 코랄
+- 넉넉한 여백과 숨 쉴 수 있는 레이아웃
+- 전문적이면서도 가족 같은 친밀함
 
 ---
 
-## 1️⃣ 헤이제노 전용 컬러 시스템
+## 1️⃣ 헤이제노 전용 컬러 시스템 (The Farmer's Dog 거의 그대로)
 
-### 🎯 컬러 사용의 대원칙
-
-> **색은 감정이 아니라 역할이다**
-
----
-
-### 🌈 컬러 팔레트 (최종)
+### 주요 색상 (직접 추출·매핑)
 
 ```dart
-// Background
-AppColors.background        // #FDF8F3  (Warm Cream)
-AppColors.surface           // #FFFFFF
-AppColors.surfaceWarm       // #FFFDF9
+// 배경 – The Farmer's Dog 전체 베이스 톤
+AppColors.background      // #FDFAF5 ~ #FEFCFA  (Warm Cream / Off-White)
 
-// Brand / Navigation
-AppColors.primaryBlue       // #1E4ED8  (Calm Blue)
-AppColors.primaryBlueSoft   // #E8EEFB  (Tint)
+// 카드 / Surface – 살짝 더 밝은 크림
+AppColors.surface         // #FFFFFF
+AppColors.surfaceWarm     // #FEF9F3  (연한 베이지-크림, 카드 배경 추천)
 
-// Sub Primary
-AppColors.primaryTeal       // #2BB0ED  (보조 CTA)
+// 텍스트
+AppColors.textPrimary     // #1F2A2F  (따뜻한 다크 차콜)
+AppColors.textSecondary   // #5C6B74  (muted gray-green)
 
-// Status / Pet
-AppColors.petGreen          // #22C58B
-AppColors.petGreenLight     // #EAF7F1
+// 헤더 / 네비게이션 – The Farmer's Dog 상단 그린
+AppColors.headerGreen     // #1A3C34 ~ #0F2E26  (Deep Forest Green)
 
-// Accent
-AppColors.softYellow        // #F4C430  (장식 전용)
+// Primary CTA / 결정 버튼 – The Farmer's Dog 주요 버튼 색상
+AppColors.primaryCoral    // #E07A5F ~ #D65A3F  (Warm Terracotta / Muted Coral)
 
-// Text
-AppColors.textPrimary       // #0F172A
-AppColors.textSecondary     // #64748B
+// 상태 / 안심 신호 – The Farmer's Dog가 주는 "건강함" 느낌에 가까운 그린
+AppColors.petGreen        // #3A7D5E ~ #4A8F6E  (Muted Olive Green)
 
-// Border
-AppColors.borderSoft        // #E5E7EB
+// Accent / 포인트 (제한적 사용)
+AppColors.accentWarm      // #F4A261  (Gentle Warm Orange, 혜택·최저가 알림에만)
+
+// 상태 색상
+AppColors.positive        // #4A8F6E  (안심 그린)
+AppColors.caution         // #F4A261  (주의 오렌지)
+AppColors.danger          // #C2410C  (따뜻한 레드, 과하지 않게)
 ```
 
-### 🔵 Primary Blue 사용 규칙
+### 컬러 사용 규칙 (The Farmer's Dog 스타일 적용)
 
-**역할**: 브랜드 / 결정 / 이동
+#### 배경
+- **전체 배경** → 항상 Warm Cream (#FDFAF5 계열) 사용
 
-**사용 위치**
-- TopBar
-- 메인 CTA (화면당 1개)
-- 탭 활성 상태
-- 링크 / 강조 텍스트
+#### 헤더/탑바
+- **헤더/탑바** → Deep Forest Green (#1A3C34)
 
-**금지**
-- 상태 표시
-- 성공/안심 메시지
-- 반복 버튼
+#### 주요 CTA 버튼
+- **"지금 추천받기", "등록하기", "구매하기"** → Warm Terracotta (#E07A5F)
 
-### 🟢 Pet Green 사용 규칙
+#### 안심 신호
+- **현재 급여 중** → Muted Olive Green (#4A8F6E) + opacity 0.08~0.12 배경
 
-**역할**: 안심 / 정상 / 현재 상태
+#### 강조 텍스트 / 링크
+- **강조 텍스트 / 링크** → primaryCoral 또는 headerGreen
 
-- 상태 배지
-- "현재 급여 중"
-- 가격 알림 ON
-- 배경 사용 시 opacity 0.08~0.12만 허용
-
-### 🟡 Soft Yellow 사용 규칙
-
-⚠️ **절대 주연 금지**
-
-**허용**
-- 히어로 영역 장식
-- 카드 내부 포인트
-- 아이콘 배경 원
-
-**금지**
-- 버튼
-- 텍스트
-- 상태 표현
+#### 금지 사항
+- ❌ 네온 색상
+- ❌ 강한 블루
+- ❌ 바이올렛
+- ❌ 과도한 그라데이션
 
 ---
 
@@ -128,7 +116,7 @@ AppColors.borderSoft        // #E5E7EB
 
 ### 핵심 원칙
 
-**이모지는 정보 보조 도구다**
+**섹션당 최대 1개, 중심에 배치**
 
 ### 허용 위치
 
@@ -158,55 +146,66 @@ AppColors.borderSoft        // #E5E7EB
 
 ## 3️⃣ 간격 시스템 (AppSpacing)
 
+The Farmer's Dog처럼 넉넉하게 유지
+
 ```dart
 class AppSpacing {
-  static const xs = 4;
-  static const sm = 8;
-  static const md = 12;
-  static const lg = 16;
-  static const xl = 24;
+  static const double sm = 8;
+  static const double md = 16;
+  static const double lg = 24;   // 카드 내부 기본 (더 넓게)
+  static const double xl = 32;
+  static const double xxl = 48;  // 섹션 간 큰 여백
 }
 ```
 
-### 원칙
+### 사용 원칙
 
-- 카드 padding: `lg`
-- 카드 간: `lg`
-- 섹션 간: `xl`
+- 카드 padding: `lg` (24px)
+- 카드 간격: `lg` (24px)
+- 섹션 간격: `xl` ~ `xxl` (32px ~ 48px)
 - ❌ 하드코딩 금지
 
 ---
 
 ## 4️⃣ AppRadius 가이드
 
+The Farmer's Dog처럼 부드럽지만 과하지 않게
+
 ```dart
 class AppRadius {
-  static const sm = 8;
-  static const md = 12;
-  static const lg = 16;
-  static const xl = 20;
+  static const double sm = 8;    // 칩·배지
+  static const double md = 16;   // 카드·버튼 기본 (The Farmer's Dog 느낌)
+  static const double lg = 24;   // 큰 카드·바텀시트
 }
 ```
 
-- 카드 / 버튼: `md`
-- 배지: `sm`
-- 바텀시트: `lg~xl`
+### 사용 원칙
+
+- 칩/배지: `sm` (8px)
+- 카드/버튼: `md` (16px)
+- 큰 카드/바텀시트: `lg` (24px)
 
 ---
 
-## 5️⃣ AppElevation 가이드
+## 5️⃣ AppElevation & Border 가이드
 
-### 원칙
+### Shadow 거의 사용 안 함 (The Farmer's Dog 스타일)
 
-**헤이제노는 그림자를 거의 쓰지 않는다**
-
+**원칙**
 - 기본: Shadow ❌
-- 구분: Border + 색온도
+- 구분: 얇은 border 또는 배경 대비로
 
-### 예외
+### 허용 shadow (예외적 사용)
 
-- BottomSheet
-- Floating CTA
+- blur: 12px
+- opacity: 0.04
+- offset: 0, 4px
+
+### Border 사용
+
+- 얇은 회색 border로 구분
+- 색상: `#E5E7EB` 또는 `AppColors.borderSoft`
+- 두께: 1px
 
 ---
 
@@ -214,10 +213,11 @@ class AppRadius {
 
 ```dart
 CardContainer(
-  padding: AppSpacing.lg,
-  borderRadius: AppRadius.md,
-  backgroundColor: AppColors.surfaceWarm,
-  borderColor: AppColors.borderSoft,
+  padding: EdgeInsets.all(AppSpacing.lg),  // 24px 넉넉하게
+  borderRadius: BorderRadius.circular(AppRadius.md),  // 16px
+  backgroundColor: AppColors.surfaceWarm,  // 따뜻한 크림
+  border: Border.all(color: Color(0xFFE5E7EB), width: 1),  // 아주 얇은 회색
+  child: ...
 )
 ```
 
@@ -225,27 +225,31 @@ CardContainer(
 
 - 카드마다 역할 명확
 - 장식 최소화
-- 타이틀은 항상 h3
+- 타이틀은 항상 명확하게
+- 넉넉한 padding으로 편안함 제공
 
 ---
 
 ## 7️⃣ 홈 화면 전용 UI 원칙
 
-### 홈은 추천 화면이 아니다
+The Farmer's Dog처럼 **"집 같은 편안함"** 중심
 
-**우선순위**
-1. 현재 급여 사료
-2. 가격 / 소진 상태
-3. 조건부 추천
-4. 혜택 (보조)
+### 우선순위
+
+1. **펫 사진 + 이름 헤더** (큰 사진, 따뜻한 배경)
+2. **현재 급여 사료 카드** (메인, petGreen accent)
+3. **건강 상태 한눈에** (안심 신호 중심)
+4. **추천 섹션** (조건부, coral CTA 버튼)
+5. **혜택·알림** (하단, gentle warm accent)
 
 ### 색 흐름
 
 Warm Cream 배경  
-→ Blue 브랜드 포인트  
-→ Warm White 카드  
-→ Green 상태  
-→ Yellow 감성 장식
+→ Deep Forest Green 헤더  
+→ Warm Cream 카드  
+→ Muted Olive Green 상태  
+→ Warm Coral CTA  
+→ Gentle Orange 혜택 포인트
 
 ---
 
@@ -253,72 +257,85 @@ Warm Cream 배경
 
 ### Duration
 
-- 짧음: 300ms
-- 기본: 400ms
-- 길게: 500ms
+- 기본: **350~500ms**
 
 ### Curve
 
-- 진입: `easeOut`
-- 완료: `easeOutBack` (절제)
+- **Curves.easeOutQuad** (자연스럽고 부드럽게)
 
-❌ 과한 Bounce 금지
+### 금지 사항
 
----
-
-## 9️⃣ 컴포넌트 가이드
-
-### TopBar
-
-- 높이 56px
-- 배경: `surfaceWarm`
-- 활성 요소: `primaryBlue`
-
-### 버튼
-
-#### Primary Button
-
-```dart
-CupertinoButton(
-  color: AppColors.primaryBlue,
-)
-```
-
-#### Outlined Button
-
-```dart
-OutlinedButton(
-  side: BorderSide(color: AppColors.primaryBlue),
-)
-```
+- ❌ 과도한 효과
+- ❌ 강한 bounce
+- ❌ 긴 duration (500ms 초과)
 
 ---
 
-## 🔟 타이포그래피
+## 9️⃣ 컴포넌트 가이드 (주요 예시)
 
-| 스타일 | 크기 | 굵기 | 용도 |
-|--------|------|------|------|
-| h1 | 42 / 34 | 900 | 히어로 |
-| h2 | 26 | 900 | 섹션 |
-| h3 | 18 | 900 | 카드 |
-| body | 16 | 400 | 본문 |
-| small | 14 | 400 | 보조 |
-| caption | 13 | 700 | 배지 |
-| button | 16 | 800 | 버튼 |
+### TopBar / Header
 
-Yellow 텍스트 사용 금지
+```dart
+// 배경: headerGreen (#1A3C34)
+// 로고/타이틀: 흰색
+// CTA 버튼: coral (#E07A5F)
+```
+
+### 추천 받기 버튼
+
+```dart
+ElevatedButton(
+  style: ElevatedButton.styleFrom(
+    backgroundColor: AppColors.primaryCoral,
+    foregroundColor: Colors.white,
+    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+  ),
+  child: Text('지금 추천받기'),
+  onPressed: () {},
+)
+```
+
+### 현재 급여 사료 카드
+
+```dart
+CardContainer(
+  padding: EdgeInsets.all(AppSpacing.lg),
+  borderRadius: BorderRadius.circular(AppRadius.md),
+  backgroundColor: AppColors.surfaceWarm,
+  border: Border.all(color: Color(0xFFE5E7EB), width: 1),
+  child: Column(
+    children: [
+      // 상태 뱃지: petGreen 배경 + 흰 글씨 "현재 급여 중"
+      Container(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.petGreen,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Text(
+          '현재 급여 중',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      // 카드 내용...
+    ],
+  ),
+)
+```
 
 ---
 
 ## ✅ 최종 체크리스트
 
-- [ ] 배경이 Warm Cream인가
-- [ ] Blue는 결정/브랜드 전용인가
-- [ ] Green은 상태 전용인가
-- [ ] Yellow는 장식으로만 쓰였는가
-- [ ] Shadow 대신 Border를 썼는가
-- [ ] 홈에서 추천이 과하지 않은가
-- [ ] iOS 스타일을 유지했는가
+- [ ] 배경이 Warm Cream / Off-White인가?
+- [ ] 헤더가 Deep Forest Green인가?
+- [ ] 주요 CTA가 Warm Coral / Terracotta인가?
+- [ ] 강한 그림자 / 네온 색상 없나?
+- [ ] 전체가 "집 안 거실처럼 편안한가"?
+- [ ] 여백이 넉넉하고 숨 쉴 수 있는가?
 
 ---
 
@@ -333,5 +350,5 @@ Yellow 텍스트 사용 금지
 
 ---
 
-**버전**: v1.1 (Tone Refined)  
+**버전**: v2.1 (The Farmer's Dog Color & Tone Inspired)  
 **마지막 업데이트**: 2026년
