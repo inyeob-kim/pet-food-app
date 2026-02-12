@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// 앱 타이포그래피 정의 (DESIGN_GUIDE.md 기반)
+/// 앱 타이포그래피 정의 (DESIGN_GUIDE.md v4.1 - Data-Driven Premium Platform Edition)
 class AppTypography {
   // H1: 42px (모바일: 34px), letter-spacing: -1px
   static const TextStyle h1 = TextStyle(
@@ -92,6 +92,14 @@ class AppTypography {
     fontSize: 13,
     fontWeight: FontWeight.w700,
     color: AppColors.chipText,
+    height: 1.2,
+  );
+  
+  // Data / Number: 20px, fontWeight: 900 (수치 강조용)
+  static const TextStyle data = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w900,
+    color: AppColors.textPrimary,
     height: 1.2,
   );
   

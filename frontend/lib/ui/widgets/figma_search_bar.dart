@@ -21,7 +21,7 @@ class FigmaSearchBar extends StatelessWidget {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: AppColors.surfaceWarm, // 따뜻한 크림
+        color: AppColors.surfaceLight, // 연한 회색
         borderRadius: BorderRadius.circular(AppRadius.lg), // 16px
         border: Border.all(
           color: AppColors.line, // #E5E7EB
@@ -52,7 +52,7 @@ class FigmaSearchBar extends StatelessWidget {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg), // 16px
             borderSide: BorderSide(
-              color: AppColors.primaryCoral.withOpacity(0.3), // Warm Terracotta
+              color: AppColors.primary.withOpacity(0.3), // Emerald Green
               width: 2,
             ),
           ),

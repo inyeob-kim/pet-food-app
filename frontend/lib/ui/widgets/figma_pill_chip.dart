@@ -29,8 +29,8 @@ class FigmaPillChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // DESIGN_GUIDE v2.2
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.primaryCoral // Warm Terracotta 또는 primary
-                : AppColors.surfaceWarm, // 따뜻한 크림
+                ? AppColors.primary // Emerald Green
+                : AppColors.surfaceLight, // 연한 회색
             borderRadius: BorderRadius.circular(AppRadius.pill), // 완전 둥근 CTA
             border: selected
                 ? null

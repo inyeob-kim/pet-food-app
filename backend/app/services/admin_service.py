@@ -67,7 +67,7 @@ class AdminService:
             if data.source is not None:
                 existing.source = data.source
             existing.version += 1
-            existing.updated_at = datetime.now().isoformat()
+            existing.updated_at = datetime.now()
             profile = existing
         else:
             # 생성
@@ -78,7 +78,7 @@ class AdminService:
                 parsed=data.parsed,
                 source=data.source,
                 version=1,
-                updated_at=datetime.now().isoformat()
+                updated_at=datetime.now()
             )
             db.add(profile)
         
@@ -125,7 +125,7 @@ class AdminService:
             if data.aafco_statement is not None:
                 existing.aafco_statement = data.aafco_statement
             existing.version += 1
-            existing.updated_at = datetime.now().isoformat()
+            existing.updated_at = datetime.now()
             facts = existing
         else:
             # 생성
@@ -141,7 +141,7 @@ class AdminService:
                 phosphorus_pct=data.phosphorus_pct,
                 aafco_statement=data.aafco_statement,
                 version=1,
-                updated_at=datetime.now().isoformat()
+                updated_at=datetime.now()
             )
             db.add(facts)
         
@@ -354,6 +354,43 @@ class AdminService:
         await db.commit()
     
     # ========== 이미지 관리 ==========
+    @staticmethod
+    async def get_product_images(product_id: UUID, db: AsyncSession) -> list[str]:
+        """상품 이미지 목록 조회"""
+        product = await db.execute(select(Product).where(Product.id == product_id))
+        product_obj = product.scalar_one_or_none()
+
+        if product_obj is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Product not found"
+            )
+
+        images: list[str] = []
+
+        # images(JSON 배열)가 있으면 우선 사용
+        raw_images = getattr(product_obj, "images", None)
+        if isinstance(raw_images, list):
+            images.extend([img for img in raw_images if isinstance(img, str) and img.strip()])
+
+        # primary/thumbnail도 누락 시 보강
+        primary_image_url = getattr(product_obj, "primary_image_url", None)
+        thumbnail_url = getattr(product_obj, "thumbnail_url", None)
+        if isinstance(primary_image_url, str) and primary_image_url.strip():
+            images.insert(0, primary_image_url)
+        if isinstance(thumbnail_url, str) and thumbnail_url.strip():
+            images.insert(0, thumbnail_url)
+
+        # 순서 유지 중복 제거
+        deduped_images: list[str] = []
+        seen: set[str] = set()
+        for img in images:
+            if img not in seen:
+                seen.add(img)
+                deduped_images.append(img)
+
+        return deduped_images
+
     @staticmethod
     async def update_product_images(
         product_id: UUID,

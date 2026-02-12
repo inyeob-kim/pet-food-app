@@ -78,7 +78,7 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               CupertinoButton(
-                color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.2)
+                color: AppColors.primary, // Emerald Green (DESIGN_GUIDE v2.3)
                 borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                 onPressed: () {
                   ref.read(watchControllerProvider.notifier).loadTrackingProducts();
@@ -174,7 +174,7 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
                             style: AppTypography.h1Mobile.copyWith(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.2)
+                              color: AppColors.primary, // Emerald Green (DESIGN_GUIDE v2.3)
                             ),
                           ),
                           const SizedBox(width: AppSpacing.sm),

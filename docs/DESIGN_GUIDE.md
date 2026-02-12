@@ -1,122 +1,216 @@
-# 🎨 헤이제노 디자인 시스템 가이드 v2.2
+# 🎨 헤이제노 디자인 시스템 v4.1
+## Data-Driven Premium Platform Edition
 
-> 쌤대신 구조 + 헤이제노 감성 통합 버전  
-> 일상 관리형 펫 웰니스 앱을 위한 따뜻하고 안심되는 디자인 시스템  
-> **목표**: "우리 아이를 가족처럼 챙기는" 느낌 그대로
+> 데이터 기반 펫 케어 & 멀티플랫폼 최저가 알림 서비스  
+> 키워드: **Trust · Precision · Clarity · Premium Neutral**
 
 ---
 
 ## 📋 목차
 
-0. 헤이제노 디자인 철학  
-1. 디자인 토큰 (Design Tokens)  
-2. 타이포그래피  
-3. 간격 시스템  
-4. AppRadius 가이드  
-5. 그림자 & 효과 (헤이제노 버전)  
-6. CardContainer & 기본 컨테이너 규칙  
-7. 컴포넌트 스타일  
-8. 홈 화면 전용 UI 원칙  
-9. 반응형 디자인  
-10. 애니메이션 & 트랜지션  
-11. 최종 체크리스트  
+0. 브랜드 정의  
+1. 컬러 전략  
+2. 버튼 시스템  
+3. 타이포그래피  
+4. 간격 시스템  
+5. AppRadius 가이드  
+6. 카드 디자인  
+7. 가격 데이터 표현 원칙  
+8. 탭 디자인  
+9. 홈 화면 구조  
+10. 그림자 & 효과  
+11. 애니메이션 & 트랜지션  
+12. 반응형 디자인  
+13. 최종 체크리스트  
 
 ---
 
-## 0️⃣ 헤이제노 디자인 철학
+## 0️⃣ 브랜드 정의
 
-### 앱의 본질
+### 핵심 포지션
 
-**"우리 아이의 매일을 조용히 지켜보고 안심하게 해주는 동반자"**
+**헤이제노는 감성 펫앱이 아니다.**  
+**데이터 기반 의사결정 플랫폼이다.**
 
-### 핵심 감성
+### 브랜드 포지션
 
-- **Comfort & Reassurance** (안심과 위로)
-- **Gentle Confidence** (부드러운 확신)
-- **Warm Daily Care** (따뜻한 일상 돌봄)
+- **비교** - 멀티플랫폼 가격 비교
+- **추적** - 가격 히스토리 추적
+- **분석** - 데이터 기반 인사이트
+- **알림** - 최저가 알림 서비스
+- **멀티 플랫폼** - 통합 가격 데이터
+
+### 디자인 철학
+
+- **Trust** - 신뢰할 수 있는 데이터
+- **Precision** - 정확한 정보 전달
+- **Clarity** - 명확한 구조와 계층
+- **Premium Neutral** - 프리미엄 중립 톤
 
 ### 시각 원칙
 
-- 차분하지만 차갑지 않게 (Warm Neutrals + Soft Natural Accents)
-- 귀엽지만 유치하지 않게
-- 넉넉한 여백과 숨 쉴 수 있는 공간
-- 장식보다 정보 신호 우선
-
-### 금지 사항
-
-- ❌ 화려한 효과
-- ❌ 강한 대비
-- ❌ 차가운 톤
-- ❌ 과도한 장식
-- ❌ 강한 블루/바이올렛/AI 색상
+- 데이터 우선, 장식 최소화
+- 구조가 장식보다 우선
+- 수치와 그래프 명확히 표현
+- 프리미엄 플랫폼 느낌
+- Admin과 자연스러운 통합
 
 ---
 
-## 1️⃣ 디자인 토큰 (Design Tokens)
+## 1️⃣ 컬러 전략
 
-### 기본 색상 시스템
+### 🎯 컬러 철학
+
+> **Blue = 브랜드 & 결정**  
+> **Green = 상태 & 정상**  
+> **Red = 가격 상승/위험**  
+> **Neutral = 데이터 기반 구조**
+
+### 🔵 Brand Primary (Core Identity)
 
 ```dart
-// 배경
-AppColors.background      // #FFFFFF (White - 화면 배경)
-AppColors.surface         // #FFFFFF
-AppColors.surfaceWarm     // #FEF9F3 (연한 베이지-크림, 카드 기본)
+AppColors.primary        // #1D4ED8 (Deep Data Blue)
+AppColors.primaryHover   // #1E40AF
+AppColors.primaryLight   // #E6ECFA
+```
 
-// 텍스트
-AppColors.textPrimary     // #1F2937 (Warm Dark Gray)
-AppColors.textSecondary   // #64748B (Muted Gray)
+**의미**: 신뢰 · 플랫폼 · 구조 · 분석 · 가격 결정
 
-// 경계선
-AppColors.line            // #E5E7EB (Gray 200, 부드러운 구분선)
-AppColors.borderSoft      // #E5E7EB (별칭)
+**사용 위치**:
+- Primary CTA 버튼
+- 탭 활성 상태
+- 선택된 필터
+- 강조 수치
+- 링크
 
-// 버튼 / 액션
-AppColors.primary         // #14B8A6 (Soft Teal – 결정/이동)
-AppColors.primaryDark     // #0F766E (호버/활성)
-AppColors.primaryCoral    // #E07A5F (Warm Terracotta – 주요 CTA 버튼)
+### 🟢 Status Color
 
-// 상태 / 안심
-AppColors.petGreen        // #10B981 (Warm Emerald – 안심 신호)
-AppColors.petGreenLight   // #ECFDF5 (opacity 배경용)
+```dart
+AppColors.status         // #16A34A
+AppColors.statusLight    // #ECFDF5
+```
 
-// Accent / 포인트 (제한적 사용)
-AppColors.accentWarm      // #F4A261 (Gentle Warm Orange, 혜택·최저가 알림에만)
+**사용 위치**:
+- 현재 급여 중
+- 알림 ON
+- 정상 상태
+- 가격 하락 성공
 
-// 상태 색상
-AppColors.positive        // #10B981 (안심 그린)
-AppColors.caution         // #F4A261 (주의 오렌지)
-AppColors.danger          // #C2410C (따뜻한 레드, 과하지 않게)
+**❌ 버튼 사용 금지**  
+**❌ 브랜드 대체 금지**
+
+### 🔴 Alert / Drop
+
+```dart
+AppColors.drop           // #DC2626
+AppColors.dropLight      // #FEE2E2
+```
+
+**사용 위치**:
+- 가격 상승/위험 알림 전용
+
+### ⚪ Premium Neutral
+
+```dart
+AppColors.background     // #F8F8F6 (완전 화이트 아님)
+AppColors.surface        // #FFFFFF
+AppColors.textPrimary    // #0F172A
+AppColors.textSecondary  // #6B7280
+AppColors.border         // #E5E7EB
+AppColors.divider        // #F1F5F9
 ```
 
 ### 컬러 사용 규칙
 
 #### 배경
-- **화면 배경** → White (#FFFFFF)
-- **카드 배경** → surfaceWarm (#FEF9F3) - 따뜻한 크림
+- **화면 배경** → Premium Neutral (#F8F8F6)
+- **카드 배경** → White (#FFFFFF)
 
 #### 헤더/탑바
 - **헤더/탑바 배경** → White (#FFFFFF)
-- **헤더 텍스트/아이콘** → textPrimary (#1F2937)
+- **헤더 텍스트/아이콘** → textPrimary (#0F172A)
 
 #### 주요 CTA 버튼
-- **"지금 추천받기", "등록하기", "구매하기"** → primaryCoral (#E07A5F) 또는 primary (#14B8A6)
-- Warm 컬러는 버튼과 이벤트에만 사용
+- **"가격 비교하기", "최저가 확인", "알림 설정", "등록하기"** → primary (#1D4ED8)
+- 모든 주요 버튼은 Blue 계열로 통일
 
-#### 안심 신호
-- **현재 급여 중** → petGreen (#10B981) + opacity 0.08~0.12 배경
+#### 탭 / 필터
+- **활성 탭** → primary (#1D4ED8) + primaryLight 배경 (#E6ECFA)
+- **비활성 탭** → textSecondary (#6B7280)
 
-#### 강조 텍스트 / 링크
-- **강조 텍스트 / 링크** → primaryCoral 또는 primary
+#### 상태 표시
+- **정상/급여 중** → status (#16A34A)
+- **가격 하락** → status (#16A34A)
+- **가격 상승** → drop (#DC2626)
 
 #### 금지 사항
-- ❌ 네온 색상
-- ❌ 강한 블루/바이올렛
-- ❌ AI 색상 (쌤대신 스타일)
-- ❌ 과도한 그라데이션
+- ❌ Green을 Primary CTA 버튼에 사용
+- ❌ Red를 상태 표시에 사용 (가격 상승 전용)
+- ❌ 완전 화이트 배경 (#FFFFFF) - Premium Neutral 사용
+- ❌ 과도한 색상 혼용 (데이터 카드에서 2개 이상 색상 사용 금지)
 
 ---
 
-## 2️⃣ 타이포그래피
+## 2️⃣ 버튼 시스템
+
+### Primary Button
+
+```dart
+ElevatedButton(
+  style: ElevatedButton.styleFrom(
+    backgroundColor: AppColors.primary, // #1D4ED8
+    foregroundColor: Colors.white,
+    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md), // 12px
+    ),
+    elevation: 0,
+  ),
+  child: Text('가격 비교하기'),
+  onPressed: () {},
+)
+```
+
+**사용 예**:
+- 가격 비교하기
+- 최저가 확인
+- 알림 설정
+- 등록하기
+
+### Secondary Button
+
+```dart
+OutlinedButton(
+  style: OutlinedButton.styleFrom(
+    backgroundColor: Colors.white,
+    foregroundColor: AppColors.textPrimary, // #0F172A
+    side: BorderSide(color: AppColors.border, width: 1), // #E5E7EB
+    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md), // 12px
+    ),
+  ),
+  child: Text('더 보기'),
+  onPressed: () {},
+)
+```
+
+### Text Button
+
+```dart
+TextButton(
+  style: TextButton.styleFrom(
+    foregroundColor: AppColors.primary, // #1D4ED8
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  ),
+  child: Text('링크 텍스트'),
+  onPressed: () {},
+)
+```
+
+---
+
+## 3️⃣ 타이포그래피
 
 ### 폰트 패밀리
 
@@ -149,6 +243,9 @@ AppTypography.button
 // Badge/Chip: 13px, fontWeight: 700~800
 AppTypography.caption
 AppTypography.badge
+
+// Data / Number: 20px, fontWeight: 900 (수치 강조용)
+AppTypography.data
 ```
 
 ### Line Height
@@ -156,9 +253,15 @@ AppTypography.badge
 - 본문: **1.6**
 - 약관/상세 텍스트: **1.75**
 
+### 데이터 표현 원칙
+
+- **수치는 bold (fontWeight: 900)**
+- **그래프는 미니멀**
+- **색은 2개 이상 쓰지 않는다**
+
 ---
 
-## 3️⃣ 간격 시스템
+## 4️⃣ 간격 시스템
 
 ### 기본 간격
 
@@ -174,7 +277,7 @@ class AppSpacing {
 }
 ```
 
-### 패딩 & 마진 패턴 (쌤대신 패턴)
+### 패딩 & 마진 패턴
 
 - **페이지 Wrap Padding**: `EdgeInsets.fromLTRB(18, 28, 18, 80)`
 - **카드 내부 Padding**: `24px` (xl)
@@ -193,12 +296,12 @@ class AppSpacing {
 
 ---
 
-## 4️⃣ AppRadius 가이드
+## 5️⃣ AppRadius 가이드
 
 ```dart
 class AppRadius {
   static const double sm = 8;     // 칩·배지
-  static const double md = 12;    // 기본 카드·버튼 (헤이제노 기본)
+  static const double md = 12;    // 기본 카드·버튼
   static const double lg = 16;    // 큰 카드·바텀시트
   static const double pill = 999; // 완전 둥근 CTA
 }
@@ -213,182 +316,177 @@ class AppRadius {
 
 ---
 
-## 5️⃣ 그림자 & 효과 (헤이제노 버전)
+## 6️⃣ 카드 디자인
 
-### 기본 원칙
-
-**Shadow 거의 사용 안 함 (The Farmer's Dog 스타일)**
-
-- 기본: Shadow ❌
-- 구분: Border 1px (#E5E7EB) 또는 배경 대비로
-
-### 허용 예외 (아주 제한적)
-
-- **BottomSheet**: `blurRadius: 12, opacity: 0.06`
-- **Floating CTA**: 아주 미세한 shadow (opacity 0.05 이하)
-
-### Border 사용
-
-- 얇은 회색 border로 구분
-- 색상: `#E5E7EB` 또는 `AppColors.line`
-- 두께: 1px
-
-### 금지 사항
-
-- ❌ 쌤대신의 강한 shadow (0 10px 30px 0.08 등) 완전히 제거
-
----
-
-## 6️⃣ CardContainer & 기본 컨테이너 규칙
-
-### CardContainer 기본 스타일
+### 기본 카드
 
 ```dart
 CardContainer(
-  padding: EdgeInsets.all(AppSpacing.xl), // 24px 넉넉하게
+  padding: EdgeInsets.all(AppSpacing.xl), // 24px
   borderRadius: BorderRadius.circular(AppRadius.md), // 12px
-  backgroundColor: AppColors.surfaceWarm, // 따뜻한 크림
-  border: Border.all(color: AppColors.line, width: 1), // 아주 얇은 회색
+  backgroundColor: AppColors.surface, // White (#FFFFFF)
+  border: Border.all(color: AppColors.border, width: 1), // #E5E7EB
+  shadow: BoxShadow(
+    color: Colors.black.withOpacity(0.03),
+    blurRadius: 6,
+    offset: Offset(0, 2),
+  ),
   child: ...
 )
 ```
+
+### 데이터 카드 원칙
+
+- **수치 강조** (bold, fontWeight: 900)
+- **그래프는 미니멀**
+- **색은 2개 이상 쓰지 않는다**
+- **장식보다 구조 우선**
 
 ### 카드 디자인 원칙
 
 - 카드마다 역할 명확
-- 장식 최소화
 - 타이틀은 항상 명확하게
 - 넉넉한 padding으로 편안함 제공
-- Shadow 없음, Border로 구분
+- 미세한 shadow로 깊이감 제공 (opacity: 0.03)
 
 ---
 
-## 7️⃣ 컴포넌트 스타일
+## 7️⃣ 가격 데이터 표현 원칙
 
-### TopBar / Header
+### 가격 하락
 
-```dart
-// 배경: White (#FFFFFF)
-// 텍스트/아이콘: textPrimary (#1F2937)
-// Border: bottom 1px line (#E5E7EB)
-AppBar(
-  backgroundColor: Colors.white,
-  elevation: 0,
-  titleTextStyle: TextStyle(
-    color: AppColors.textPrimary,
-    fontSize: 20,
-    fontWeight: FontWeight.w700,
-  ),
-  iconTheme: IconThemeData(
-    color: AppColors.textPrimary,
-  ),
-)
-```
+- **수치**: Primary Blue (#1D4ED8)
+- **보조 표시**: Green (#16A34A)
+- **배경**: statusLight (#ECFDF5) - 선택적
 
-### Button
+### 가격 상승
 
-#### Primary Button
+- **수치**: Red (#DC2626)
+- **배경**: dropLight (#FEE2E2) - tint 사용
 
-```dart
-ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: AppColors.primaryCoral, // Warm Terracotta 또는 primary (Soft Teal)
-    foregroundColor: Colors.white,
-    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md), // 12px
-    ),
-    elevation: 0, // Shadow 없음
-  ),
-  child: Text('지금 추천받기'),
-  onPressed: () {},
-)
-```
+### 가격 히스토리 차트
 
-#### Subtle Button
+- **차트 색상**: Primary Blue (#1D4ED8)
+- **하락 구간**: Green (#16A34A)
+- **상승 구간**: Red (#DC2626)
+- **미니멀 디자인**: 선만 사용, 배경 최소화
 
-```dart
-OutlinedButton(
-  style: OutlinedButton.styleFrom(
-    backgroundColor: AppColors.surface,
-    foregroundColor: AppColors.textPrimary,
-    side: BorderSide(color: AppColors.line, width: 1),
-    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md), // 12px
-    ),
-  ),
-  child: Text('더 보기'),
-  onPressed: () {},
-)
-```
+---
 
-### Chip/Badge
+## 8️⃣ 탭 디자인
+
+### 활성 탭
 
 ```dart
 Container(
-  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
   decoration: BoxDecoration(
-    color: AppColors.petGreen, // 또는 배경색
-    borderRadius: BorderRadius.circular(AppRadius.pill), // 999
+    color: AppColors.primaryLight, // #E6ECFA
+    borderRadius: BorderRadius.circular(AppRadius.sm), // 8px
   ),
   child: Text(
-    '현재 급여 중',
+    '탭 이름',
     style: TextStyle(
-      fontSize: 13,
+      color: AppColors.primary, // #1D4ED8
+      fontSize: 14,
       fontWeight: FontWeight.w700,
-      color: Colors.white,
     ),
   ),
 )
 ```
 
-### Callout / Warm Line
+### 비활성 탭
 
 ```dart
 Container(
-  padding: EdgeInsets.all(AppSpacing.lg),
-  decoration: BoxDecoration(
-    color: AppColors.surfaceWarm,
-    borderRadius: BorderRadius.circular(AppRadius.lg), // 16px
-    border: Border.all(color: AppColors.line, width: 1),
+  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  child: Text(
+    '탭 이름',
+    style: TextStyle(
+      color: AppColors.textSecondary, // #6B7280
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+    ),
   ),
+)
+```
+
+---
+
+## 9️⃣ 홈 화면 구조
+
+### 우선순위
+
+1. **펫 프로필** (사진, 기본 정보)
+2. **현재 급여 사료** (메인 정보)
+3. **최저가 상태 카드** (가격 비교 결과)
+4. **가격 히스토리 미니 차트** (데이터 시각화)
+5. **알림 설정** (CTA)
+6. **추천** (조건부)
+
+### 색 흐름
+
+Premium Neutral 배경 (#F8F8F6)  
+→ White TopBar  
+→ White 카드  
+→ Primary Blue CTA 버튼  
+→ Status Green 상태 표시  
+→ Drop Red 가격 상승 알림
+
+---
+
+## 🔟 그림자 & 효과
+
+### 기본 원칙
+
+**미세한 Shadow 사용 (Premium 느낌)**
+
+- 기본 카드: `0 2px 6px rgba(0,0,0,0.03)`
+- 구분: Border 1px (#E5E7EB) + 미세한 shadow
+
+### 허용 예외
+
+- **BottomSheet**: `blurRadius: 12, opacity: 0.06`
+- **Floating CTA**: 미세한 shadow (opacity 0.03~0.05)
+
+### Border 사용
+
+- 얇은 회색 border로 구분
+- 색상: `#E5E7EB` 또는 `AppColors.border`
+- 두께: 1px
+
+---
+
+## 1️⃣1️⃣ 애니메이션 & 트랜지션
+
+### Duration
+
+- 기본: **200~350ms**
+- 짧은 트랜지션: **150~200ms**
+
+### Curve
+
+- **Curves.easeOut** (자연스럽고 부드럽게)
+
+### 트랜지션 패턴
+
+```dart
+AnimatedContainer(
+  duration: Duration(milliseconds: 250),
+  curve: Curves.easeOut,
   child: ...
 )
 ```
 
-### Grid / Flex Row
+### 금지 사항
 
-- **Gap**: `14~16px`
-- **Button Row Gap**: `10~12px`
-- **Chip Gap**: `8px`
-
----
-
-## 8️⃣ 홈 화면 전용 UI 원칙
-
-The Farmer's Dog처럼 **"집 같은 편안함"** 중심
-
-### 우선순위
-
-1. **펫 프로필 헤더** (사진 크게, warm 배경)
-2. **현재 급여 사료 카드** (메인, petGreen 포인트)
-3. **상태 신호 카드** (안심 중심)
-4. **추천 카드** (조건부, coral CTA)
-5. **혜택 하단** (gentle warm accent)
-
-### 색 흐름
-
-White 배경  
-→ White TopBar  
-→ Warm Cream 카드  
-→ Muted Olive Green 상태  
-→ Warm Coral CTA  
-→ Gentle Orange 혜택 포인트
+- ❌ 과도한 효과
+- ❌ **bounce 금지**
+- ❌ 긴 duration (350ms 초과)
 
 ---
 
-## 9️⃣ 반응형 디자인
+## 1️⃣2️⃣ 반응형 디자인
 
 ### 브레이크포인트
 
@@ -400,51 +498,22 @@ White 배경
 - **그리드** → 모바일 1열로 collapse
 - **폰트** → 모바일 축소 (h1: 42px → 34px 등)
 - **패딩** → 모바일 축소
-
----
-
-## 🔟 애니메이션 & 트랜지션
-
-### Duration
-
-- 기본: **300~500ms**
-- 짧은 트랜지션: **150~200ms**
-
-### Curve
-
-- **Curves.easeOut** (자연스럽고 부드럽게)
-- **Curves.easeOutQuad** (헤이제노 기본)
-
-### 트랜지션 패턴 (쌤대신 패턴 유지)
-
-```dart
-// transition: transform 0.06s ease, background 0.12s ease
-AnimatedContainer(
-  duration: Duration(milliseconds: 120),
-  curve: Curves.ease,
-  transform: Matrix4.translationValues(0, -1, 0), // hover: translateY(-1px) 살짝
-  child: ...
-)
-```
-
-### 금지 사항
-
-- ❌ 과도한 효과
-- ❌ 강한 bounce
-- ❌ 긴 duration (500ms 초과)
+- **차트** → 모바일에서 간소화
 
 ---
 
 ## ✅ 최종 체크리스트
 
-- [ ] 화면 배경이 White인가?
-- [ ] TopBar가 White 배경인가?
-- [ ] 주요 CTA가 Warm Coral / Terracotta 또는 Soft Teal인가?
-- [ ] Warm 컬러가 버튼/이벤트에만 사용되는가?
-- [ ] 강한 그림자 / 네온 색상 없나?
-- [ ] 전체가 "집 안 거실처럼 편안한가"?
-- [ ] 여백이 넉넉하고 숨 쉴 수 있는가?
-- [ ] 카드가 surfaceWarm 배경과 border로 구분되는가?
+- [ ] CTA가 Blue (#1D4ED8)인가?
+- [ ] Green이 상태 전용인가? (버튼 사용 안 함)
+- [ ] Red는 가격 상승 전용인가?
+- [ ] 배경이 Premium Neutral (#F8F8F6)인가? (완전 화이트 아님)
+- [ ] 데이터가 명확히 보이는가?
+- [ ] 수치가 bold로 강조되었는가?
+- [ ] 그래프가 미니멀한가?
+- [ ] 데이터 카드에서 색상이 2개 이상 사용되지 않았는가?
+- [ ] 장식보다 구조가 우선인가?
+- [ ] 프리미엄 플랫폼 느낌이 나는가?
 
 ---
 
@@ -459,5 +528,15 @@ AnimatedContainer(
 
 ---
 
-**버전**: v2.2 (쌤대신 구조 + 헤이제노 감성 통합)  
+## 🔥 이 디자인의 장점
+
+- ✅ 헬스앱 느낌 제거
+- ✅ 프리미엄 플랫폼 느낌
+- ✅ Admin과 자연스럽게 통합
+- ✅ 가격/데이터 서비스에 매우 적합
+- ✅ 확장성 매우 높음
+
+---
+
+**버전**: v4.1 (Data-Driven Premium Platform Edition)  
 **마지막 업데이트**: 2026년

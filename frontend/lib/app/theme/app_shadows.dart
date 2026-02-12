@@ -1,24 +1,46 @@
 import 'package:flutter/material.dart';
 
-/// 앱 Shadow 정의 (DESIGN_GUIDE.md v2.1 - Shadow 거의 사용 안 함)
+/// 앱 Shadow 정의 (DESIGN_GUIDE.md v4.1 - Premium Shadow System)
 /// 
-/// The Farmer's Dog 스타일: Shadow 대신 얇은 border 또는 배경 대비로 구분
-/// 허용 shadow: blur 12px, opacity 0.04, offset 0,4px
+/// 미세한 Shadow 사용 (Premium 느낌)
+/// - 기본 카드: 0 2px 6px rgba(0,0,0,0.03)
+/// - BottomSheet: blurRadius 12, opacity 0.06
+/// - Floating CTA: opacity 0.03~0.05
 class AppShadows {
-  // 허용 shadow (예외적 사용만): blur 12px, opacity 0.04, offset 0,4px
-  static const List<BoxShadow> minimal = [
+  // 기본 카드 shadow (Premium 느낌)
+  static const List<BoxShadow> card = [
     BoxShadow(
-      color: Color(0x0A0F172A), // rgba(15, 23, 42, 0.04)
+      color: Color(0x08000000), // rgba(0, 0, 0, 0.03)
+      blurRadius: 6,
+      offset: Offset(0, 2),
+      spreadRadius: 0,
+    ),
+  ];
+  
+  // BottomSheet (예외적 사용)
+  static const List<BoxShadow> bottomSheet = [
+    BoxShadow(
+      color: Color(0x0F000000), // rgba(0, 0, 0, 0.06)
       blurRadius: 12,
       offset: Offset(0, 4),
       spreadRadius: 0,
     ),
   ];
   
-  // 모달/바텀시트 (예외적 사용)
+  // Floating CTA (미세한 shadow)
+  static const List<BoxShadow> floating = [
+    BoxShadow(
+      color: Color(0x08000000), // rgba(0, 0, 0, 0.03)
+      blurRadius: 8,
+      offset: Offset(0, 2),
+      spreadRadius: 0,
+    ),
+  ];
+  
+  // Modal (예외적 사용)
   static const List<BoxShadow> modal = [
     BoxShadow(
-      color: Color(0x0A0F172A), // rgba(15, 23, 42, 0.04) - 최소화
+      color: Color(0x0F000000), // rgba(0, 0, 0, 0.06)
       blurRadius: 12,
       offset: Offset(0, 4),
       spreadRadius: 0,
@@ -26,20 +48,8 @@ class AppShadows {
   ];
   
   // Legacy (호환성 - 사용 권장하지 않음)
-  @Deprecated('Shadow 사용을 피하고 border로 구분하세요')
-  static const List<BoxShadow> card = [];
-  
-  @Deprecated('Shadow 사용을 피하고 border로 구분하세요')
-  static const List<BoxShadow> button = [];
-  
-  @Deprecated('Shadow 사용을 피하고 border로 구분하세요')
-  static const List<BoxShadow> small = [];
-  
-  @Deprecated('Shadow 사용을 피하고 border로 구분하세요')
-  static const List<BoxShadow> medium = [];
-  
-  @Deprecated('Shadow 사용을 피하고 border로 구분하세요')
-  static const List<BoxShadow> large = [];
+  @Deprecated('card shadow 사용')
+  static const List<BoxShadow> minimal = card;
   
   // AI 마크 (유지)
   static const List<BoxShadow> aiMark = [

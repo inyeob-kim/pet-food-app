@@ -1,53 +1,56 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_radius.dart';
+import 'app_shadows.dart';
 
+/// 앱 테마 정의 (DESIGN_GUIDE.md v4.1 - Data-Driven Premium Platform Edition)
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.light(
-        primary: AppColors.primary, // Soft Teal
-        surface: AppColors.surface,
-        background: Colors.white, // White
-        error: AppColors.error,
+        primary: AppColors.primary, // Blue (#1D4ED8)
+        surface: AppColors.surface, // White
+        background: AppColors.background, // Premium Neutral (#F8F8F6)
+        error: AppColors.drop, // Red
       ),
-      scaffoldBackgroundColor: Colors.white, // White (화면 배경)
+      scaffoldBackgroundColor: AppColors.background, // Premium Neutral (#F8F8F6)
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white, // White background
+        backgroundColor: AppColors.surface, // White background
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: AppColors.textPrimary, // 따뜻한 다크 차콜
+          color: AppColors.textPrimary, // #0F172A
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
         iconTheme: IconThemeData(
-          color: AppColors.textPrimary, // 헤더 아이콘은 다크 차콜
+          color: AppColors.textPrimary, // #0F172A
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 0, // Shadow 없음
-        color: AppColors.surfaceWarm, // 따뜻한 크림
+        elevation: 0,
+        color: AppColors.surface, // White
+        shadowColor: Colors.black.withOpacity(0.03),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card), // 12px
           side: const BorderSide(
-            color: AppColors.line, // 얇은 회색 border
+            color: AppColors.border, // #E5E7EB
             width: 1,
           ),
         ),
       ),
       dividerTheme: const DividerThemeData(
-        color: AppColors.divider,
+        color: AppColors.divider, // #F1F5F9
         thickness: 1,
         space: 1,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryCoral, // Warm Terracotta 또는 primary
+          backgroundColor: AppColors.primary, // Blue (#1D4ED8)
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
-            horizontal: 24, // DESIGN_GUIDE v2.2: horizontal 24px
+            horizontal: 24, // DESIGN_GUIDE v4.1: horizontal 24px
             vertical: 12, // vertical 12px
           ),
           shape: RoundedRectangleBorder(
@@ -57,16 +60,16 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primaryCoral, // Coral
+        backgroundColor: AppColors.primary, // Blue
         foregroundColor: Colors.white,
-        elevation: 0, // Shadow 최소화
+        elevation: 0,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.white, // White
-        selectedItemColor: AppColors.primaryCoral, // Warm Terracotta 또는 primary
+        backgroundColor: AppColors.surface, // White
+        selectedItemColor: AppColors.primary, // Blue
         unselectedItemColor: AppColors.iconMuted,
         type: BottomNavigationBarType.fixed,
-        elevation: 0, // Shadow 없음
+        elevation: 0,
       ),
     );
   }
@@ -75,30 +78,30 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.dark(
-        primary: AppColors.primaryCoral, // Coral 유지
+        primary: AppColors.primary, // Blue
         surface: const Color(0xFF1E1E1E),
         background: const Color(0xFF121212),
-        error: AppColors.error,
+        error: AppColors.drop,
       ),
       scaffoldBackgroundColor: const Color(0xFF121212),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white, // White background
+        backgroundColor: AppColors.surface, // White background (라이트 모드와 동일)
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: AppColors.textPrimary, // 따뜻한 다크 차콜
+          color: AppColors.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
         iconTheme: IconThemeData(
-          color: AppColors.textPrimary, // 헤더 아이콘은 다크 차콜
+          color: AppColors.textPrimary,
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 0, // Shadow 없음
+        elevation: 0,
         color: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card), // 16px
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(
             color: Color(0xFF2C2C2C),
             width: 1,
@@ -112,33 +115,30 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryCoral, // Coral
+          backgroundColor: AppColors.primary, // Blue
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(
-            horizontal: 32,
-            vertical: 16,
+            horizontal: 24,
+            vertical: 12,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button), // 16px
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
-          elevation: 0, // Shadow 없음
+          elevation: 0,
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primaryCoral, // Coral
+        backgroundColor: AppColors.primary, // Blue
         foregroundColor: Colors.white,
-        elevation: 0, // Shadow 최소화
+        elevation: 0,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1E1E1E),
-        selectedItemColor: AppColors.primaryCoral, // Coral
+        selectedItemColor: AppColors.primary, // Blue
         unselectedItemColor: AppColors.iconMuted,
         type: BottomNavigationBarType.fixed,
-        elevation: 0, // Shadow 없음
+        elevation: 0,
       ),
     );
   }
 }
-
-
-

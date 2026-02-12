@@ -1,0 +1,63 @@
+.layout-root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.layout-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.landing-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.landing-card {
+  width: 100%;
+  max-width: 380px;
+  flex: 1 1 320px;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.debug-layout div {
+  outline: 1px solid red;
+}
+
+@media (min-width: 768px) {
+  .layout-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .landing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

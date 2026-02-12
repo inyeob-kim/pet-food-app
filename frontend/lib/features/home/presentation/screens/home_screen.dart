@@ -197,7 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 위젯 트리 구조 통일: 모든 상태에서 동일한 Scaffold 구조 사용
     // _scrollController를 항상 사용하여 unmount/mount 시 안전성 확보
     return Scaffold(
-      backgroundColor: Colors.white, // White (화면 배경)
+      backgroundColor: AppColors.background, // Premium Neutral (#F8F8F6)
       body: SafeArea(
         child: Column(
           children: [
@@ -333,7 +333,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
+                  backgroundColor: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md), // 12px
@@ -430,7 +430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1) (Calm Blue 통일)
+                      color: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
                     ),
                   ),
                 ),
@@ -580,7 +580,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.petGreen, // 상태/안심용
+                        backgroundColor: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(22),
@@ -668,7 +668,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const Icon(
                     Icons.check_circle,
                     size: 24,
-                    color: AppColors.petGreen, // 상태/안심용
+                    color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                   ),
                   const SizedBox(width: AppSpacing.sm), // 텍스트/아이콘 간격
                   TweenAnimationBuilder<int>(
@@ -912,7 +912,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             // 추천 로드
                             ref.read(homeControllerProvider.notifier).loadRecommendations();
                           },
-                          color: AppColors.petGreen, // 상태/안심용
+                          color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                           borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                           padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                           child: Text(
@@ -967,7 +967,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Text(
                   '변경하기',
                   style: AppTypography.body.copyWith(
-                    color: AppColors.petGreen, // 상태/안심용
+                    color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                   ),
                 ),
               ),
@@ -1371,7 +1371,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Text(
                             '${item.matchScore.toStringAsFixed(1)}점',
                             style: AppTypography.body.copyWith(
-                              color: AppColors.petGreen, // 상태/안심용
+                              color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1393,7 +1393,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // 추천 페이지로 이동
                     context.push('/recommendation');
                   },
-                  color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
+                  color: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
                   borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                   padding: EdgeInsets.zero,
                   child: Row(
@@ -1447,7 +1447,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Text(
                             '${item.matchScore.toStringAsFixed(1)}점',
                             style: AppTypography.body.copyWith(
-                              color: AppColors.petGreen, // 상태/안심용
+                              color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1475,7 +1475,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
+                      color: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.md), // 12px
@@ -1486,7 +1486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Icon(
                         Icons.compare_arrows,
                         size: 18,
-                        color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
+                        color: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
@@ -1494,7 +1494,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ? "더 보기" 
                             : "비교해보기",
                         style: AppTypography.button.copyWith(
-                          color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
+                          color: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1606,7 +1606,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.petGreen.withOpacity(0.1), // 상태/안심용
+                color: AppColors.statusLight, // 상태 전용 배경 - DESIGN_GUIDE v4.1
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -1623,7 +1623,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: const Icon(
                           Icons.attach_money,
                           size: 20,
-                          color: AppColors.petGreen, // 상태/안심용
+                          color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm), // 텍스트/아이콘 간격
@@ -1651,7 +1651,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
                         decoration: BoxDecoration(
-                          color: AppColors.petGreen, // 상태/안심용
+                          color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Row(
@@ -1690,7 +1690,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg), // 16px
               decoration: BoxDecoration(
-                color: AppColors.accentWarm.withOpacity(0.1), // Gentle Warm Orange 배경
+                color: AppColors.statusLight, // 상태 전용 배경 - DESIGN_GUIDE v4.1
                 borderRadius: BorderRadius.circular(AppRadius.md), // 12px
               ),
               child: Row(
@@ -1704,7 +1704,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Icon(
                       CupertinoIcons.clock,
                       size: 20,
-                      color: AppColors.accentWarm, // Gentle Warm Orange
+                      color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm), // 텍스트/아이콘 간격
@@ -1758,14 +1758,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                       ),
                       side: const BorderSide(
-                        color: AppColors.petGreen, // 상태/안심용
+                        color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                         width: 1,
                       ),
                     ),
                     child: Text(
                       '가격 알림 ON',
                       style: AppTypography.button.copyWith(
-                        color: AppColors.petGreen, // 상태/안심용
+                        color: AppColors.status, // 상태 전용 (Green) - DESIGN_GUIDE v4.1
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1824,8 +1824,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: Icons.arrow_downward,
                   title: '지금 먹는 사료가',
                   subtitle: '최근 30일 중 가장 싸요',
-                  backgroundColor: AppColors.primarySoft, // Teal 배경
-                  iconColor: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
+                  backgroundColor: AppColors.primaryLight, // Blue 배경 - DESIGN_GUIDE v4.1
+                  iconColor: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
                 ),
               ),
             );
@@ -2001,12 +2001,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md), // 12px
                 ),
-                side: BorderSide(color: AppColors.primaryCoral), // Warm Terracotta (DESIGN_GUIDE v2.1)
+                side: BorderSide(color: AppColors.primary), // Emerald Green (DESIGN_GUIDE v2.3)
               ),
               child: Text(
                 '비교해보기',
                 style: AppTypography.button.copyWith(
-                  color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1) (Calm Blue 통일)
+                  color: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1 (Calm Blue 통일)
                 ),
               ),
             ),

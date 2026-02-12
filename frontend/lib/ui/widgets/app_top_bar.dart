@@ -32,8 +32,10 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       title: Text(
         title,
-        style: AppTypography.titleLarge.copyWith(
-          color: AppColors.textPrimary, // Warm Dark Gray
+        style: AppTypography.h3.copyWith(
+          color: AppColors.textPrimary, // #0F172A
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
         ),
       ),
       titleSpacing: 0,

@@ -21,7 +21,7 @@ class SoftChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // DESIGN_GUIDE v2.2
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surfaceWarm,
+        color: backgroundColor ?? AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(AppRadius.pill), // 완전 둥근 CTA
       ),
       child: Text(

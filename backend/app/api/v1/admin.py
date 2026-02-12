@@ -182,6 +182,15 @@ async def unarchive_product(
 
 
 # ========== 이미지 관리 ==========
+@router.get("/products/{product_id}/images", response_model=list[str])
+async def get_product_images(
+    product_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """상품 이미지 목록 조회"""
+    return await AdminService.get_product_images(product_id, db)
+
+
 @router.patch("/products/{product_id}/images", response_model=ProductRead)
 async def update_product_images(
     product_id: UUID,
@@ -571,7 +580,7 @@ async def save_parsed(
         profile.parsed = req.parsed
         profile.version += 1
         from datetime import datetime
-        profile.updated_at = datetime.now().isoformat()
+        profile.updated_at = datetime.now()
         
         await AdminService._commit_or_rollback(db, "Failed to save parsed data")
         await db.refresh(profile)
@@ -655,7 +664,7 @@ async def analyze_and_save_ingredients(
         profile.parsed = parsed
         profile.version += 1
         from datetime import datetime
-        profile.updated_at = datetime.now().isoformat()
+        profile.updated_at = datetime.now()
         
         await AdminService._commit_or_rollback(db, "Failed to save parsed data")
         await db.refresh(profile)

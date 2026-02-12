@@ -268,7 +268,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                       color: isLatest
-                                                          ? AppColors.primaryCoral // Warm Terracotta (DESIGN_GUIDE v2.1)
+                                                          ? AppColors.primary // Emerald Green (DESIGN_GUIDE v2.3)
                                                           : const Color(0xFFE5E7EB),
                                                       borderRadius: const BorderRadius.vertical(
                                                         top: Radius.circular(2),
@@ -550,7 +550,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           Text(
             value,
             style: AppTypography.body.copyWith(
-              color: AppColors.primaryCoral, // Warm Terracotta (DESIGN_GUIDE v2.1)
+              color: AppColors.primary, // Emerald Green (DESIGN_GUIDE v2.3)
               fontWeight: FontWeight.w600,
             ),
           ),

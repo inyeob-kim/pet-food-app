@@ -1,4 +1,18 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Enum as SQLEnum, UniqueConstraint, Index, BigInteger
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    ForeignKey,
+    Enum as SQLEnum,
+    UniqueConstraint,
+    Index,
+    BigInteger,
+    SmallInteger,
+    Text,
+    DateTime,
+    Integer,
+    CHAR,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -13,6 +27,13 @@ class Merchant(str, enum.Enum):
     BRAND = "BRAND"
 
 
+class OfferFetchStatus(str, enum.Enum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    PENDING = "PENDING"
+    NOT_FETCHED = "NOT_FETCHED"
+
+
 class ProductOffer(Base, TimestampMixin):
     __tablename__ = "product_offers"
 
@@ -25,6 +46,19 @@ class ProductOffer(Base, TimestampMixin):
     url = Column(String(500), nullable=False)
     affiliate_url = Column(String(500), nullable=True)
     seller_name = Column(String(120), nullable=True)  # 네이버/오픈마켓 대비
+    platform_image_url = Column(String(500), nullable=True)
+    display_priority = Column(SmallInteger, nullable=False, default=10)
+    admin_note = Column(Text, nullable=True)
+    last_fetch_status = Column(
+        SQLEnum(OfferFetchStatus, name="offer_fetch_status", create_type=False),
+        nullable=False,
+        default=OfferFetchStatus.NOT_FETCHED,
+    )
+    last_fetch_error = Column(Text, nullable=True)
+    last_fetched_at = Column(DateTime(timezone=True), nullable=True)
+    current_price = Column(Integer, nullable=True)
+    currency = Column(CHAR(3), nullable=False, default="KRW")
+    last_seen_price = Column(Integer, nullable=True)
     is_primary = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
 

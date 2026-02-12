@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_typography.dart';
 
 /// 토스 스타일 Bottom Tab Bar (가볍고 안정적)
 class AppBottomTabBar extends StatelessWidget {
@@ -38,7 +38,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.home,
                   size: 24,
                   color: currentIndex == 0 
-                      ? AppColors.primaryCoral 
+                      ? AppColors.primary 
                       : AppColors.textSecondary,
                 ),
                 label: '홈',
@@ -50,7 +50,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.favorite,
                   size: 24,
                   color: currentIndex == 1 
-                      ? AppColors.primaryCoral 
+                      ? AppColors.primary 
                       : AppColors.textSecondary,
                 ),
                 label: '관심',
@@ -62,7 +62,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.shopping_bag,
                   size: 24,
                   color: currentIndex == 2 
-                      ? AppColors.primaryCoral 
+                      ? AppColors.primary 
                       : AppColors.textSecondary,
                 ),
                 label: '마켓',
@@ -74,7 +74,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.card_giftcard,
                   size: 24,
                   color: currentIndex == 3 
-                      ? AppColors.primaryCoral 
+                      ? AppColors.primary 
                       : AppColors.textSecondary,
                 ),
                 label: '혜택',
@@ -86,7 +86,7 @@ class AppBottomTabBar extends StatelessWidget {
                   Icons.more_horiz,
                   size: 24,
                   color: currentIndex == 4 
-                      ? AppColors.primaryCoral 
+                      ? AppColors.primary 
                       : AppColors.textSecondary,
                 ),
                 label: '더보기',
@@ -130,9 +130,9 @@ class _TabItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: AppTypography.sub.copyWith(
+              style: AppTypography.small.copyWith(
                 fontSize: 11,
-                color: isActive ? AppColors.primaryCoral : AppColors.textSecondary,
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
                 fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
               ),
               maxLines: 1,
