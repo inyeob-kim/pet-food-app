@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../ui/widgets/app_top_bar.dart';
-import '../../../../../ui/widgets/card_container.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../app/theme/app_spacing.dart';
@@ -83,41 +82,67 @@ class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
                     children: [
                       const SizedBox(height: AppSpacing.xl),
                       // Hero Point Section
-                      CardContainer(
-                        isHomeStyle: true,
+                      Container(
+                        padding: const EdgeInsets.all(24), // Card Padding p-6 sm:p-8
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16), // rounded-2xl
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                const Icon(
-                                  Icons.card_giftcard,
-                                  size: 24,
-                                  color: AppColors.primaryBlue, // 결정/정보용
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryLight, // Light Blue #EFF6FF
+                                    borderRadius: BorderRadius.circular(16), // rounded-2xl
+                                  ),
+                                  child: const Icon(
+                                    Icons.card_giftcard,
+                                    size: 24,
+                                    color: AppColors.primary, // Primary Blue #2563EB
+                                  ),
                                 ),
-                                const SizedBox(width: AppSpacing.sm),
+                                const SizedBox(width: 12),
                                 Text(
                                   '내 포인트',
                                   style: AppTypography.body.copyWith(
                                     color: AppColors.textSecondary,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: AppSpacing.md),
+                            const SizedBox(height: 16),
                             Text(
                               '${totalPoints.toLocaleString()}P',
-                              style: AppTypography.h1Mobile.copyWith(
+                              style: const TextStyle(
                                 fontSize: 48,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primaryBlue, // 결정/정보용
+                                color: AppColors.primary, // Primary Blue #2563EB
+                                height: 1.2,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
                             Text(
                               '${availablePoints.toLocaleString()}P 더 받을 수 있어요',
                               style: AppTypography.body.copyWith(
                                 color: AppColors.textSecondary,
+                                fontSize: 14,
                               ),
                             ),
                           ],
@@ -130,31 +155,43 @@ class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
                         children: [
                           Text(
                             '미션 완료하고 포인트 받기',
-                            style: AppTypography.body.copyWith(
+                            style: AppTypography.h3.copyWith(
                               color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             '${state.completedCount}/${missions.length}',
                             style: AppTypography.small.copyWith(
                               color: AppColors.textSecondary,
+                              fontSize: 12,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.lg),
+                      const SizedBox(height: 16),
                       // Mission Cards
-                      ...missions.map((mission) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                        child: _buildMissionCard(context, mission),
-                      )),
+                      ...missions.map((mission) => _buildMissionCard(context, mission)),
                       const SizedBox(height: AppSpacing.lg),
                       // Points Usage
-                      CardContainer(
-                        isHomeStyle: true,
-                        backgroundColor: AppColors.primaryBlue.withOpacity(0.05),
-                        showBorder: false,
+                      Container(
+                        padding: const EdgeInsets.all(24), // Card Padding
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight, // Light Blue #EFF6FF
+                          borderRadius: BorderRadius.circular(16), // rounded-2xl
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -162,14 +199,17 @@ class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
                               '포인트 사용 방법',
                               style: AppTypography.body.copyWith(
                                 color: AppColors.textPrimary,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
                             Text(
                               '100P = 100원 할인 (다음 구매 시 자동 적용)',
                               style: AppTypography.small.copyWith(
                                 color: AppColors.textSecondary,
+                                fontSize: 14,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -188,90 +228,113 @@ class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
   }
 
   Widget _buildMissionCard(BuildContext context, MissionData mission) {
-    return CardContainer(
-      isHomeStyle: true,
-      backgroundColor: mission.completed
-          ? AppColors.petGreen.withOpacity(0.1) // 상태/안심용
-          : Colors.white,
-      showBorder: mission.completed,
+    return GestureDetector(
       onTap: () {
         _showMissionBottomSheet(context, mission);
       },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Icon
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: mission.completed
-                  ? AppColors.petGreen // 상태/안심용
-                  : Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              mission.completed ? Icons.check_circle : Icons.flag,
-              size: 18,
-              color: mission.completed
-                  ? Colors.white
-                  : AppColors.iconMuted,
-            ),
+      child: Container(
+        padding: const EdgeInsets.all(20), // Card Padding
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: mission.completed
+              ? AppColors.statusLight // Light Green
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16), // rounded-2xl
+          border: Border.all(
+            color: mission.completed
+                ? AppColors.status.withOpacity(0.2)
+                : AppColors.border,
+            width: 1,
           ),
-          const SizedBox(width: AppSpacing.md),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mission.title,
-                  style: AppTypography.body.copyWith(
-                    color: mission.completed
-                        ? AppColors.textSecondary
-                        : AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  mission.description,
-                  style: AppTypography.small.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs + 2),
-                Row(
-                  children: [
-                    Text(
-                      '+${mission.reward}P',
-                      style: AppTypography.small.copyWith(
-                        color: mission.completed
-                            ? AppColors.petGreen // 상태/안심용
-                            : AppColors.primaryBlue, // 결정/정보용
-                        fontWeight: FontWeight.w600,
-                      ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icon Container
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: mission.completed
+                    ? AppColors.status // Green
+                    : AppColors.primaryLight, // Light Blue #EFF6FF
+                borderRadius: BorderRadius.circular(16), // rounded-2xl
+              ),
+              child: Icon(
+                mission.completed ? Icons.check_circle : Icons.flag,
+                size: 24,
+                color: mission.completed
+                    ? Colors.white
+                    : AppColors.primary, // Primary Blue #2563EB
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    mission.title,
+                    style: AppTypography.body.copyWith(
+                      color: mission.completed
+                          ? AppColors.textSecondary
+                          : AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
-                    if (!mission.completed) ...[
-                      const SizedBox(width: AppSpacing.sm),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    mission.description,
+                    style: AppTypography.small.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
                       Text(
-                        '· ${mission.current}/${mission.total} 완료',
+                        '+${mission.reward}P',
                         style: AppTypography.small.copyWith(
-                          color: AppColors.textSecondary,
+                          color: mission.completed
+                              ? AppColors.status // Green
+                              : AppColors.primary, // Primary Blue #2563EB
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
                       ),
+                      if (!mission.completed) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          '· ${mission.current}/${mission.total} 완료',
+                          style: AppTypography.small.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(
-            Icons.chevron_right,
-            size: 20,
-            color: AppColors.iconMuted,
-          ),
-        ],
+            const Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: AppColors.textSecondary,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -327,59 +390,58 @@ class _MissionBottomSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon and Title
-                        Row(
                           children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: mission.completed
-                                    ? AppColors.petGreen // 상태/안심용
-                                    : Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.divider,
-                                  width: 1,
+                            // Icon and Title
+                            Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: mission.completed
+                                        ? AppColors.status // Green
+                                        : AppColors.primaryLight, // Light Blue #EFF6FF
+                                    borderRadius: BorderRadius.circular(16), // rounded-2xl
+                                  ),
+                                  child: Icon(
+                                    mission.completed 
+                                        ? Icons.check_circle 
+                                        : Icons.flag,
+                                    size: 24,
+                                    color: mission.completed
+                                        ? Colors.white
+                                        : AppColors.primary, // Primary Blue #2563EB
+                                  ),
                                 ),
-                              ),
-                          child: Icon(
-                            mission.completed 
-                                ? Icons.check_circle 
-                                : Icons.flag,
-                            size: 24,
-                            color: mission.completed
-                                ? Colors.white
-                                : AppColors.iconMuted,
-                          ),
-                            ),
-                            const SizedBox(width: AppSpacing.lg),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    mission.title,
-                                    style: AppTypography.h2.copyWith(
-                                      color: AppColors.textPrimary,
-                                    ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        mission.title,
+                                        style: AppTypography.h3.copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '+${mission.reward}P',
+                                        style: AppTypography.body.copyWith(
+                                          color: mission.completed
+                                              ? AppColors.status // Green
+                                              : AppColors.primary, // Primary Blue #2563EB
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    '+${mission.reward}P',
-                                    style: AppTypography.body.copyWith(
-                                      color: mission.completed
-                                          ? AppColors.petGreen // 상태/안심용
-                                          : AppColors.primaryBlue, // 결정/정보용
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
                         const SizedBox(height: AppSpacing.xl),
                         // Description
                         Text(
@@ -421,8 +483,8 @@ class _MissionBottomSheet extends StatelessWidget {
                           Container(
                             height: 8,
                             decoration: BoxDecoration(
-                              color: AppColors.divider,
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              color: AppColors.border,
+                              borderRadius: BorderRadius.circular(4),
                             ),
                             child: FractionallySizedBox(
                               alignment: Alignment.centerLeft,
@@ -431,8 +493,8 @@ class _MissionBottomSheet extends StatelessWidget {
                                   : 0,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryBlue, // 결정/정보용
-                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                  color: AppColors.primary, // Primary Blue #2563EB
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
                             ),
@@ -464,17 +526,27 @@ class _MissionBottomSheet extends StatelessWidget {
                     child: SafeArea(
                       child: SizedBox(
                         width: double.infinity,
-                        child: CupertinoButton(
-                          color: AppColors.primaryBlue, // 결정/이동용
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                        child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
                             // TODO: 미션 시작 로직 구현
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary, // Primary Blue #2563EB
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12), // rounded-xl
+                            ),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                          ),
                           child: Text(
                             '시작하기',
-                            style: AppTypography.button.copyWith(color: Colors.white),
+                            style: AppTypography.button.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),

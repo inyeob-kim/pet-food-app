@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../ui/widgets/app_top_bar.dart';
 import '../../../../../ui/widgets/match_score_badge.dart';
-import '../../../../../ui/widgets/card_container.dart';
-import '../../../../../ui/widgets/figma_section_header.dart';
 import '../../../../../ui/widgets/setting_item.dart';
 import '../../../../../ui/widgets/toggle_switch.dart';
 import '../../../../../app/theme/app_typography.dart';
@@ -90,7 +88,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         label: '개인정보 보호',
         hasChevron: true,
         onTap: () {
-          context.push('privacy');
+          context.push('/me/privacy');
         },
       ),
       SettingData(
@@ -98,7 +96,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         label: '도움말',
         hasChevron: true,
         onTap: () {
-          context.push('help');
+          context.push('/me/help');
         },
       ),
       SettingData(
@@ -106,7 +104,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         label: '문의하기',
         hasChevron: true,
         onTap: () {
-          context.push('contact');
+          context.push('/me/contact');
         },
       ),
       SettingData(
@@ -122,7 +120,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         label: '앱 정보',
         hasChevron: true,
         onTap: () {
-          context.push('app-info');
+          context.push('/me/app-info');
         },
       ),
     ];
@@ -148,29 +146,64 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                       _buildPetProfilesSection(state.pets),
                       const SizedBox(height: AppSpacing.lg),
                       // Recent Recommendation History
-                      CardContainer(
-                        isHomeStyle: true,
+                      Container(
+                        padding: const EdgeInsets.all(24), // Card Padding p-6 sm:p-8
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16), // rounded-2xl
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            FigmaSectionHeader(
-                              title: '최근 추천 히스토리',
-                              onViewAll: state.recentRecommendations.isNotEmpty
-                                  ? () {
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '최근 추천 히스토리',
+                                  style: AppTypography.h3.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (state.recentRecommendations.isNotEmpty)
+                                  GestureDetector(
+                                    onTap: () {
                                       // TODO: 전체 추천 히스토리 화면으로 이동
-                                    }
-                                  : null,
+                                    },
+                                    child: Text(
+                                      '전체보기',
+                                      style: AppTypography.small.copyWith(
+                                        color: AppColors.primary, // Primary Blue #2563EB
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            const SizedBox(height: AppSpacing.lg),
+                            const SizedBox(height: 16),
                             if (state.recentRecommendations.isNotEmpty)
                               ..._buildRecentRecommendations(state.recentRecommendations)
                             else
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                                 child: Text(
                                   '아직 추천 히스토리가 없어요',
                                   style: AppTypography.small.copyWith(
                                     color: AppColors.textSecondary,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ),
@@ -179,24 +212,58 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       // Settings
-                      CardContainer(
-                        isHomeStyle: true,
+                      Container(
+                        padding: const EdgeInsets.all(24), // Card Padding
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16), // rounded-2xl
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ...settings.map((setting) => Padding(
-                              padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                              child: _buildSettingItem(setting),
-                            )),
+                            ...settings.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final setting = entry.value;
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: index == settings.length - 1 ? 0 : 12,
+                                ),
+                                child: _buildSettingItem(setting),
+                              );
+                            }),
                           ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       // Point Summary Section
-                      CardContainer(
-                        isHomeStyle: true,
-                        backgroundColor: AppColors.primary.withOpacity(0.05), // Emerald Green (DESIGN_GUIDE v2.3)
-                        showBorder: false,
+                      Container(
+                        padding: const EdgeInsets.all(24), // Card Padding
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight, // Light Blue #EFF6FF
+                          borderRadius: BorderRadius.circular(16), // rounded-2xl
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -207,37 +274,50 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                   '사용 가능 포인트',
                                   style: AppTypography.body.copyWith(
                                     color: AppColors.textPrimary,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
                                   '${state.totalPoints.toLocaleString()}P',
-                                  style: AppTypography.h3.copyWith(
+                                  style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.primary, // Emerald Green (DESIGN_GUIDE v2.3)
+                                    color: AppColors.primary, // Primary Blue #2563EB
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
                             Text(
                               '다음 구매 시 할인받으세요',
                               style: AppTypography.small.copyWith(
                                 color: AppColors.textSecondary,
+                                fontSize: 14,
+                                height: 1.5,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.lg),
+                            const SizedBox(height: 16),
                             SizedBox(
                               width: double.infinity,
-                              child: CupertinoButton(
-                                color: AppColors.primaryBlue, // 결정/이동용
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                              child: ElevatedButton(
                                 onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary, // Primary Blue #2563EB
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12), // rounded-xl
+                                  ),
+                                  elevation: 0,
+                                  shadowColor: Colors.transparent,
+                                ),
                                 child: Text(
                                   '혜택 보기',
-                                  style: AppTypography.button.copyWith(color: Colors.white),
+                                  style: AppTypography.button.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
@@ -263,9 +343,10 @@ class _MyScreenState extends ConsumerState<MyScreen> {
       children: [
         Text(
           '우리 아이들',
-          style: AppTypography.body.copyWith(
+          style: AppTypography.h3.copyWith(
             color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -307,14 +388,25 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         },
         child: SizedBox(
           width: 120,
-          child: CardContainer(
-            isHomeStyle: true,
-            showBorder: true,
-            borderColor: isPrimary ? AppColors.primaryBlue : null,
-            borderWidth: isPrimary ? 2.0 : null,
+          child: Container(
             padding: const EdgeInsets.symmetric(
-              vertical: 6,
-              horizontal: AppSpacing.md,
+              vertical: 12,
+              horizontal: 16,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16), // rounded-2xl
+              border: Border.all(
+                color: isPrimary ? AppColors.primary : AppColors.border,
+                width: isPrimary ? 2 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -324,7 +416,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                   species: pet.species,
                   size: 36,
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 6),
                 Text(
                   pet.name,
                   style: AppTypography.body.copyWith(
@@ -335,20 +427,20 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: 2),
                 Text(
                   pet.species == 'DOG' ? '강아지' : '고양이',
                   style: AppTypography.small.copyWith(
-                    fontSize: 9,
+                    fontSize: 10,
                     color: AppColors.textSecondary,
                   ),
                 ),
                 if (pet.ageStage != null) ...[
-                  const SizedBox(height: 0),
+                  const SizedBox(height: 2),
                   Text(
                     PetConstants.getAgeStageText(pet.ageStage) ?? '',
                     style: AppTypography.small.copyWith(
-                      fontSize: 8,
+                      fontSize: 9,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -372,50 +464,60 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         },
         child: SizedBox(
           width: 120,
-          child: CardContainer(
-            isHomeStyle: true,
-            backgroundColor: AppColors.background,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 6,
-                horizontal: AppSpacing.md,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 16,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16), // rounded-2xl
+              border: Border.all(
+                color: AppColors.border,
+                width: 1,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlue.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primaryBlue.withOpacity(0.3),
-                        width: 2,
-                        style: BorderStyle.solid,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      size: 22,
-                      color: AppColors.primaryBlue,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight, // Light Blue #EFF6FF
+                    borderRadius: BorderRadius.circular(16), // rounded-2xl
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.3),
+                      width: 2,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '아이 추가하기',
-                    style: AppTypography.body.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      color: AppColors.primaryBlue,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  child: const Icon(
+                    Icons.add,
+                    size: 22,
+                    color: AppColors.primary, // Primary Blue #2563EB
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '아이 추가하기',
+                  style: AppTypography.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: AppColors.primary, // Primary Blue #2563EB
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ),
@@ -441,13 +543,13 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  color: AppColors.primaryLight, // Light Blue #EFF6FF
+                  borderRadius: BorderRadius.circular(12), // rounded-xl
                 ),
                 child: const Icon(
                   Icons.image_outlined,
                   size: 32,
-                  color: AppColors.iconMuted,
+                  color: AppColors.primary, // Primary Blue #2563EB
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -527,7 +629,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
     }
 
     return SettingItem.withAutoColors(
-      title: setting.label,
+      label: setting.label,
       icon: setting.icon,
       onTap: setting.onTap,
       trailing: trailing,
@@ -541,13 +643,13 @@ class _MyScreenState extends ConsumerState<MyScreen> {
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
+            ),
         title: Text(
           '펫 전환',
           style: AppTypography.h3.copyWith(
             fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,8 +732,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
     final textController = TextEditingController();
     
     ModalBottomSheetWrapper.show(
-      context: context,
-      builder: (context) => Padding(
+      context,
+      title: '기능 요청하기',
+                  child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -648,11 +751,11 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide(color: AppColors.divider),
-                ),
+                    ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide(color: AppColors.divider),
-                ),
+              ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
@@ -683,7 +786,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 ),
               ),
             ),
-          ],
+        ],
         ),
       ),
     );

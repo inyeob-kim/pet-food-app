@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 import '../../app/theme/app_spacing.dart';
+import '../../app/theme/app_radius.dart';
 import 'widgets/progress_bar.dart';
 import 'widgets/primary_cta_button.dart';
 
@@ -85,17 +86,17 @@ class _OnboardingShellState extends State<OnboardingShell>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // Progress Bar
+            // Progress Bar (design.mdc: 상단 고정, 충분한 패딩)
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 AppSpacing.lg,
                 AppSpacing.lg,
-                0,
+                AppSpacing.md,
               ),
               child: ProgressBar(
                 current: widget.currentStep,
@@ -103,23 +104,31 @@ class _OnboardingShellState extends State<OnboardingShell>
               ),
             ),
 
-            // Back Button
+            // Back Button (design.mdc: 명확한 위치, 충분한 터치 영역)
             if (widget.onBack != null)
               Padding(
                 padding: const EdgeInsets.only(
-                  top: AppSpacing.md,
+                  top: AppSpacing.sm,
                   left: AppSpacing.lg,
+                  bottom: AppSpacing.sm,
                 ),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: CupertinoButton(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     minSize: 0,
                     onPressed: widget.onBack,
-                    child: const Icon(
-                      Icons.arrow_back_ios,
-                      size: 20,
-                      color: AppColors.textPrimary,
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSpacing.xs),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
@@ -151,38 +160,47 @@ class _OnboardingShellState extends State<OnboardingShell>
                             const SizedBox(height: AppSpacing.xl),
                           ],
 
-                          // Emoji (only show if not empty) - 섹션 헤더로 사용
+                          // Emoji (only show if not empty) - design.mdc: Hero Section 스타일
                           if (widget.emoji.isNotEmpty) ...[
-                            Text(
-                              widget.emoji,
-                              style: const TextStyle(fontSize: 64),
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.lg),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                              ),
+                              child: Text(
+                                widget.emoji,
+                                style: const TextStyle(fontSize: 56),
+                              ),
                             ),
                             const SizedBox(height: AppSpacing.xl),
                           ],
 
-                          // Title
+                          // Title (design.mdc: Hero/Display 스타일)
                           Text(
                             widget.title,
                             style: AppTypography.h2.copyWith(
-                              fontSize: 26,
+                              fontSize: 28,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
+                              height: 1.25, // leading-tight
                             ),
                           ),
 
-                          // Subtitle
+                          // Subtitle (design.mdc: Body Large 스타일)
                           if (widget.subtitle != null) ...[
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: AppSpacing.md),
                             Text(
                               widget.subtitle!,
                               style: AppTypography.body.copyWith(
-                                fontSize: 15,
+                                fontSize: 16,
                                 color: AppColors.textSecondary,
+                                height: 1.625, // leading-relaxed
                               ),
                             ),
                           ],
 
-                          const SizedBox(height: AppSpacing.xl * 1.5),
+                          const SizedBox(height: AppSpacing.xxl),
 
                           // Content
                           widget.child,
@@ -194,19 +212,26 @@ class _OnboardingShellState extends State<OnboardingShell>
               ),
             ),
 
-            // Bottom CTA
+            // Bottom CTA (design.mdc: 고정 바텀 바, 그림자 효과)
             Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg + MediaQuery.of(context).padding.bottom,
+              ),
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: AppColors.divider,
-                    width: 0.5,
+                color: AppColors.background,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
                   ),
-                ),
+                ],
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   PrimaryCTAButton(
                     text: widget.ctaText,

@@ -8,7 +8,8 @@ import '../../../../core/utils/error_handler.dart';
 
 /// 추적 상품 데이터 모델
 class TrackingProductData {
-  final String id;
+  final String id; // tracking ID
+  final String productId; // 상품 ID
   final String title;
   final String brandName;
   final String price;
@@ -21,6 +22,7 @@ class TrackingProductData {
 
   TrackingProductData({
     required this.id,
+    required this.productId,
     required this.title,
     required this.brandName,
     required this.price,
@@ -46,12 +48,14 @@ class WatchState {
   final String? error;
   final List<TrackingProductData> trackingProducts;
   final SortOption sortOption;
+  final Set<String> trackedProductIds; // 찜한 상품 ID 목록
 
   const WatchState({
     this.isLoading = false,
     this.error,
     this.trackingProducts = const [],
     this.sortOption = SortOption.priceLow,
+    this.trackedProductIds = const {},
   });
 
   WatchState copyWith({
@@ -59,12 +63,14 @@ class WatchState {
     String? error,
     List<TrackingProductData>? trackingProducts,
     SortOption? sortOption,
+    Set<String>? trackedProductIds,
   }) {
     return WatchState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       trackingProducts: trackingProducts ?? this.trackingProducts,
       sortOption: sortOption ?? this.sortOption,
+      trackedProductIds: trackedProductIds ?? this.trackedProductIds,
     );
   }
 
@@ -141,12 +147,16 @@ class WatchController extends StateNotifier<WatchState> {
         trackings.map((tracking) => _convertToTrackingProductData(tracking)),
       );
       
-      // null 값 필터링
-      final validProducts = trackingProducts.where((p) => p != null).cast<TrackingProductData>().toList();
+      // Future.wait로 이미 모든 값이 non-null이므로 필터링 불필요
+      final validProducts = trackingProducts.cast<TrackingProductData>().toList();
+      
+      // 찜한 상품 ID 목록 업데이트 (productId 기준)
+      final trackedIds = validProducts.map((p) => p.productId).toSet();
       
       state = state.copyWith(
         isLoading: false,
         trackingProducts: validProducts,
+        trackedProductIds: trackedIds,
       );
     } catch (e) {
       final failure = e is Exception
@@ -167,6 +177,7 @@ class WatchController extends StateNotifier<WatchState> {
       if (tracking.productId.isEmpty) {
         return TrackingProductData(
           id: tracking.id,
+          productId: tracking.productId,
           title: '상품 정보 없음',
           brandName: '알 수 없음',
           price: '가격 정보 없음',
@@ -185,8 +196,9 @@ class WatchController extends StateNotifier<WatchState> {
       // 임시 데이터 (백엔드 API 확장 시 실제 데이터로 대체)
       return TrackingProductData(
         id: tracking.id,
-        title: '${product.brandName ?? '브랜드 없음'} ${product.productName ?? '상품명 없음'}',
-        brandName: product.brandName ?? '알 수 없음',
+        productId: tracking.productId,
+        title: '${product.brandName} ${product.productName}',
+        brandName: product.brandName,
         price: '가격 정보 없음', // TODO: ProductOffer에서 가격 정보 가져오기
         priceValue: null,
         avgPrice: null,
@@ -199,6 +211,7 @@ class WatchController extends StateNotifier<WatchState> {
       // 상품 조회 실패 시 기본 데이터 반환
       return TrackingProductData(
         id: tracking.id,
+        productId: tracking.productId,
         title: '상품 정보 없음',
         brandName: '알 수 없음',
         price: '가격 정보 없음',
@@ -226,6 +239,7 @@ class WatchController extends StateNotifier<WatchState> {
         if (product.id == trackingId) {
           return TrackingProductData(
             id: product.id,
+            productId: product.productId,
             title: product.title,
             brandName: product.brandName,
             price: product.price,
@@ -246,6 +260,68 @@ class WatchController extends StateNotifier<WatchState> {
           ? handleException(e)
           : ServerFailure('알림 설정 업데이트 실패: ${e.toString()}');
       state = state.copyWith(error: failure.message);
+    }
+  }
+
+  /// 찜한 상품인지 확인
+  bool isProductTracked(String productId) {
+    return state.trackedProductIds.contains(productId);
+  }
+
+  /// 찜 추가
+  Future<bool> addTracking(String productId, String petId) async {
+    try {
+      await _trackingRepository.createTracking(
+        productId: productId,
+        petId: petId,
+      );
+      
+      // 찜한 상품 목록 새로고침
+      await loadTrackingProducts();
+      
+      return true;
+    } catch (e) {
+      final failure = e is Exception
+          ? handleException(e)
+          : ServerFailure('찜 추가 실패: ${e.toString()}');
+      state = state.copyWith(error: failure.message);
+      return false;
+    }
+  }
+
+  /// 찜 취소
+  Future<bool> removeTracking(String productId) async {
+    try {
+      // trackingProducts에서 해당 productId를 가진 tracking 찾기
+      final tracking = state.trackingProducts.firstWhere(
+        (product) => product.productId == productId,
+        orElse: () => throw Exception('찜한 상품을 찾을 수 없습니다'),
+      );
+      
+      await _trackingRepository.deleteTracking(tracking.id);
+      
+      // 찜한 상품 목록 새로고침
+      await loadTrackingProducts();
+      
+      return true;
+    } catch (e) {
+      final failure = e is Exception
+          ? handleException(e)
+          : ServerFailure('찜 취소 실패: ${e.toString()}');
+      state = state.copyWith(error: failure.message);
+      return false;
+    }
+  }
+
+  /// productId로 tracking 찾기
+  String? findTrackingIdByProductId(String productId) {
+    try {
+      final tracking = state.trackingProducts.firstWhere(
+        (product) => product.productId == productId,
+      );
+      return tracking.id;
+    } catch (e) {
+      return null;
     }
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../ui/widgets/app_top_bar.dart';
 import '../../../../../ui/widgets/figma_pill_chip.dart';
-import '../../../../../ui/widgets/figma_empty_state.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../app/theme/app_spacing.dart';
@@ -94,32 +93,69 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
       );
     }
 
-    // 빈 상태
+    // 빈 상태 - "+" 카드 표시
     if (state.trackingProducts.isEmpty) {
-      return FigmaEmptyState(
-        emoji: '❤️',
-        title: '찜한 사료가 없어요',
-        description: '관심 있는 사료를 찜하고 가격 알림을 받아보세요',
-        ctaText: '사료 둘러보기',
-        onCTA: () {
-          context.go('/market');
+      return CupertinoScrollbar(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              // "+" 카드 그리드
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: AppSpacing.lg,
+                  mainAxisSpacing: AppSpacing.lg,
+                  childAspectRatio: 0.65,
+                ),
+                itemCount: 1, // "+" 카드 하나만 표시
+                itemBuilder: (context, index) {
+                  return _buildAddProductCard();
         },
+              ),
+              const SizedBox(height: AppSpacing.xl * 2),
+            ],
+          ),
+        ),
       );
     }
 
     final sortedProducts = state.sortedProducts;
-    final cheaperCount = state.cheaperCount;
     
-    // sortedProducts가 비어있는 경우 추가 체크
+    // sortedProducts가 비어있는 경우 추가 체크 - "+" 카드 표시
     if (sortedProducts.isEmpty) {
-      return FigmaEmptyState(
-        emoji: '❤️',
-        title: '찜한 사료가 없어요',
-        description: '관심 있는 사료를 찜하고 가격 알림을 받아보세요',
-        ctaText: '사료 둘러보기',
-        onCTA: () {
-          context.go('/market');
+      return CupertinoScrollbar(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              // "+" 카드 그리드
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: AppSpacing.lg,
+                  mainAxisSpacing: AppSpacing.lg,
+                  childAspectRatio: 0.65,
+                ),
+                itemCount: 1, // "+" 카드 하나만 표시
+                itemBuilder: (context, index) {
+                  return _buildAddProductCard();
         },
+              ),
+              const SizedBox(height: AppSpacing.xl * 2),
+            ],
+          ),
+        ),
       );
     }
 
@@ -131,74 +167,6 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: AppSpacing.md),
-            // Summary - Numbers First
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${state.trackingProducts.length}',
-                      style: AppTypography.h1Mobile.copyWith(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      '총 찜',
-                      style: AppTypography.small.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: AppSpacing.xl),
-                Container(
-                  width: 1,
-                  height: 48,
-                  color: AppColors.divider,
-                ),
-                const SizedBox(width: AppSpacing.xl),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            '$cheaperCount',
-                            style: AppTypography.h1Mobile.copyWith(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary, // Emerald Green (DESIGN_GUIDE v2.3)
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            '/ ${state.trackingProducts.length}개',
-                            style: AppTypography.body.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        '평균 대비 저렴',
-                        style: AppTypography.small.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xl),
             // Sorting Chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -240,7 +208,7 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: AppSpacing.lg,
                 mainAxisSpacing: AppSpacing.lg,
-                childAspectRatio: 0.68,
+                childAspectRatio: 0.65,
               ),
               itemCount: sortedProducts.length,
               itemBuilder: (context, index) {
@@ -257,6 +225,67 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
             const SizedBox(height: AppSpacing.xl * 2),
           ],
         ),
+      ),
+    );
+  }
+
+  /// "+" 카드 위젯 (사료 추가용)
+  Widget _buildAddProductCard() {
+    return InkWell(
+      onTap: () {
+        context.go('/market');
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // "+" 아이콘 영역 (TrackingProductCard와 동일한 크기)
+          AspectRatio(
+            aspectRatio: 1,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F8FA), // 회색 배경
+                  // 테두리 제거
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add,
+                      size: 48,
+                      color: AppColors.textSecondary.withOpacity(0.6), // 옅은 회색 아이콘
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '사료 추가하기',
+                      style: AppTypography.body2.copyWith(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        color: AppColors.textSecondary.withOpacity(0.6), // 더 옅은 회색
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // 텍스트 영역 (TrackingProductCard와 동일한 구조)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 브랜드명 위치 (빈 공간)
+                const SizedBox(height: 15), // 브랜드명 높이 + 간격
+                // 제품명 위치 (빈 공간)
+                const SizedBox(height: 20), // 제품명 높이
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

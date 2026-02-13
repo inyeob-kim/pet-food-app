@@ -25,14 +25,15 @@ async def get_products(db: AsyncSession = Depends(get_db)):
 @router.get("/recommendations", response_model=RecommendationResponse)
 async def get_recommendations(
     pet_id: UUID = Query(..., description="반려동물 ID"),
+    skip_llm: bool = Query(False, description="LLM 설명 생성 스킵 여부 (애니메이션 화면용)"),
     db: AsyncSession = Depends(get_db)
 ):
     """추천 상품 목록 조회 (실시간 계산 + 히스토리 저장)"""
     start_time = time.time()
-    logger.info(f"[Products API] 📥 추천 요청 수신: pet_id={pet_id}")
+    logger.info(f"[Products API] 📥 추천 요청 수신: pet_id={pet_id}, skip_llm={skip_llm}")
     
     try:
-        result = await ProductService.get_recommendations(pet_id, db)
+        result = await ProductService.get_recommendations(pet_id, db, skip_llm=skip_llm)
         duration_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[Products API] ✅ 추천 응답 반환: pet_id={pet_id}, items={len(result.items)}개, 소요시간={duration_ms}ms")
         return result

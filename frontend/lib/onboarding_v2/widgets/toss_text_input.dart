@@ -95,14 +95,23 @@ class _TossTextInputStatefulState extends State<_TossTextInputStateful> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: _hasFocus ? Colors.white : AppColors.background,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: _hasFocus ? AppColors.surface : AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.button), // rounded-xl (12px)
         border: Border.all(
           color: _hasFocus
-              ? AppColors.primaryBlue // 결정/이동용
-              : AppColors.divider,
+              ? AppColors.primary // #2563EB
+              : AppColors.border, // #E5E7EB
           width: _hasFocus ? 2 : 1,
         ),
+        boxShadow: _hasFocus
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Focus(
         onFocusChange: (hasFocus) {

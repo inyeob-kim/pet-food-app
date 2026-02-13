@@ -6,11 +6,12 @@ import '../../../../../ui/widgets/app_top_bar.dart';
 import '../../../../../ui/widgets/figma_search_bar.dart';
 import '../../../../../ui/widgets/figma_section_header.dart';
 import '../../../../../ui/widgets/figma_pill_chip.dart';
-import '../../../../../app/theme/app_spacing.dart';
 import '../../../../../core/widgets/loading.dart';
 import '../../../../../core/widgets/empty_state.dart';
 import '../controllers/market_controller.dart';
 import '../widgets/product_card.dart';
+import '../../../watch/presentation/controllers/watch_controller.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 
 /// 실제 API 데이터를 사용하는 Market Screen
 class MarketScreen extends ConsumerStatefulWidget {
@@ -41,6 +42,17 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(marketControllerProvider);
+    final homeState = ref.watch(homeControllerProvider);
+    
+    // WatchController 변경 시 MarketController의 찜 상태 업데이트
+    ref.listen<WatchState>(watchControllerProvider, (previous, next) {
+      if (previous?.trackedProductIds != next.trackedProductIds) {
+        ref.read(marketControllerProvider.notifier).updateTrackingStatus();
+      }
+    });
+    
+    // 현재 펫 ID 가져오기
+    final currentPetId = homeState.petSummary?.petId;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -59,7 +71,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 child: const FigmaSearchBar(placeholder: '사료 브랜드나 제품명을 검색하세요'),
               ),
               Expanded(
-                child: _buildBody(state),
+                child: _buildBody(state, currentPetId),
               ),
             ],
           ),
@@ -68,7 +80,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     );
   }
 
-  Widget _buildBody(MarketState state) {
+  Widget _buildBody(MarketState state, String? currentPetId) {
     // 로딩 상태
     if (state.isLoading) {
       return const Center(child: LoadingWidget());
@@ -116,22 +128,27 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     ),
                   ),
                   SizedBox(
-                    height: 200,
+                    height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: state.hotDealProducts.length,
                       itemBuilder: (context, index) {
                         final product = state.hotDealProducts[index];
+                        final isTracked = state.trackedProductIds.contains(product.id);
                         return Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: SizedBox(
                             width: 170,
                             child: ProductCard(
-                              data: product,
+                              product: product,
+                              isTracked: isTracked,
                               onTap: () {
                                 context.push('/products/${product.id}');
                               },
+                              onHeartTap: currentPetId != null
+                                  ? () => _handleHeartTap(product.id, isTracked, currentPetId)
+                                  : null,
                             ),
                           ),
                         );
@@ -156,22 +173,27 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     ),
                   ),
                   SizedBox(
-                    height: 200,
+                    height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: state.popularProducts.length,
                       itemBuilder: (context, index) {
                         final product = state.popularProducts[index];
+                        final isTracked = state.trackedProductIds.contains(product.id);
                         return Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: SizedBox(
                             width: 170,
                             child: ProductCard(
-                              data: product,
+                              product: product,
+                              isTracked: isTracked,
                               onTap: () {
                                 context.push('/products/${product.id}');
                               },
+                              onHeartTap: currentPetId != null
+                                  ? () => _handleHeartTap(product.id, isTracked, currentPetId)
+                                  : null,
                             ),
                           ),
                         );
@@ -215,16 +237,21 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: 0.68,
+                        childAspectRatio: 0.65,
                       ),
                       itemCount: state.allProducts.length,
                       itemBuilder: (context, index) {
                         final product = state.allProducts[index];
+                        final isTracked = state.trackedProductIds.contains(product.id);
                         return ProductCard(
-                          data: product,
+                          product: product,
+                          isTracked: isTracked,
                           onTap: () {
                             context.push('/products/${product.id}');
                           },
+                          onHeartTap: currentPetId != null
+                              ? () => _handleHeartTap(product.id, isTracked, currentPetId)
+                              : null,
                         );
                       },
                     ),
@@ -244,5 +271,42 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         ),
       ),
     );
+  }
+
+  /// 하트 클릭 핸들러
+  Future<void> _handleHeartTap(String productId, bool isTracked, String petId) async {
+    final watchController = ref.read(watchControllerProvider.notifier);
+    
+    if (isTracked) {
+      // 찜 취소
+      final success = await watchController.removeTracking(productId);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('찜 목록에서 제거되었습니다'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } else {
+      // 찜 추가
+      final success = await watchController.addTracking(productId, petId);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('찜 목록에 추가되었습니다'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      } else if (!success && mounted) {
+        final watchState = ref.read(watchControllerProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(watchState.error ?? '찜 추가에 실패했습니다'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }

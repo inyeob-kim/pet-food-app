@@ -19,25 +19,44 @@ class ProgressBar extends StatelessWidget {
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: progress),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         return Container(
           width: double.infinity,
-          height: 4,
+          height: 6, // design.mdc: 더 두꺼운 진행 바
           decoration: BoxDecoration(
-            color: AppColors.divider,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            color: AppColors.primaryLight.withOpacity(0.3), // Light Blue 배경
+            borderRadius: BorderRadius.circular(AppRadius.pill), // rounded-full
           ),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: value,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue, // 결정/이동용
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: Stack(
+            children: [
+              // 진행 바 (design.mdc: Primary Blue, 부드러운 그라데이션)
+              FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: value,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withOpacity(0.8),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         );
       },

@@ -27,6 +27,19 @@ class RecommendationItemDto {
   @JsonKey(name: 'match_reasons')
   final List<String>? matchReasons;
   final String? explanation;
+  // 애니메이션용 상세 분석 데이터
+  @JsonKey(name: 'ingredient_count')
+  final int? ingredientCount;
+  @JsonKey(name: 'main_ingredients')
+  final List<String>? mainIngredients;
+  @JsonKey(name: 'allergy_ingredients')
+  final List<String>? allergyIngredients;
+  @JsonKey(name: 'harmful_ingredients')
+  final List<String>? harmfulIngredients;
+  @JsonKey(name: 'quality_checklist')
+  final List<String>? qualityChecklist;
+  @JsonKey(name: 'daily_amount_g')
+  final double? dailyAmountG;
 
   RecommendationItemDto({
     required this.product,
@@ -40,6 +53,12 @@ class RecommendationItemDto {
     required this.fitnessScore,
     this.matchReasons,
     this.explanation,
+    this.ingredientCount,
+    this.mainIngredients,
+    this.allergyIngredients,
+    this.harmfulIngredients,
+    this.qualityChecklist,
+    this.dailyAmountG,
   });
 
   factory RecommendationItemDto.fromJson(Map<String, dynamic> json) => _$RecommendationItemDtoFromJson(json);
@@ -58,12 +77,14 @@ class RecommendationResponseDto {
   final bool isCached;
   @JsonKey(name: 'last_recommended_at')
   final DateTime? lastRecommendedAt;
+  final String? message;
 
   RecommendationResponseDto({
     required this.petId,
     required this.items,
     this.isCached = false,
     this.lastRecommendedAt,
+    this.message,
   });
 
   factory RecommendationResponseDto.fromJson(Map<String, dynamic> json) => _$RecommendationResponseDtoFromJson(json);

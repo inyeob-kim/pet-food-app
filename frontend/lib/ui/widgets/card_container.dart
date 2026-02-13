@@ -4,15 +4,15 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_shadows.dart';
 
-/// 카드 컨테이너 위젯 (DESIGN_GUIDE.md v4.1 - Data-Driven Premium Platform Edition)
+/// 카드 컨테이너 위젯 (HeyGeno Landing Style)
 /// 
 /// 규칙:
-/// - padding: AppSpacing.xl (24px) 넉넉하게
-/// - borderRadius: AppRadius.md (12px)
+/// - padding: AppSpacing.xl (24px) 또는 p-6 sm:p-8 (24px-32px)
+/// - borderRadius: AppRadius.lg (16px) - rounded-2xl
 /// - backgroundColor: AppColors.surface (White)
-/// - border: 얇은 회색 border (1px, #E5E7EB)
-/// - shadow: 미세한 shadow (0 2px 6px rgba(0,0,0,0.03))
-class CardContainer extends StatelessWidget {
+/// - border: border-2 border-gray-100 hover:border-gray-200
+/// - shadow: shadow-sm hover:shadow-md
+class CardContainer extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final Color? backgroundColor;
@@ -31,40 +31,63 @@ class CardContainer extends StatelessWidget {
     this.backgroundColor,
     this.onTap,
     this.showBorder = true,
-    this.showShadow = true, // v4.1: Premium shadow 기본 사용
+    this.showShadow = true,
     this.borderColor,
     this.borderWidth,
     this.isHomeStyle = false, // Legacy 호환성
   });
 
   @override
+  State<CardContainer> createState() => _CardContainerState();
+}
+
+class _CardContainerState extends State<CardContainer> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    // DESIGN_GUIDE v4.1: padding은 AppSpacing.xl (24px)로 통일
-    final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.xl);
+    // HeyGeno Landing: padding은 AppSpacing.xl (24px)로 통일
+    final effectivePadding = widget.padding ?? const EdgeInsets.all(AppSpacing.xl);
     
-    // DESIGN_GUIDE v4.1: 카드 배경은 surface (White)
-    final effectiveBackgroundColor = backgroundColor ?? AppColors.surface;
+    // HeyGeno Landing: 카드 배경은 surface (White)
+    final effectiveBackgroundColor = widget.backgroundColor ?? AppColors.surface;
     
-    // DESIGN_GUIDE v4.1: borderRadius는 AppRadius.md (12px)
-    final effectiveBorderRadius = BorderRadius.circular(AppRadius.md);
+    // HeyGeno Landing: borderRadius는 AppRadius.lg (16px) - rounded-2xl
+    final effectiveBorderRadius = BorderRadius.circular(AppRadius.lg);
     
-    final content = Container(
+    // HeyGeno Landing: border는 border-2 (2px)
+    final effectiveBorderWidth = widget.borderWidth ?? 2.0;
+    final effectiveBorderColor = widget.borderColor ?? 
+        (_isHovered ? AppColors.border : const Color(0xFFF3F4F6)); // border-gray-100 hover:border-gray-200
+    
+    // HeyGeno Landing: shadow-sm hover:shadow-md
+    final effectiveShadow = widget.showShadow 
+        ? (_isHovered ? AppShadows.cardHover : AppShadows.card)
+        : null;
+    
+    final content = MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
       padding: effectivePadding,
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
         borderRadius: effectiveBorderRadius,
-        border: showBorder ? Border.all(
-          color: borderColor ?? AppColors.border, // #E5E7EB
-          width: borderWidth ?? 1,
+          border: widget.showBorder ? Border.all(
+            color: effectiveBorderColor,
+            width: effectiveBorderWidth,
         ) : null,
-        boxShadow: showShadow ? AppShadows.card : null, // Premium shadow
+          boxShadow: effectiveShadow,
+        ),
+        child: widget.child,
       ),
-      child: child,
     );
 
-    if (onTap != null) {
+    if (widget.onTap != null) {
       return InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         borderRadius: effectiveBorderRadius,
         child: content,
       );

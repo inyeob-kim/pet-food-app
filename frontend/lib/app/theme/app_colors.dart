@@ -9,11 +9,12 @@ import 'package:flutter/material.dart';
 /// - Neutral = 데이터 기반 구조
 class AppColors {
   // ============================================
-  // 🔵 Brand Primary (Core Identity)
+  // 🔵 Brand Primary (Core Identity) - HeyGeno Landing Style
   // ============================================
-  static const Color primary = Color(0xFF1D4ED8); // Deep Data Blue
+  static const Color primary = Color(0xFF2563EB); // Blue 600 (HeyGeno Landing)
   static const Color primaryHover = Color(0xFF1E40AF);
-  static const Color primaryLight = Color(0xFFE6ECFA); // 연한 블루 배경
+  static const Color primaryLight = Color(0xFFEFF6FF); // Blue 50 (HeyGeno Landing)
+  static const Color primaryLighter = Color(0xFFDBEAFE); // Blue 100 (HeyGeno Landing)
 
   // ============================================
   // 🟢 Status Color (상태 전용)
@@ -28,15 +29,16 @@ class AppColors {
   static const Color dropLight = Color(0xFFFEE2E2); // 연한 레드 배경
 
   // ============================================
-  // ⚪ Premium Neutral
+  // ⚪ Premium Neutral - HeyGeno Landing Style
   // ============================================
-  static const Color background = Color(0xFFF8F8F6); // Premium Neutral (완전 화이트 아님)
+  static const Color background = Color(0xFFFFFFFF); // White (HeyGeno Landing)
   static const Color surface = Color(0xFFFFFFFF); // White (카드 배경)
-  static const Color surfaceLight = Color(0xFFF9FAFB); // Legacy 호환성 (점진적 제거 예정)
+  static const Color surfaceLight = Color(0xFFEFF6FF); // Light Blue (HeyGeno Landing - 섹션 배경)
   
-  // 텍스트
-  static const Color textPrimary = Color(0xFF0F172A); // Dark Slate
-  static const Color textSecondary = Color(0xFF6B7280); // Gray 500
+  // 텍스트 - HeyGeno Landing Style
+  static const Color textPrimary = Color(0xFF0F172A); // Slate 900 (HeyGeno Landing)
+  static const Color textSecondary = Color(0xFF475569); // Slate 600 (HeyGeno Landing)
+  static const Color textMuted = Color(0xFF717182); // HeyGeno Landing
   
   // 경계선
   static const Color border = Color(0xFFE5E7EB); // Gray 200
@@ -131,7 +133,4 @@ class AppColors {
   static Color primaryBorder = primary.withOpacity(0.18); // Blue with opacity
   static Color aiBorder = const Color(0xFF7C3AED).withOpacity(0.18);
   static Color aiBorderStrong = const Color(0xFF7C3AED).withOpacity(0.22);
-
-  // Legacy (호환성)
-  static const Color textMuted = textSecondary;
 }

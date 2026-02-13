@@ -1,0 +1,286 @@
+---
+alwaysApply: true
+---
+
+# HeyGeno Landing 디자인 시스템 가이드
+
+이 문서는 `heygeno-landing` 디렉토리의 디자인 시스템을 분석하여 정리한 가이드입니다.
+
+## 색상 시스템 (Color System)
+
+### Primary Colors
+- **Primary Blue**: `#2563EB` (Blue 600)
+  - 주요 CTA 버튼, 브랜드 색상, 강조 텍스트
+  - 사용 예: 버튼 배경, 브랜드 로고, 강조 텍스트 스팬
+
+- **Dark Blue**: `#1E3A8A` (Blue 800)
+  - 다크 섹션 배경 (Final CTA 등)
+
+### Text Colors
+- **Text Primary**: `#0F172A` (Slate 900)
+  - 제목, 주요 텍스트
+  - 사용 예: h1-h3, 카드 제목
+
+- **Text Secondary**: `#475569` (Slate 600)
+  - 본문, 설명 텍스트
+  - 사용 예: p 태그, 카드 설명
+
+- **Text Muted**: `#717182`
+  - 보조 텍스트
+
+### Background Colors
+- **White**: `#FFFFFF`
+  - 기본 배경, 카드 배경
+
+- **Light Blue**: `#EFF6FF` (Blue 50)
+  - 섹션 배경 (Solution Section 등)
+
+- **Lighter Blue**: `#DBEAFE` (Blue 100)
+  - 아이콘 배경, 체크마크 배경
+
+- **Blue 100**: `#DBEAFE`
+  - Final CTA의 서브텍스트
+
+### Accent Colors
+- **Red**: `#EF4444` (Red 500)
+  - 경고/알림 아이콘
+
+- **Teal**: `#14B8A6` (Teal 500)
+  - 특정 기능 강조
+
+- **Amber**: `#F59E0B` (Amber 500)
+  - 리워드/혜택 강조
+
+### Border Colors
+- **Border Light**: `#E5E7EB` (Gray 200)
+  - 카드 테두리, 버튼 테두리
+
+- **Border Muted**: `rgba(0, 0, 0, 0.1)`
+  - 기본 테두리
+
+## 타이포그래피 (Typography)
+
+### Font Sizes
+- **Hero/Display**: `text-3xl sm:text-4xl lg:text-5xl xl:text-6xl` (30px-60px)
+  - 메인 헤드라인
+
+- **Section Title**: `text-3xl sm:text-4xl lg:text-5xl` (30px-48px)
+  - 섹션 제목 (h2)
+
+- **Card Title**: `text-lg sm:text-xl` (18px-20px)
+  - 카드 제목 (h3)
+
+- **Body Large**: `text-base sm:text-lg lg:text-xl` (16px-20px)
+  - 큰 본문 텍스트
+
+- **Body**: `text-sm sm:text-base` (14px-16px)
+  - 기본 본문 텍스트
+
+- **Small**: `text-xs sm:text-sm` (12px-14px)
+  - 작은 텍스트, 캡션
+
+- **Brand Label**: `text-xs sm:text-sm` (12px-14px)
+  - 브랜드 라벨 (uppercase, tracking-wider)
+
+### Font Weights
+- **Bold**: `font-bold` (700)
+  - 제목, 강조 텍스트
+
+- **Semibold**: `font-semibold` (600)
+  - 버튼, 라벨
+
+- **Medium**: `font-medium` (500)
+  - 기본 텍스트
+
+- **Normal**: `font-normal` (400)
+  - 본문
+
+### Line Heights
+- **Tight**: `leading-tight` (1.25)
+  - 제목
+
+- **Snug**: `leading-snug` (1.375)
+  - 카드 제목
+
+- **Relaxed**: `leading-relaxed` (1.625)
+  - 본문
+
+### Letter Spacing
+- **Wider**: `tracking-wider` (0.05em)
+  - 브랜드 라벨 (uppercase)
+
+## 간격 시스템 (Spacing System)
+
+### Container
+- **Max Width**: `max-w-7xl` (1280px)
+  - 메인 컨테이너
+
+- **Max Width Medium**: `max-w-4xl` (896px)
+  - 중간 컨테이너
+
+- **Max Width Small**: `max-w-2xl` (672px)
+  - 작은 컨테이너
+
+### Padding
+- **Section Padding**: `py-16 sm:py-20 lg:py-24` (64px-96px)
+  - 섹션 상하 패딩
+
+- **Container Padding**: `px-4 sm:px-6 lg:px-8` (16px-32px)
+  - 컨테이너 좌우 패딩
+
+- **Card Padding**: `p-6 sm:p-8` (24px-32px)
+  - 카드 내부 패딩
+
+- **Button Padding**: `px-8 py-4` 또는 `px-8 sm:px-10 py-4 sm:py-5`
+  - 버튼 패딩
+
+### Gap
+- **Section Gap**: `gap-6 sm:gap-8` (24px-32px)
+  - 그리드/플렉스 간격
+
+- **Small Gap**: `gap-3` (12px)
+  - 작은 요소 간격
+
+- **Large Gap**: `gap-12 lg:gap-16` (48px-64px)
+  - 큰 요소 간격
+
+### Margin
+- **Section Margin Bottom**: `mb-12 sm:mb-16` 또는 `mb-16 sm:mb-20`
+  - 섹션 제목 하단 여백
+
+## Border Radius
+
+- **Card**: `rounded-2xl` (16px)
+  - 카드, 섹션 컨테이너
+
+- **Button**: `rounded-xl` (12px)
+  - 버튼
+
+- **Icon Container**: `rounded-2xl` (16px)
+  - 아이콘 배경 컨테이너
+
+- **Pill**: `rounded-full` (999px)
+  - 완전히 둥근 형태 (배지 등)
+
+- **Small**: `rounded-sm` (4px)
+  - 작은 요소
+
+## 그림자 (Shadows)
+
+- **Card Default**: `shadow-sm`
+  - 기본 카드 그림자
+
+- **Card Hover**: `hover:shadow-md`
+  - 카드 호버 시
+
+- **Button**: `shadow-lg hover:shadow-xl`
+  - 버튼 기본/호버
+
+- **Large**: `shadow-2xl`
+  - 큰 요소 (모달 등)
+
+## 레이아웃 (Layout)
+
+### Grid System
+- **Mobile**: `grid-cols-1` (1열)
+- **Tablet**: `md:grid-cols-2` (2열)
+- **Desktop**: `lg:grid-cols-3` (3열)
+
+### Flex Layout
+- **Responsive Direction**: `flex-col sm:flex-row`
+  - 모바일: 세로, 데스크톱: 가로
+
+- **Items**: `items-center`, `items-stretch`
+- **Justify**: `justify-between`, `justify-center`
+
+## 컴포넌트 스타일
+
+### Navigation
+- **Background**: `bg-white/80 backdrop-blur-lg`
+- **Border**: `border-b border-gray-200`
+- **Height**: `h-16 sm:h-20`
+- **Z-index**: `z-50`
+
+### Hero Section
+- **Background**: `bg-white`
+- **Padding**: `pt-20 sm:pt-24 lg:pt-32 pb-16 sm:pb-20 lg:pb-28`
+- **Layout**: `grid lg:grid-cols-2 gap-12 lg:gap-16`
+
+### Cards
+- **Background**: `bg-white`
+- **Border**: `border-2 border-gray-100 hover:border-gray-200`
+- **Border Radius**: `rounded-2xl`
+- **Padding**: `p-6 sm:p-8`
+- **Shadow**: `shadow-sm hover:shadow-md`
+- **Transition**: `transition-all`
+
+### Buttons
+
+#### Primary Button
+- **Background**: `#2563EB`
+- **Text**: `text-white`
+- **Padding**: `px-8 py-4` 또는 `px-8 sm:px-10 py-4 sm:py-5`
+- **Border Radius**: `rounded-xl`
+- **Shadow**: `shadow-lg hover:shadow-xl`
+- **Font**: `font-semibold text-base sm:text-lg`
+
+#### Secondary Button
+- **Background**: `transparent`
+- **Text**: `#475569`
+- **Border**: `border-2 border-gray-200` 또는 `border-white`
+- **Hover**: `hover:bg-gray-50` 또는 `hover:bg-white/10`
+
+### Icon Containers
+- **Size**: `w-12 h-12 sm:w-14 sm:h-14`
+- **Background**: `#EFF6FF` (Light Blue)
+- **Border Radius**: `rounded-2xl`
+- **Icon Size**: `w-6 h-6 sm:w-7 sm:h-7`
+- **Icon Color**: `#2563EB` (Primary Blue)
+
+### Checkmarks/Bullets
+- **Size**: `w-5 h-5`
+- **Background**: `#DBEAFE`
+- **Border Radius**: `rounded-full`
+- **Icon Size**: `w-3 h-3`
+- **Icon Color**: `#2563EB`
+
+## 반응형 브레이크포인트
+
+- **Mobile**: 기본 (< 640px)
+- **sm**: `640px` (40rem)
+- **md**: `768px` (48rem)
+- **lg**: `1024px` (64rem)
+- **xl**: `1280px` (80rem)
+
+## 애니메이션 & 트랜지션
+
+- **Transition**: `transition-all`
+- **Duration**: `duration-300` (0.3s), `duration-500` (0.5s)
+- **Easing**: `ease-out`, `ease-in-out`
+- **Hover Scale**: `hover:scale-105`, `active:scale-95`
+- **Hover Translate**: `group-hover:translate-x-1`
+
+## 특수 효과
+
+### Backdrop Blur
+- **Navigation**: `backdrop-blur-lg`
+- **Modal**: `backdrop-blur-sm`
+
+### Gradient Backgrounds
+- **Radial Gradients**: Final CTA 섹션 배경
+  - `radial-gradient(circle, #60A5FA 0%, transparent 70%)`
+  - `radial-gradient(circle, #14B8A6 0%, transparent 70%)`
+
+### Opacity
+- **Semi-transparent**: `bg-white/80`, `bg-white/90`
+- **Text Muted**: `text-white/80`
+
+## 디자인 원칙
+
+1. **일관성**: 모든 섹션은 동일한 패딩/마진 시스템 사용
+2. **계층 구조**: 색상과 타이포그래피로 명확한 정보 위계
+3. **반응형 우선**: 모바일 퍼스트 접근 방식
+4. **부드러운 전환**: 모든 인터랙티브 요소에 transition 적용
+5. **시각적 피드백**: 호버/액티브 상태 명확히 표현
+6. **여백 활용**: 충분한 여백으로 가독성 확보
+7. **그리드 시스템**: 일관된 그리드로 레이아웃 구성

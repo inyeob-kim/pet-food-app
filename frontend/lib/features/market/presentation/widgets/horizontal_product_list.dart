@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../app/router/route_paths.dart';
 import '../../../../../ui/components/product_tile.dart';
-import 'product_card.dart';
+import '../../../../../data/models/product_dto.dart';
 
 /// 가로 스크롤 상품 리스트 (토스/폴센트 스타일 - ProductTile 사용)
 class HorizontalProductList extends StatelessWidget {
-  final List<ProductCardData> products;
+  final List<ProductDto> products;
   final Function(String productId)? onProductTap;
 
   const HorizontalProductList({
@@ -30,15 +29,7 @@ class HorizontalProductList extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final product = products[index];
-          final tileData = ProductTileDataHelper.fromCardData(
-            id: product.id,
-            brandName: product.brandName,
-            productName: product.productName,
-            imageUrl: product.imageUrl,
-            price: product.price,
-            originalPrice: product.originalPrice,
-            discountRate: product.discountRate,
-          );
+          final tileData = ProductTileDataHelper.fromProductDto(product);
           
           return SizedBox(
             width: 170,
@@ -49,7 +40,7 @@ class HorizontalProductList extends StatelessWidget {
                   onProductTap!(product.id);
                 } else {
                   // 기본 동작: 상품 상세 페이지로 이동
-                  context.push(RoutePaths.productDetailPath(product.id));
+                  context.push('/products/${product.id}');
                 }
               },
             ),

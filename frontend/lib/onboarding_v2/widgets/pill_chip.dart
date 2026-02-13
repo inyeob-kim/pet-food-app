@@ -30,15 +30,24 @@ class PillChip extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primaryBlue // 결정/이동용
+              ? AppColors.primary // #2563EB
               : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.badge), // rounded-sm (8px)
           border: Border.all(
             color: selected
-                ? AppColors.primaryBlue
-                : AppColors.divider,
+                ? AppColors.primary
+                : AppColors.border,
             width: selected ? 2 : 1,
           ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,

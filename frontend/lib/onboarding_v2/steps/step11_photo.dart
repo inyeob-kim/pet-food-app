@@ -6,6 +6,7 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_radius.dart';
+import '../../app/theme/app_shadows.dart';
 
 /// Step 11: Photo - DESIGN_GUIDE v1.0 준수
 class Step11Photo extends StatefulWidget {
@@ -82,16 +83,17 @@ class _Step11PhotoState extends State<Step11Photo> {
                     scale: 0.95 + (0.05 * value.clamp(0.0, 1.0)),
                     child: Container(
                       width: double.infinity,
-                      height: 256,
+                      height: 280,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.card), // rounded-2xl
                         border: Border.all(
-                          color: AppColors.primaryBlue,
+                          color: AppColors.primary,
                           width: 2,
                         ),
+                        boxShadow: AppShadows.cardHover,
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.md - 2),
+                        borderRadius: BorderRadius.circular(AppRadius.card - 2),
                         child: Image.file(
                           File(_pickedFile?.path ?? widget.value),
                           fit: BoxFit.cover,
@@ -106,39 +108,38 @@ class _Step11PhotoState extends State<Step11Photo> {
               onTap: () => _showImageSourceDialog(context),
               child: Container(
                 width: double.infinity,
-                height: 256,
+                height: 280,
                 decoration: BoxDecoration(
                   color: AppColors.background,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.card), // rounded-2xl
                   border: Border.all(
-                    color: AppColors.divider,
-                    width: 1,
+                    color: AppColors.border,
+                    width: 2,
+                    style: BorderStyle.solid,
                   ),
+                  boxShadow: AppShadows.card,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 64,
-                      height: 64,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.primaryLight,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.divider,
-                          width: 1,
-                        ),
                       ),
                       child: const Icon(
                         Icons.add_photo_alternate_outlined,
-                        size: 28,
-                        color: AppColors.iconMuted,
+                        size: 36,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.lg),
                     Text(
                       '사진을 선택해주세요',
                       style: AppTypography.body.copyWith(
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -163,35 +164,52 @@ class _Step11PhotoState extends State<Step11Photo> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+            top: Radius.circular(AppRadius.lg), // rounded-2xl
           ),
+          boxShadow: AppShadows.modal,
         ),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 드래그 핸들 (design.mdc: 명확한 시각적 피드백)
               Container(
                 margin: const EdgeInsets.only(
                   top: AppSpacing.md,
-                  bottom: AppSpacing.sm,
+                  bottom: AppSpacing.md,
                 ),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(2),
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
+              // 갤러리 선택
               ListTile(
-                leading: const Icon(
-                  Icons.photo_library_outlined,
-                  color: AppColors.iconPrimary,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
+                ),
+                leading: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: const Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
                 ),
                 title: Text(
                   '갤러리에서 선택',
                   style: AppTypography.body.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -200,14 +218,29 @@ class _Step11PhotoState extends State<Step11Photo> {
                   _pickImage(ImageSource.gallery);
                 },
               ),
+              // 사진 촬영
               ListTile(
-                leading: const Icon(
-                  Icons.camera_alt_outlined,
-                  color: AppColors.iconPrimary,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
+                ),
+                leading: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
                 ),
                 title: Text(
                   '사진 촬영',
                   style: AppTypography.body.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -216,7 +249,7 @@ class _Step11PhotoState extends State<Step11Photo> {
                   _pickImage(ImageSource.camera);
                 },
               ),
-              const SizedBox(height: AppSpacing.lg),
+              SizedBox(height: AppSpacing.lg + MediaQuery.of(context).padding.bottom),
             ],
           ),
         ),

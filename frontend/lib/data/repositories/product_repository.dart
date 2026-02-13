@@ -72,14 +72,14 @@ class ProductRepository {
   }
 
   /// 추천 상품 목록 조회 (실시간 계산)
-  Future<RecommendationResponseDto> getRecommendations(String petId) async {
+  Future<RecommendationResponseDto> getRecommendations(String petId, {bool skipLlm = false}) async {
     final startTime = DateTime.now();
-    print('[ProductRepository] 🌐 API 호출 시작: GET ${Endpoints.productRecommendations}?pet_id=$petId');
+    print('[ProductRepository] 🌐 API 호출 시작: GET ${Endpoints.productRecommendations}?pet_id=$petId&skip_llm=$skipLlm');
     
     try {
       final response = await _apiClient.get(
         Endpoints.productRecommendations,
-        queryParameters: {'pet_id': petId},
+        queryParameters: {'pet_id': petId, 'skip_llm': skipLlm},
       );
 
       final duration = DateTime.now().difference(startTime);

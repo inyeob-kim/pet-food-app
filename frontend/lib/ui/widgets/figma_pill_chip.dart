@@ -20,31 +20,24 @@ class FigmaPillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // DESIGN_GUIDE v2.2
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.primary // Emerald Green
-                : AppColors.surfaceLight, // 연한 회색
-            borderRadius: BorderRadius.circular(AppRadius.pill), // 완전 둥근 CTA
-            border: selected
-                ? null
-                : Border.all(color: AppColors.line, width: 1),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: selected
-                    ? Colors.white
-                    : AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // DESIGN_GUIDE v2.2
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary // Blue
+              : const Color(0xFFF3F4F6), // Gray 100 - 회색 배경
+          borderRadius: BorderRadius.circular(AppRadius.pill), // 완전 둥근 CTA
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: selected
+                  ? Colors.white
+                  : AppColors.textSecondary, // 회색 텍스트
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

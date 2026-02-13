@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../../app/theme/app_typography.dart';
-import '../../../../../app/theme/app_colors.dart';
-import '../../../../../core/utils/price_formatter.dart';
-import 'product_card.dart';
+import '../../../../../data/models/product_dto.dart';
 
 /// 폴센트 스타일 가로 스크롤 상품 카드
 class HorizontalProductCard extends StatefulWidget {
-  final ProductCardData data;
+  final ProductDto product;
   final double width;
   final VoidCallback? onTap;
 
   const HorizontalProductCard({
     super.key,
-    required this.data,
+    required this.product,
     this.width = 170,
     this.onTap,
   });
@@ -22,8 +20,6 @@ class HorizontalProductCard extends StatefulWidget {
 }
 
 class _HorizontalProductCardState extends State<HorizontalProductCard> {
-  bool _isImageLoading = true;
-  bool _hasImageError = false;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +48,7 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
                 children: [
                   // 브랜드명 (회색 12)
                   Text(
-                    widget.data.brandName,
+                    widget.product.brandName,
                     style: AppTypography.caption.copyWith(
                       color: Colors.grey.shade600,
                       fontSize: 12,
@@ -63,7 +59,7 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
                   const SizedBox(height: 3),
                   // 상품명 (14 semibold 2줄)
                   Text(
-                    widget.data.productName,
+                    widget.product.productName,
                     style: AppTypography.body2.copyWith(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -72,9 +68,17 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  // 가격 (검정 bold, 파란색 금지) + 할인율
-                  _buildPriceSection(),
+                  if (widget.product.sizeLabel != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.product.sizeLabel!,
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.grey.shade600,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                  // TODO: 가격 정보는 ProductOffer에서 가져와야 함 (API 확장 필요)
                 ],
               ),
             ),
@@ -85,64 +89,8 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
   }
 
   Widget _buildImage() {
-    if (widget.data.imageUrl == null || widget.data.imageUrl!.isEmpty) {
-      return _buildPlaceholder();
-    }
-
-    if (_isImageLoading && !_hasImageError) {
-      return _buildImageSkeleton();
-    }
-
-    if (_hasImageError) {
-      return _buildPlaceholder();
-    }
-
-    return Image.network(
-      widget.data.imageUrl!,
-      fit: BoxFit.cover,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          if (_isImageLoading) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                setState(() {
-                  _isImageLoading = false;
-                });
-              }
-            });
-          }
-          return child;
-        }
-        return _buildImageSkeleton();
-      },
-      errorBuilder: (context, error, stackTrace) {
-        if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() {
-              _isImageLoading = false;
-              _hasImageError = true;
-            });
-          });
-        }
-        return _buildPlaceholder();
-      },
-    );
-  }
-
-  Widget _buildImageSkeleton() {
-    return Container(
-      color: Colors.grey.shade200,
-      child: Center(
-        child: SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
-          ),
-        ),
-      ),
-    );
+    // TODO: ProductDto에 imageUrl 추가 시 사용
+    return _buildPlaceholder();
   }
 
   Widget _buildPlaceholder() {
@@ -158,33 +106,5 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
     );
   }
 
-  Widget _buildPriceSection() {
-    final hasDiscount = widget.data.discountRate != null && widget.data.discountRate! > 0;
-    
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          PriceFormatter.formatWithCurrency(widget.data.price),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-            fontSize: 16,
-          ),
-        ),
-        if (hasDiscount) ...[
-          const SizedBox(width: 6),
-          Text(
-            '-${widget.data.discountRate!.toInt()}%',
-            style: TextStyle(
-              color: AppColors.dangerRed,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
 
 }

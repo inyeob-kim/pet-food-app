@@ -30,15 +30,19 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
           width: 1,
         ),
       ),
-      title: Text(
-        title,
-        style: AppTypography.h3.copyWith(
-          color: AppColors.textPrimary, // #0F172A
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
+      title: Padding(
+        padding: const EdgeInsets.only(left: 15), // 15px 왼쪽 패딩
+        child: Text(
+          title,
+          style: AppTypography.h3.copyWith(
+            color: AppColors.textPrimary, // #0F172A
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       titleSpacing: 0,
+      centerTitle: false,
       iconTheme: IconThemeData(
         color: AppColors.textPrimary, // 헤더 아이콘은 Warm Dark Gray
       ),

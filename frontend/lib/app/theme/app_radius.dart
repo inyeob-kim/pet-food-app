@@ -22,8 +22,8 @@ class AppRadius {
   static const double buttonModal = md;
   static const double buttonPill = pill; // 완전한 둥근 모서리
   
-  // Card
-  static const double card = md; // 12px
+  // Card - HeyGeno Landing Style
+  static const double card = lg; // 16px (HeyGeno Landing: rounded-2xl)
   
   // Chip/Badge
   static const double chip = sm; // 8px

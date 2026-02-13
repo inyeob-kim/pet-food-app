@@ -3,10 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'route_paths.dart';
+import 'router_guards.dart';
+import 'route_validators.dart';
 import '../../ui/widgets/bottom_nav_shell.dart';
 import '../../features/onboarding/presentation/screens/splash_screen.dart';
 import '../../features/onboarding/presentation/screens/initial_splash_screen.dart';
-import '../../domain/services/onboarding_service.dart';
 import '../../features/pet_profile/presentation/screens/pet_profile_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/watch/presentation/screens/watch_screen.dart';
@@ -15,13 +16,15 @@ import '../../features/market/presentation/screens/market_screen.dart';
 import '../../features/me/presentation/screens/my_screen.dart';
 import '../../features/product_detail/presentation/screens/product_detail_screen.dart';
 import '../../features/pet_profile/presentation/screens/pet_profile_detail_screen.dart';
-import '../../features/home/presentation/screens/recommendation_screen.dart';
 import '../../features/me/presentation/screens/privacy_settings_screen.dart';
 import '../../features/me/presentation/screens/help_screen.dart';
 import '../../features/me/presentation/screens/contact_screen.dart';
 import '../../features/me/presentation/screens/app_info_screen.dart';
+import '../../features/home/presentation/screens/recommendation_animation_screen.dart';
+import '../../features/home/presentation/screens/recommendation_detail_screen.dart';
 import '../../onboarding_v2/onboarding_flow.dart';
 import '../../data/models/pet_summary_dto.dart';
+import '../../data/models/recommendation_dto.dart';
 
 // 루트 네비게이터 키 (바텀 탭 밖의 페이지용) - 전역으로 선언하여 접근 가능하게
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -42,40 +45,7 @@ GoRouter _createRouter(Ref ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: RoutePaths.initialSplash,
-    redirect: (context, state) async {
-      final location = state.uri.path;
-      
-      // 초기 스플래시 화면은 리다이렉트하지 않음 (자체적으로 처리)
-      if (location == RoutePaths.initialSplash) {
-        return null;
-      }
-
-      // 상세 페이지 및 펫 추가 페이지는 온보딩 체크 제외
-      if (location.startsWith('/products/') || 
-          location == RoutePaths.petProfileDetail ||
-          location == RoutePaths.onboardingV2) {
-        return null;
-      }
-
-      // 온보딩 서비스를 통해 완료 여부 확인
-      final onboardingService = ref.read(onboardingServiceProvider);
-      final isCompleted = await onboardingService.isOnboardingCompleted();
-
-      // A) 온보딩 미완료 → 온보딩으로 리다이렉트
-      if (!isCompleted) {
-        if (location != RoutePaths.onboarding) {
-          return RoutePaths.onboarding;
-        }
-        return null; // 이미 온보딩 화면이면 그대로
-      }
-
-      // B) 온보딩 완료 → 온보딩 화면 접근 시 홈으로 리다이렉트
-      if (isCompleted && location == RoutePaths.onboarding) {
-        return RoutePaths.home;
-      }
-
-      return null; // 리다이렉트 불필요
-    },
+    redirect: (context, state) => onboardingGuard(context, state, ref),
     routes: [
       // 초기 스플래시 스크린 (앱 시작 시 첫 화면)
       GoRoute(
@@ -109,6 +79,38 @@ GoRouter _createRouter(Ref ref) {
         path: RoutePaths.petProfile,
         name: RoutePaths.petProfile,
         builder: (context, state) => const PetProfileScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.recommendationAnimation,
+        name: RoutePaths.recommendationAnimation,
+        builder: (context, state) {
+          // 데이터 검증
+          final errorWidget = validateRecommendationAnimationRoute(state);
+          if (errorWidget != null) {
+            return errorWidget;
+          }
+          final petSummary = state.extra as PetSummaryDto;
+          return RecommendationAnimationScreen(petSummary: petSummary);
+        },
+      ),
+      GoRoute(
+        path: RoutePaths.recommendationDetail,
+        name: RoutePaths.recommendationDetail,
+        builder: (context, state) {
+          // 데이터 검증
+          final errorWidget = validateRecommendationDetailRoute(state);
+          if (errorWidget != null) {
+            return errorWidget;
+          }
+          final args = state.extra as Map<String, dynamic>;
+          final petSummary = args['petSummary'] as PetSummaryDto;
+          final recommendations = args['recommendations'] as RecommendationResponseDto;
+          
+          return RecommendationDetailScreen(
+            petSummary: petSummary,
+            recommendations: recommendations,
+          );
+        },
       ),
       
       // 메인 탭 ShellRoute
@@ -210,12 +212,6 @@ GoRouter _createRouter(Ref ref) {
           final petSummary = state.extra as PetSummaryDto;
           return PetProfileDetailScreen(petSummary: petSummary);
         },
-      ),
-      // 추천 페이지
-      GoRoute(
-        path: RoutePaths.recommendation,
-        name: RoutePaths.recommendation,
-        builder: (context, state) => const RecommendationScreen(),
       ),
     ],
   );

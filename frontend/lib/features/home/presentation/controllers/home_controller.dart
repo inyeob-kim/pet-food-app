@@ -2,11 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/product_repository.dart';
 import '../../../../data/models/recommendation_dto.dart';
+import '../../../../data/models/recommendation_extensions.dart';
 import '../../../../data/models/pet_summary_dto.dart';
 import '../../../../domain/services/pet_service.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/providers/pet_id_provider.dart';
+import '../../../../core/storage/secure_storage.dart';
+import '../../../../core/storage/storage_keys.dart';
 
 /// 홈 화면 상태 타입 (A/B/C 분기)
 enum HomeStateType {
@@ -25,6 +28,7 @@ class HomeState {
   // UPDATED: Dynamic recommendation UI to reduce reload fatigue
   final DateTime? lastRecommendedAt;
   final bool hasRecentRecommendation;
+  final String? userNickname; // 유저 닉네임
 
   HomeState({
     HomeStateType? stateType,
@@ -34,6 +38,7 @@ class HomeState {
     this.error,
     this.lastRecommendedAt,
     this.hasRecentRecommendation = false,
+    this.userNickname,
   }) : stateType = stateType ?? HomeStateType.loading;
 
   bool get hasPet => stateType == HomeStateType.hasPet && petSummary != null;
@@ -63,6 +68,7 @@ class HomeState {
     String? error,
     DateTime? lastRecommendedAt,
     bool? hasRecentRecommendation,
+    String? userNickname,
   }) {
     return HomeState(
       stateType: stateType ?? this.stateType,
@@ -72,6 +78,7 @@ class HomeState {
       error: error ?? this.error,
       lastRecommendedAt: lastRecommendedAt ?? this.lastRecommendedAt,
       hasRecentRecommendation: hasRecentRecommendation ?? this.hasRecentRecommendation,
+      userNickname: userNickname ?? this.userNickname,
     );
   }
 }
@@ -107,17 +114,26 @@ class HomeController extends StateNotifier<HomeState> {
       // 2. Pet ID를 provider에 저장
       _ref.read(currentPetIdProvider.notifier).state = petSummary.petId;
 
-      // 3. B 상태: pet 존재 (추천은 버튼 클릭 시 로드)
+      // 3. 유저 닉네임 로드
+      String? nickname;
+      try {
+        nickname = await SecureStorage.read(StorageKeys.draftNickname);
+      } catch (e) {
+        print('[HomeController] 닉네임 로드 실패: $e');
+      }
+      
+      // 4. B 상태: pet 존재 (추천은 버튼 클릭 시 로드)
       state = state.copyWith(
         stateType: HomeStateType.hasPet,
         petSummary: petSummary,
         isLoadingRecommendations: false,  // 초기에는 로딩하지 않음
         recommendations: null,  // 초기에는 추천 없음
+        userNickname: nickname,
       );
     } catch (e) {
       final failure = e is Exception
           ? handleException(e)
-          : ServerFailure('알 수 없는 오류가 발생했습니다: ${e.toString()}');
+          : ServerFailure('펫 정보를 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
       state = state.copyWith(
         stateType: HomeStateType.error,
         error: failure.message,
@@ -144,25 +160,21 @@ class HomeController extends StateNotifier<HomeState> {
       }
       
       // UPDATED: Dynamic recommendation UI to reduce reload fatigue - 캐싱 정보 기반 상태 업데이트
-      final lastRecommendedAt = recommendations.lastRecommendedAt;
-      final isCached = recommendations.isCached;
-      final hasRecent = isCached || 
-          (lastRecommendedAt != null && DateTime.now().difference(lastRecommendedAt).inDays <= 7);
-      
+      // extension을 사용하여 hasRecent 계산
       state = state.copyWith(
         recommendations: recommendations,
         isLoadingRecommendations: false,
-        lastRecommendedAt: lastRecommendedAt,
-        hasRecentRecommendation: hasRecent,
+        lastRecommendedAt: recommendations.lastRecommendedAt,
+        hasRecentRecommendation: recommendations.hasRecentRecommendation,
       );
-      print('[HomeController] ✅ 상태 업데이트 완료: isLoadingRecommendations=false, hasRecentRecommendation=$hasRecent, lastRecommendedAt=$lastRecommendedAt');
+      print('[HomeController] ✅ 상태 업데이트 완료: isLoadingRecommendations=false, hasRecentRecommendation=${recommendations.hasRecentRecommendation}, lastRecommendedAt=${recommendations.lastRecommendedAt}');
     } catch (e, stackTrace) {
       final duration = DateTime.now().difference(startTime);
       print('[HomeController] ❌ 추천 데이터 로드 실패: error=$e, 소요시간=${duration.inMilliseconds}ms');
       print('[HomeController] ❌ StackTrace: $stackTrace');
       final failure = e is Exception
           ? handleException(e)
-          : ServerFailure('추천 데이터를 불러오는데 실패했습니다.');
+          : ServerFailure('추천 상품을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
       state = state.copyWith(
         isLoadingRecommendations: false,
         error: failure.message,
@@ -205,6 +217,17 @@ class HomeController extends StateNotifier<HomeState> {
     if (petSummary != null) {
       await _loadRecommendations(petSummary.petId);
     }
+  }
+  
+  /// 추천 결과 직접 설정 (애니메이션 화면에서 사용)
+  void setRecommendations(RecommendationResponseDto recommendations) {
+    // extension을 사용하여 hasRecent 계산
+    state = state.copyWith(
+      recommendations: recommendations,
+      isLoadingRecommendations: false,
+      lastRecommendedAt: recommendations.lastRecommendedAt,
+      hasRecentRecommendation: recommendations.hasRecentRecommendation,
+    );
   }
 }
 

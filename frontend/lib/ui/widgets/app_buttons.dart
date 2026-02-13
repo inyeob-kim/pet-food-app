@@ -132,7 +132,7 @@ class AppButtonRow extends StatelessWidget {
   const AppButtonRow({
     super.key,
     required this.children,
-    this.gap = AppSpacing.buttonRowGap,
+    this.gap = AppSpacing.md, // 12px - group gap
   });
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../../core/utils/price_formatter.dart';
+import '../../data/models/product_dto.dart';
 
 /// 상품 타일 데이터 모델
 class ProductTileData {
@@ -156,10 +157,24 @@ class ProductTile extends StatelessWidget {
   }
 }
 
-/// ProductCardData를 ProductTileData로 변환하는 헬퍼
-/// 기존 ProductCardData와의 호환성을 위해 제공
+/// ProductDto를 ProductTileData로 변환하는 헬퍼
 class ProductTileDataHelper {
-  /// market/presentation/widgets/product_card.dart의 ProductCardData를 변환
+  /// ProductDto를 ProductTileData로 변환
+  static ProductTileData fromProductDto(ProductDto product) {
+    return ProductTileData(
+      id: product.id,
+      brandName: product.brandName,
+      productName: product.productName,
+      imageUrl: null, // TODO: ProductDto에 imageUrl 추가 시 사용
+      price: 0, // TODO: ProductOffer에서 가격 정보 가져오기 (API 확장 필요)
+      originalPrice: null,
+      discountRate: null,
+      statusText: null,
+    );
+  }
+  
+  /// 기존 호환성을 위한 fromCardData (deprecated)
+  @Deprecated('Use fromProductDto instead')
   static ProductTileData fromCardData({
     required String id,
     required String brandName,

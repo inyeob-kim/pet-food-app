@@ -66,6 +66,13 @@ class RecommendationItem(BaseModel):
     fitness_score: float = Field(..., description="적합성 점수")
     match_reasons: Optional[List[str]] = Field(None, description="추천 이유 리스트 (기술적)")
     explanation: Optional[str] = Field(None, description="추천 이유 자연어 설명")
+    # 애니메이션용 상세 분석 데이터
+    ingredient_count: Optional[int] = Field(None, description="검출된 성분 개수")
+    main_ingredients: Optional[List[str]] = Field(None, description="주요 성분 리스트")
+    allergy_ingredients: Optional[List[str]] = Field(None, description="알레르기 성분 리스트")
+    harmful_ingredients: Optional[List[str]] = Field(None, description="유해 성분 리스트")
+    quality_checklist: Optional[List[str]] = Field(None, description="품질 체크리스트")
+    daily_amount_g: Optional[float] = Field(None, description="하루 권장 급여량 (g)")
 
 
 class RecommendationResponse(BaseModel):
@@ -74,4 +81,5 @@ class RecommendationResponse(BaseModel):
     items: List[RecommendationItem]
     is_cached: bool = Field(default=False, description="캐싱된 추천 여부")
     last_recommended_at: Optional[datetime] = Field(default=None, description="마지막 추천 시각")
+    message: Optional[str] = Field(default=None, description="추천 결과가 없을 때 사용자 친화적 메시지")
 

@@ -24,6 +24,20 @@ RecommendationItemDto _$RecommendationItemDtoFromJson(
       ?.map((e) => e as String)
       .toList(),
   explanation: json['explanation'] as String?,
+  ingredientCount: (json['ingredient_count'] as num?)?.toInt(),
+  mainIngredients: (json['main_ingredients'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  allergyIngredients: (json['allergy_ingredients'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  harmfulIngredients: (json['harmful_ingredients'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  qualityChecklist: (json['quality_checklist'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  dailyAmountG: (json['daily_amount_g'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$RecommendationItemDtoToJson(
@@ -42,6 +56,12 @@ Map<String, dynamic> _$RecommendationItemDtoToJson(
   'fitness_score': instance.fitnessScore,
   'match_reasons': instance.matchReasons,
   'explanation': instance.explanation,
+  'ingredient_count': instance.ingredientCount,
+  'main_ingredients': instance.mainIngredients,
+  'allergy_ingredients': instance.allergyIngredients,
+  'harmful_ingredients': instance.harmfulIngredients,
+  'quality_checklist': instance.qualityChecklist,
+  'daily_amount_g': instance.dailyAmountG,
 };
 
 RecommendationResponseDto _$RecommendationResponseDtoFromJson(
@@ -51,8 +71,17 @@ RecommendationResponseDto _$RecommendationResponseDtoFromJson(
   items: (json['items'] as List<dynamic>)
       .map((e) => RecommendationItemDto.fromJson(e as Map<String, dynamic>))
       .toList(),
+  isCached: json['is_cached'] as bool? ?? false,
+  lastRecommendedAt: json['last_recommended_at'] == null
+      ? null
+      : DateTime.parse(json['last_recommended_at'] as String),
 );
 
 Map<String, dynamic> _$RecommendationResponseDtoToJson(
   RecommendationResponseDto instance,
-) => <String, dynamic>{'pet_id': instance.petId, 'items': instance.items};
+) => <String, dynamic>{
+  'pet_id': instance.petId,
+  'items': instance.items,
+  'is_cached': instance.isCached,
+  'last_recommended_at': instance.lastRecommendedAt?.toIso8601String(),
+};

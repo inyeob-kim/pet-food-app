@@ -16,8 +16,8 @@ class ApiClient {
     // iOS/Android 실제 디바이스에서는 localhost 대신 Mac의 IP 사용
     final baseUrl = _getBaseUrl();
     _dio.options.baseUrl = baseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 30);
-    _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.connectTimeout = const Duration(seconds: 60);
+    _dio.options.receiveTimeout = const Duration(seconds: 90); // LLM 설명 생성 시간 고려
     _dio.options.followRedirects = false; // 리다이렉션 비활성화 (수동 처리)
     _dio.options.maxRedirects = 0;
     _dio.options.headers = {

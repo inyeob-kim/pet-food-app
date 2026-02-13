@@ -3,9 +3,12 @@ import json
 import logging
 from typing import Optional, List, Dict, Tuple
 from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.schemas.pet_summary import PetSummaryResponse
 from app.models.product import Product, ProductIngredientProfile, ProductNutritionFacts
+from app.models.ingredient_config import HarmfulIngredient, AllergenKeyword
 
 logger = logging.getLogger(__name__)
 
@@ -13,11 +16,12 @@ logger = logging.getLogger(__name__)
 class RecommendationScoringService:
     """추천 시스템 스코링 서비스 - 룰베이스 기반 점수 계산"""
     
-    # 가장 흔한 알레르겐 Top 8
+    # 가장 흔한 알레르겐 Top 8 (하위 호환성을 위해 유지, DB에서 동적으로 로드 가능)
     COMMON_ALLERGENS_DOG = ["BEEF", "DAIRY", "CHICKEN", "WHEAT", "SOY", "EGG", "LAMB", "CORN"]
     COMMON_ALLERGENS_CAT = ["BEEF", "FISH", "DAIRY", "CHICKEN"]
     
-    # 유해 성분 리스트
+    # 유해 성분 리스트 (하위 호환성을 위해 유지, DB에서 동적으로 로드 가능)
+    # DEPRECATED: DB에서 조회하도록 변경됨. _get_harmful_ingredients() 사용 권장
     HARMFUL_INGREDIENTS = [
         "인공색소", "인공향료", "BHA", "BHT", "에톡시퀸",
         "옥수수 시럽", "설탕", "소금 과다"
@@ -68,12 +72,14 @@ class RecommendationScoringService:
     BRACHYCEPHALIC_CODES = ["퍼그", "프렌치불독", "보스턴테리어", "불독"]
     
     @staticmethod
-    def calculate_safety_score(
+    async def calculate_safety_score(
         pet: PetSummaryResponse,
         product: Product,
         parsed: dict,
         ingredients_text: str = "",
-        user_prefs: dict = None
+        user_prefs: dict = None,
+        db: Optional[AsyncSession] = None,
+        harmful_ingredients_cache: Optional[List[str]] = None
     ) -> Tuple[float, List[str]]:
         """
         안전성 점수 계산 (0~100점)
@@ -114,8 +120,8 @@ class RecommendationScoringService:
                     break  # 첫 번째 매칭만 적용
         
         # 2. 유해 성분 체크 (20점 만점)
-        harmful_score, harmful_reasons = RecommendationScoringService._check_harmful_ingredients(
-            parsed, ingredients_text
+        harmful_score, harmful_reasons = await RecommendationScoringService._check_harmful_ingredients(
+            parsed, ingredients_text, db, harmful_ingredients_cache
         )
         reasons.extend(harmful_reasons)
         
@@ -195,9 +201,34 @@ class RecommendationScoringService:
         return (max(score, 0.0), reasons)
     
     @staticmethod
-    def _check_harmful_ingredients(
+    async def _get_harmful_ingredients(db: AsyncSession) -> List[str]:
+        """DB에서 활성화된 유해 성분 목록 조회"""
+        result = await db.execute(
+            select(HarmfulIngredient.name)
+            .where(HarmfulIngredient.is_active == True)
+        )
+        return [row[0] for row in result.all()]
+    
+    @staticmethod
+    async def _get_allergen_keywords(db: AsyncSession, allergen_code: str) -> List[str]:
+        """DB에서 알레르기 코드에 해당하는 키워드 목록 조회"""
+        result = await db.execute(
+            select(AllergenKeyword.keyword)
+            .where(
+                and_(
+                    AllergenKeyword.allergen_code == allergen_code,
+                    AllergenKeyword.is_active == True
+                )
+            )
+        )
+        return [row[0] for row in result.all()]
+    
+    @staticmethod
+    async def _check_harmful_ingredients(
         parsed: dict,
-        ingredients_text: str
+        ingredients_text: str,
+        db: Optional[AsyncSession] = None,
+        harmful_ingredients_cache: Optional[List[str]] = None
     ) -> Tuple[float, List[str]]:
         """유해 성분 체크 (20점 만점)"""
         score = 20.0
@@ -206,8 +237,17 @@ class RecommendationScoringService:
         ingredients_ordered = parsed.get("ingredients_ordered", [])
         all_ingredients = " ".join(ingredients_ordered).lower() + " " + ingredients_text.lower()
         
+        # DB에서 유해 성분 조회 (캐시 우선)
+        if harmful_ingredients_cache is not None:
+            harmful_ingredients = harmful_ingredients_cache
+        elif db is not None:
+            harmful_ingredients = await RecommendationScoringService._get_harmful_ingredients(db)
+        else:
+            # Fallback: 하드코딩된 리스트 사용 (하위 호환성)
+            harmful_ingredients = RecommendationScoringService.HARMFUL_INGREDIENTS
+        
         harmful_count = 0
-        for harmful in RecommendationScoringService.HARMFUL_INGREDIENTS:
+        for harmful in harmful_ingredients:
             if harmful.lower() in all_ingredients:
                 harmful_count += 1
                 score -= 5.0

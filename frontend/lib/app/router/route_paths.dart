@@ -19,6 +19,8 @@ class RoutePaths {
   static const String productDetail = '/products/:id';
   static const String petProfileDetail = '/pet-profile-detail';
   static const String recommendation = '/recommendation';
+  static const String recommendationAnimation = '/recommendation/animation';
+  static const String recommendationDetail = '/recommendation/detail';
   
   // 설정 화면 (중첩 라우트 - /me 하위)
   static const String notificationSettings = '/settings/notifications';

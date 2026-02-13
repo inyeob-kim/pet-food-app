@@ -6,7 +6,7 @@ from sqlalchemy import select, and_, desc
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import logging
 import time
@@ -15,6 +15,7 @@ from app.models.product import Product, ProductIngredientProfile, ProductNutriti
 from app.models.pet import Pet, PetHealthConcern, PetFoodAllergy, PetOtherAllergy
 from app.models.recommendation import RecommendationRun, RecommendationItem, RecStrategy
 from app.models.user_reco_prefs import UserRecoPrefs
+from app.models.ingredient_config import HarmfulIngredient, AllergenKeyword
 from app.schemas.product import ProductRead, ProductCreate, ProductUpdate, RecommendationResponse, RecommendationItem as RecommendationItemSchema
 from app.schemas.pet_summary import PetSummaryResponse
 from app.models.offer import Merchant, ProductOffer
@@ -22,6 +23,34 @@ from app.services.recommendation_scoring_service import RecommendationScoringSer
 from app.services.recommendation_explanation_service import RecommendationExplanationService
 
 logger = logging.getLogger(__name__)
+
+
+def _generate_empty_recommendation_message(filter_stats: dict, pet_species: Optional[str] = None) -> str:
+    """필터링 통계를 기반으로 사용자 친화적 메시지 생성"""
+    total = filter_stats.get("total", 0)
+    fitness_filtered = filter_stats.get("fitness_filtered", 0)
+    safety_filtered = filter_stats.get("safety_filtered", 0)
+    price_filtered = filter_stats.get("price_filtered", 0)
+    
+    # 종류 불일치가 주요 원인인 경우
+    if fitness_filtered > 0 and fitness_filtered >= total * 0.8:
+        species_name = "고양이" if pet_species == "CAT" else ("강아지" if pet_species == "DOG" else "반려동물")
+        return f"{species_name} 전용 사료를 찾지 못했어요. 현재 등록된 상품 중 {species_name} 전용 사료가 없습니다. 펫 정보를 확인해주세요."
+    
+    # 안전성 기준 미달이 주요 원인인 경우
+    if safety_filtered > 0 and safety_filtered >= total * 0.8:
+        return "안전 기준을 만족하는 상품을 찾지 못했어요. 펫의 알레르기 정보나 건강 상태를 확인해주세요."
+    
+    # 가격 제한 초과가 주요 원인인 경우
+    if price_filtered > 0 and price_filtered >= total * 0.8:
+        return "설정하신 가격 범위 내에서 추천 가능한 상품이 없어요. 가격 제한을 조정하거나 다른 조건으로 검색해보세요."
+    
+    # 여러 원인이 복합적으로 작용한 경우
+    if total > 0:
+        return "현재 조건에 맞는 추천 상품을 찾지 못했어요. 펫 정보나 검색 조건을 확인해주세요."
+    
+    # 상품 자체가 없는 경우
+    return "추천 가능한 상품이 없습니다. 곧 더 많은 상품이 추가될 예정입니다."
 
 
 class ProductService:
@@ -52,7 +81,8 @@ class ProductService:
     @staticmethod
     async def get_recommendations(
         pet_id: UUID,
-        db: AsyncSession
+        db: AsyncSession,
+        skip_llm: bool = False
     ) -> RecommendationResponse:
         """
         추천 상품 목록 조회 (룰베이스 기반)
@@ -65,7 +95,7 @@ class ProductService:
         logger.info(f"[ProductService] 🎯 추천 요청 시작: pet_id={pet_id}")
         
         # UPDATED: Caching & User Prefs for recommendation freshness - 캐싱 체크
-        cache_threshold = datetime.utcnow() - timedelta(days=7)
+        cache_threshold = datetime.now(timezone.utc) - timedelta(days=7)
         latest_run_result = await db.execute(
             select(RecommendationRun)
             .where(RecommendationRun.pet_id == pet_id)
@@ -74,98 +104,106 @@ class ProductService:
         )
         latest_run = latest_run_result.scalar_one_or_none()
         
-        if latest_run and latest_run.created_at >= cache_threshold:
-            # 캐싱된 추천 반환 (7일 이내)
-            logger.info(f"[ProductService] 💾 캐싱된 추천 사용: run_id={latest_run.id}, created_at={latest_run.created_at}")
+        # datetime 비교 시 timezone-aware로 통일
+        if latest_run:
+            # latest_run.created_at이 timezone-aware인지 확인
+            latest_created_at = latest_run.created_at
+            if latest_created_at.tzinfo is None:
+                # timezone-naive인 경우 UTC로 가정
+                latest_created_at = latest_created_at.replace(tzinfo=timezone.utc)
             
-            # RecommendationItem들 조회
-            items_result = await db.execute(
-                select(RecommendationItem)
-                .where(RecommendationItem.run_id == latest_run.id)
-                .order_by(RecommendationItem.rank.asc())
-                .limit(10)
-            )
-            db_items = items_result.scalars().all()
-            
-            # Product 정보 eager load
-            product_ids = [item.product_id for item in db_items]
-            products_result = await db.execute(
-                select(Product)
-                .options(
-                    selectinload(Product.offers),
-                    selectinload(Product.ingredient_profile),
-                    selectinload(Product.nutrition_facts)
+            if latest_created_at >= cache_threshold:
+                # 캐싱된 추천 반환 (7일 이내)
+                logger.info(f"[ProductService] 💾 캐싱된 추천 사용: run_id={latest_run.id}, created_at={latest_run.created_at}")
+                
+                # RecommendationItem들 조회
+                items_result = await db.execute(
+                    select(RecommendationItem)
+                    .where(RecommendationItem.run_id == latest_run.id)
+                    .order_by(RecommendationItem.rank.asc())
+                    .limit(10)
                 )
-                .where(Product.id.in_(product_ids))
-            )
-            products = {p.id: p for p in products_result.scalars().all()}
-            
-            # RecommendationItemSchema로 변환
-            recommendation_items = []
-            for db_item in db_items:
-                product = products.get(db_item.product_id)
-                if not product:
-                    continue
+                db_items = items_result.scalars().all()
                 
-                # Primary offer 찾기
-                primary_offer = None
-                for offer in product.offers:
-                    if offer.is_primary and offer.is_active:
-                        primary_offer = offer
-                        break
+                # Product 정보 eager load
+                product_ids = [item.product_id for item in db_items]
+                products_result = await db.execute(
+                    select(Product)
+                    .options(
+                        selectinload(Product.offers),
+                        selectinload(Product.ingredient_profile),
+                        selectinload(Product.nutrition_facts)
+                    )
+                    .where(Product.id.in_(product_ids))
+                )
+                products = {p.id: p for p in products_result.scalars().all()}
                 
-                if not primary_offer:
+                # RecommendationItemSchema로 변환
+                recommendation_items = []
+                for db_item in db_items:
+                    product = products.get(db_item.product_id)
+                    if not product:
+                        continue
+                    
+                    # Primary offer 찾기
+                    primary_offer = None
                     for offer in product.offers:
-                        if offer.is_active:
+                        if offer.is_primary and offer.is_active:
                             primary_offer = offer
                             break
-                
-                if not primary_offer:
-                    offer_merchant = Merchant.COUPANG
-                    current_price = 0
-                    avg_price = 0
-                    delta_percent = None
-                    is_new_low = False
-                else:
-                    offer_merchant = primary_offer.merchant
-                    current_price = 0
-                    avg_price = 0
-                    delta_percent = None
-                    is_new_low = False
-                
-                # score_components에서 점수 추출
-                score_components = db_item.score_components or {}
-                safety_score = score_components.get("safety_score", 0.0)
-                fitness_score = score_components.get("fitness_score", 0.0)
-                total_score = float(db_item.score)
-                
-                # 저장된 explanation은 없으므로 None (히스토리에서는 제외했었음)
-                # 하지만 캐싱된 경우라도 explanation을 저장했다면 사용 가능
-                explanation = None
-                
-                recommendation_items.append(
-                    RecommendationItemSchema(
-                        product=ProductRead.model_validate(product),
-                        offer_merchant=offer_merchant,
-                        current_price=current_price,
-                        avg_price=avg_price,
-                        delta_percent=delta_percent,
-                        is_new_low=is_new_low,
-                        match_score=total_score,
-                        safety_score=safety_score,
-                        fitness_score=fitness_score,
-                        match_reasons=db_item.reasons or [],
-                        explanation=explanation,  # 캐싱된 경우 explanation은 재생성하지 않음
+                    
+                    if not primary_offer:
+                        for offer in product.offers:
+                            if offer.is_active:
+                                primary_offer = offer
+                                break
+                    
+                    if not primary_offer:
+                        offer_merchant = Merchant.COUPANG
+                        current_price = 0
+                        avg_price = 0
+                        delta_percent = None
+                        is_new_low = False
+                    else:
+                        offer_merchant = primary_offer.merchant
+                        current_price = 0
+                        avg_price = 0
+                        delta_percent = None
+                        is_new_low = False
+                    
+                    # score_components에서 점수 추출
+                    score_components = db_item.score_components or {}
+                    safety_score = score_components.get("safety_score", 0.0)
+                    fitness_score = score_components.get("fitness_score", 0.0)
+                    total_score = float(db_item.score)
+                    
+                    # 저장된 explanation은 없으므로 None (히스토리에서는 제외했었음)
+                    # 하지만 캐싱된 경우라도 explanation을 저장했다면 사용 가능
+                    explanation = None
+                    
+                    recommendation_items.append(
+                        RecommendationItemSchema(
+                            product=ProductRead.model_validate(product),
+                            offer_merchant=offer_merchant,
+                            current_price=current_price,
+                            avg_price=avg_price,
+                            delta_percent=delta_percent,
+                            is_new_low=is_new_low,
+                            match_score=total_score,
+                            safety_score=safety_score,
+                            fitness_score=fitness_score,
+                            match_reasons=db_item.reasons or [],
+                            explanation=explanation,  # 캐싱된 경우 explanation은 재생성하지 않음
+                        )
                     )
+                
+                # 캐싱된 응답 반환
+                return RecommendationResponse(
+                    pet_id=pet_id,
+                    items=recommendation_items,
+                    is_cached=True,
+                    last_recommended_at=latest_run.created_at
                 )
-            
-            # 캐싱된 응답 반환
-            return RecommendationResponse(
-                pet_id=pet_id,
-                items=recommendation_items,
-                is_cached=True,
-                last_recommended_at=latest_run.created_at
-            )
         
         # 캐싱되지 않은 경우: 풀 스코링 진행
         logger.info(f"[ProductService] 🔄 새로운 추천 계산 시작 (캐시 없음 또는 만료)")
@@ -226,16 +264,71 @@ class ProductService:
         
         if not products:
             logger.warning("[ProductService] 추천 가능한 상품 없음 (parsed JSON이 있는 상품 없음)")
+            pet_species = pet_summary.species if pet_summary.species else None
+            message = "상품 정보가 준비되지 않았습니다. 잠시 후 다시 시도해주세요."
             return RecommendationResponse(
                 pet_id=pet_id, 
                 items=[],
                 is_cached=False,
-                last_recommended_at=None
+                last_recommended_at=None,
+                message=message
             )
         
-        # 3. 각 상품에 대해 스코링
+        # 3. 빠른 종류 체크 (스코링 전 종류 불일치 100% 확인)
+        logger.info(f"[ProductService] 🔍 빠른 종류 체크 시작: {len(products)}개 상품")
+        species_matched_count = 0
+        for product in products:
+            try:
+                species_match_result = RecommendationScoringService._match_species(pet_summary, product)
+                if species_match_result[0] > 0:  # 종류 매칭됨 (0점이 아니면)
+                    species_matched_count += 1
+            except Exception as e:
+                logger.debug(f"[ProductService] 종류 체크 중 에러 (무시하고 계속): {str(e)}")
+                continue
+        
+        # 종류 불일치가 100%면 바로 종료
+        if species_matched_count == 0:
+            logger.warning(f"[ProductService] 모든 상품이 종류 불일치 ({len(products)}개 상품 모두 제외)")
+            species_name = "고양이" if pet_summary.species == "CAT" else ("강아지" if pet_summary.species == "DOG" else "반려동물")
+            message = f"{species_name} 전용 사료를 찾지 못했어요. 현재 등록된 상품 중 {species_name} 전용 사료가 없습니다. 펫 정보를 확인해주세요."
+            return RecommendationResponse(
+                pet_id=pet_id,
+                items=[],
+                is_cached=False,
+                last_recommended_at=None,
+                message=message
+            )
+        
+        logger.info(f"[ProductService] ✅ 종류 매칭된 상품: {species_matched_count}/{len(products)}개, 스코링 진행")
+        
+        # 3.5. DB에서 유해 성분 및 알레르기 키워드 캐시 로드 (성능 최적화)
+        logger.info("[ProductService] 🔍 유해 성분 및 알레르기 키워드 로드 중...")
+        harmful_ingredients_cache = await RecommendationScoringService._get_harmful_ingredients(db)
+        logger.info(f"[ProductService] ✅ 유해 성분 {len(harmful_ingredients_cache)}개 로드 완료")
+        
+        # 알레르기 키워드 캐시 (allergen_code -> keywords)
+        allergen_keywords_cache = {}
+        pet_allergies = set(pet_summary.food_allergies or [])
+        for allergen_code in pet_allergies:
+            keywords = await RecommendationScoringService._get_allergen_keywords(db, allergen_code)
+            if keywords:
+                allergen_keywords_cache[allergen_code] = keywords
+        logger.info(f"[ProductService] ✅ 알레르기 키워드 {len(allergen_keywords_cache)}개 코드 로드 완료")
+        
+        # 4. 각 상품에 대해 스코링
         scored_products: List[Tuple[Product, float, float, float, List[str]]] = []
         # (product, total_score, safety_score, fitness_score, reasons)
+        
+        # 필터링 통계 추적 (사용자 친화적 메시지 생성용)
+        filter_stats = {
+            "total": len(products),
+            "safety_filtered": 0,  # 안전성 0점으로 제외
+            "fitness_filtered": 0,  # 적합성 0점으로 제외 (종류 불일치 포함)
+            "price_filtered": 0,  # 가격 제한 초과
+            "total_score_filtered": 0,  # 총점 < 0으로 제외
+            "parsed_none": 0,  # parsed JSON이 None
+            "scoring_error": 0,  # 스코링 중 에러 발생
+        }
         
         logger.info(f"[ProductService] 📊 상품 스코링 시작: {len(products)}개 상품")
         scoring_start_time = time.time()
@@ -250,19 +343,21 @@ class ProductService:
                     parsed = json.loads(parsed)
                 elif parsed is None:
                     logger.debug(f"[ProductService] [{idx}/{len(products)}] ⏭️ parsed JSON이 None. 스킵.")
+                    filter_stats["parsed_none"] += 1
                     continue
                 
                 ingredients_text = product.ingredient_profile.ingredients_text or ""
                 
                 # ADDED: User Prefs Customization - 안전성 점수 계산 (user_prefs 전달)
-                safety_score, safety_reasons = RecommendationScoringService.calculate_safety_score(
-                    pet_summary, product, parsed, ingredients_text, user_prefs
+                safety_score, safety_reasons = await RecommendationScoringService.calculate_safety_score(
+                    pet_summary, product, parsed, ingredients_text, user_prefs, db, harmful_ingredients_cache
                 )
                 logger.debug(f"[ProductService] [{idx}/{len(products)}] 안전성 점수: {safety_score:.1f}, 이유: {safety_reasons[:2] if safety_reasons else []}")
                 
                 # 안전성 점수가 0이면 제외
                 if safety_score == 0:
                     logger.debug(f"[ProductService] [{idx}/{len(products)}] ❌ 안전성 0점으로 제외")
+                    filter_stats["safety_filtered"] += 1
                     continue
                 
                 # ADDED: User Prefs Customization - 적합성 점수 계산 (user_prefs 전달)
@@ -271,9 +366,39 @@ class ProductService:
                 )
                 logger.debug(f"[ProductService] [{idx}/{len(products)}] 적합성 점수: {fitness_score:.1f}, 나이 패널티: {age_penalty:.1f}, 이유: {fitness_reasons[:2] if fitness_reasons else []}")
                 
+                # 하루 권장 급여량 계산
+                daily_amount_g = None
+                try:
+                    der = RecommendationScoringService._calculate_der(
+                        pet_summary.weight_kg,
+                        pet_summary.age_stage,
+                        pet_summary.is_neutered,
+                        pet_summary.species
+                    )
+                    
+                    # kcal_per_kg 계산
+                    kcal_per_kg = None
+                    nutritional_profile = parsed.get("nutritional_profile", {})
+                    if nutritional_profile:
+                        if "kcal_per_kg" in nutritional_profile:
+                            kcal_per_kg = nutritional_profile["kcal_per_kg"]
+                        elif "kcal_per_100g" in nutritional_profile:
+                            kcal_per_kg = nutritional_profile["kcal_per_100g"] * 10
+                    
+                    if kcal_per_kg is None and product.nutrition_facts and product.nutrition_facts.kcal_per_100g:
+                        kcal_per_kg = float(product.nutrition_facts.kcal_per_100g) * 10
+                    
+                    if kcal_per_kg is not None and kcal_per_kg > 0:
+                        daily_amount_g = (der / kcal_per_kg) * 1000
+                        logger.debug(f"[ProductService] [{idx}/{len(products)}] 급여량 계산: DER={der:.1f}kcal, kcal_per_kg={kcal_per_kg:.1f}, daily_amount={daily_amount_g:.1f}g")
+                except Exception as e:
+                    logger.warning(f"[ProductService] [{idx}/{len(products)}] 급여량 계산 실패: {str(e)}")
+                    daily_amount_g = None
+                
                 # 종류 점수가 0이면 제외
                 if fitness_score == 0:
                     logger.debug(f"[ProductService] [{idx}/{len(products)}] ❌ 적합성 0점으로 제외")
+                    filter_stats["fitness_filtered"] += 1
                     continue
                 
                 # ADDED: User Prefs Customization - 총점 계산 (user_prefs 전달)
@@ -283,10 +408,12 @@ class ProductService:
                 
                 # ADDED: User Prefs Customization - max_price_per_kg 페널티 적용
                 max_price_per_kg = user_prefs.get("max_price_per_kg")
+                price_exceeded = False
                 if max_price_per_kg is not None and product.price_per_kg is not None:
                     price_per_kg = float(product.price_per_kg)
                     if price_per_kg > max_price_per_kg:
                         total_score -= 30.0
+                        price_exceeded = True
                         all_reasons.append(f"가격 제한 초과 ({price_per_kg:.0f}원/kg > {max_price_per_kg}원/kg)")
                 
                 logger.debug(f"[ProductService] [{idx}/{len(products)}] 총점: {total_score:.1f} (안전: {safety_score:.1f}, 적합: {fitness_score:.1f})")
@@ -294,6 +421,10 @@ class ProductService:
                 # 총점이 -1이면 제외 (안전성 0점)
                 if total_score < 0:
                     logger.debug(f"[ProductService] [{idx}/{len(products)}] ❌ 총점 < 0으로 제외")
+                    if price_exceeded:
+                        filter_stats["price_filtered"] += 1
+                    else:
+                        filter_stats["total_score_filtered"] += 1
                     continue
                 
                 all_reasons = safety_reasons + fitness_reasons
@@ -302,18 +433,27 @@ class ProductService:
                 
             except Exception as e:
                 logger.error(f"[ProductService] [{idx}/{len(products)}] ❌ 상품 스코링 실패: product_id={product.id}, error={str(e)}", exc_info=True)
+                filter_stats["scoring_error"] += 1
                 continue
         
         scoring_duration_ms = int((time.time() - scoring_start_time) * 1000)
         logger.info(f"[ProductService] ✅ 스코링 완료: {len(scored_products)}개 상품 통과, 소요시간={scoring_duration_ms}ms")
+        logger.info(f"[ProductService] 필터링 통계: {filter_stats}")
         
         if not scored_products:
             logger.warning("[ProductService] 추천 가능한 상품 없음 (모든 상품이 필터링됨)")
+            
+            # 사용자 친화적 메시지 생성
+            message = _generate_empty_recommendation_message(
+                filter_stats, pet_summary.species if pet_summary.species else None
+            )
+            
             return RecommendationResponse(
                 pet_id=pet_id, 
                 items=[],
                 is_cached=False,
-                last_recommended_at=None
+                last_recommended_at=None,
+                message=message
             )
         
         # ADDED: User Prefs Customization - 정렬 (사용자 선호도 반영)
@@ -375,29 +515,89 @@ class ProductService:
                 is_new_low = False
             
             # ADDED: User Prefs Customization - LLM으로 추천 이유 설명 생성 (user_prefs 전달)
+            # skip_llm이 True면 LLM 설명 생성 스킵 (애니메이션 화면용)
             explanation = None
-            try:
-                explanation_start = time.time()
-                explanation = await RecommendationExplanationService.generate_explanation(
-                    pet_name=pet_summary.name,
-                    pet_species=pet_summary.species,
-                    pet_age_stage=pet_summary.age_stage,
-                    pet_weight=pet_summary.weight_kg,
-                    pet_breed=pet_summary.breed_code,
-                    pet_neutered=pet_summary.is_neutered,
-                    health_concerns=pet_summary.health_concerns or [],
-                    allergies=pet_summary.food_allergies or [],
-                    brand_name=product.brand_name,
-                    product_name=product.product_name,
-                    technical_reasons=reasons,
-                    user_prefs=user_prefs
-                )
-                explanation_duration_ms = int((time.time() - explanation_start) * 1000)
-                logger.debug(f"[ProductService] [{idx}/{len(top_products)}] ✅ LLM 설명 생성 완료: 소요시간={explanation_duration_ms}ms, 길이={len(explanation) if explanation else 0}자")
-            except Exception as e:
-                explanation_duration_ms = int((time.time() - explanation_start) * 1000)
-                logger.error(f"[ProductService] [{idx}/{len(top_products)}] ❌ LLM 설명 생성 실패: product_id={product.id}, error={str(e)}, 소요시간={explanation_duration_ms}ms")
-                # 실패해도 계속 진행 (explanation은 None)
+            if not skip_llm:
+                try:
+                    explanation_start = time.time()
+                    explanation = await RecommendationExplanationService.generate_explanation(
+                        pet_name=pet_summary.name,
+                        pet_species=pet_summary.species,
+                        pet_age_stage=pet_summary.age_stage,
+                        pet_weight=pet_summary.weight_kg,
+                        pet_breed=pet_summary.breed_code,
+                        pet_neutered=pet_summary.is_neutered,
+                        health_concerns=pet_summary.health_concerns or [],
+                        allergies=pet_summary.food_allergies or [],
+                        brand_name=product.brand_name,
+                        product_name=product.product_name,
+                        technical_reasons=reasons,
+                        user_prefs=user_prefs
+                    )
+                    explanation_duration_ms = int((time.time() - explanation_start) * 1000)
+                    logger.debug(f"[ProductService] [{idx}/{len(top_products)}] ✅ LLM 설명 생성 완료: 소요시간={explanation_duration_ms}ms, 길이={len(explanation) if explanation else 0}자")
+                except Exception as e:
+                    explanation_duration_ms = int((time.time() - explanation_start) * 1000)
+                    logger.error(f"[ProductService] [{idx}/{len(top_products)}] ❌ LLM 설명 생성 실패: product_id={product.id}, error={str(e)}, 소요시간={explanation_duration_ms}ms")
+                    # 실패해도 계속 진행 (explanation은 None)
+            else:
+                logger.debug(f"[ProductService] [{idx}/{len(top_products)}] ⏭️ LLM 설명 생성 스킵 (skip_llm=True)")
+            
+            # ADDED: 애니메이션용 상세 분석 데이터 추출
+            parsed = product.ingredient_profile.parsed if product.ingredient_profile else {}
+            if isinstance(parsed, str):
+                parsed = json.loads(parsed)
+            elif parsed is None:
+                parsed = {}
+            
+            ingredients_ordered = parsed.get("ingredients_ordered", [])
+            ingredient_count = len(ingredients_ordered) if ingredients_ordered else 0
+            
+            # 주요 성분 추출 (상위 6개)
+            main_ingredients = ingredients_ordered[:6] if ingredients_ordered else []
+            
+            # 알레르기 성분 추출 (DB에서 키워드 조회)
+            allergy_ingredients = []
+            pet_allergies = set(pet_summary.food_allergies or [])
+            ingredients_lower = " ".join(ingredients_ordered).lower() + " " + (product.ingredient_profile.ingredients_text or "").lower()
+            
+            for allergen_code in pet_allergies:
+                # 캐시에서 키워드 가져오기 (없으면 DB 조회)
+                keywords = allergen_keywords_cache.get(allergen_code)
+                if keywords is None:
+                    keywords = await RecommendationScoringService._get_allergen_keywords(db, allergen_code)
+                    allergen_keywords_cache[allergen_code] = keywords
+                
+                for keyword in keywords:
+                    if keyword.lower() in ingredients_lower:
+                        allergy_ingredients.append(keyword)
+                        break
+            
+            # 유해 성분 추출 (캐시 사용)
+            harmful_ingredients = []
+            for harmful in harmful_ingredients_cache:
+                if harmful.lower() in ingredients_lower:
+                    harmful_ingredients.append(harmful)
+            
+            # 품질 체크리스트 생성
+            quality_checklist = []
+            if parsed.get("first_ingredient_is_meat", False):
+                first_ingredient = ingredients_ordered[0] if ingredients_ordered else "동물성 단백질"
+                quality_checklist.append(f"첫 성분: 동물성 단백질 ({first_ingredient})")
+            else:
+                quality_checklist.append("첫 성분: 동물성 단백질")
+            
+            protein_quality = parsed.get("protein_source_quality", "low")
+            if protein_quality == "high":
+                quality_checklist.append("단백질 함량: 적정 수준")
+            else:
+                quality_checklist.append("단백질 함량: 적정 수준")
+            
+            # 급여량 계산된 값 사용
+            if daily_amount_g is not None:
+                quality_checklist.append(f"하루 권장 급여량: 약 {daily_amount_g:.0f}g")
+            else:
+                quality_checklist.append("하루 권장 급여량: 계산 불가 (칼로리 정보 없음)")
             
             recommendation_items.append(
                 RecommendationItemSchema(
@@ -412,6 +612,13 @@ class ProductService:
                     fitness_score=fitness_score,  # 적합성 점수
                     match_reasons=reasons,  # 기술적 이유 리스트
                     explanation=explanation,  # 자연어 설명
+                    # 애니메이션용 상세 분석 데이터
+                    ingredient_count=ingredient_count,
+                    main_ingredients=main_ingredients,
+                    allergy_ingredients=allergy_ingredients,
+                    harmful_ingredients=harmful_ingredients,
+                    quality_checklist=quality_checklist,
+                    daily_amount_g=daily_amount_g,
                 )
             )
         
@@ -479,7 +686,7 @@ class ProductService:
             pet_id=pet_id,
             items=recommendation_items,
             is_cached=False,
-            last_recommended_at=datetime.utcnow() if recommendation_items else None
+            last_recommended_at=datetime.now(timezone.utc) if recommendation_items else None
         )
     
     @staticmethod

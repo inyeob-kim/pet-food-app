@@ -3,6 +3,7 @@ import '../onboarding_shell.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 import '../../app/theme/app_spacing.dart';
+import '../../app/theme/app_radius.dart';
 
 /// Step 8: BCS - DESIGN_GUIDE v1.0 준수
 class Step08BCS extends StatelessWidget {
@@ -42,42 +43,88 @@ class Step08BCS extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$value',
-                style: AppTypography.h1Mobile.copyWith(
-                  color: AppColors.primaryBlue,
-                ),
+          // BCS Score Display (design.mdc: Hero Section 스타일)
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.2),
+                width: 1,
               ),
-              Text(
-                getBCSLabel(value),
-                style: AppTypography.body.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'BCS',
+                      style: AppTypography.small.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      '$value',
+                      style: AppTypography.h2.copyWith(
+                        fontSize: 32,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLighter,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    getBCSLabel(value),
+                    style: AppTypography.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          // Slider
+          const SizedBox(height: AppSpacing.xxl),
+          // Slider (design.mdc: 더 세련된 스타일)
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.primaryBlue,
-              inactiveTrackColor: AppColors.divider,
-              thumbColor: AppColors.primaryBlue,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
-              trackHeight: 4,
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: AppColors.primaryLight,
+              thumbColor: AppColors.primary,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 14),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+              trackHeight: 6,
+              valueIndicatorShape: const PaddleSliderValueIndicatorShape(),
+              valueIndicatorColor: AppColors.primary,
+              valueIndicatorTextStyle: AppTypography.small.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             child: Slider(
               value: value.toDouble(),
               min: 1,
               max: 9,
               divisions: 8,
+              label: '$value',
               onChanged: (val) => onUpdate(val.toInt()),
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -85,12 +132,14 @@ class Step08BCS extends StatelessWidget {
                 '마른 편',
                 style: AppTypography.small.copyWith(
                   color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               Text(
                 '통통한 편',
                 style: AppTypography.small.copyWith(
                   color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

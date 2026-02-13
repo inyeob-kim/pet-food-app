@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/product_repository.dart';
 import '../../../../data/models/product_dto.dart';
-import '../widgets/product_card.dart';
 import '../widgets/category_chips.dart';
+import '../../../watch/presentation/controllers/watch_controller.dart';
 
 /// 마켓 화면 상태
 class MarketState {
   final bool isLoading;
   final bool isRefreshing;
   final String? error;
-  final List<ProductCardData> hotDealProducts;
-  final List<ProductCardData> popularProducts;
-  final List<ProductCardData> allProducts;
+  final List<ProductDto> hotDealProducts;
+  final List<ProductDto> popularProducts;
+  final List<ProductDto> allProducts;
   final List<CategoryChipData> categories;
   final String? selectedCategoryId;
   final String? searchQuery;
+  final Set<String> trackedProductIds; // 찜한 상품 ID 목록
 
   MarketState({
     this.isLoading = false,
@@ -27,18 +28,20 @@ class MarketState {
     this.categories = const [],
     this.selectedCategoryId,
     this.searchQuery,
+    this.trackedProductIds = const {},
   });
 
   MarketState copyWith({
     bool? isLoading,
     bool? isRefreshing,
     String? error,
-    List<ProductCardData>? hotDealProducts,
-    List<ProductCardData>? popularProducts,
-    List<ProductCardData>? allProducts,
+    List<ProductDto>? hotDealProducts,
+    List<ProductDto>? popularProducts,
+    List<ProductDto>? allProducts,
     List<CategoryChipData>? categories,
     String? selectedCategoryId,
     String? searchQuery,
+    Set<String>? trackedProductIds,
   }) {
     return MarketState(
       isLoading: isLoading ?? this.isLoading,
@@ -50,6 +53,7 @@ class MarketState {
       categories: categories ?? this.categories,
       selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
       searchQuery: searchQuery ?? this.searchQuery,
+      trackedProductIds: trackedProductIds ?? this.trackedProductIds,
     );
   }
 }
@@ -58,9 +62,11 @@ class MarketState {
 /// 단일 책임: 상품 목록 관리
 class MarketController extends StateNotifier<MarketState> {
   final ProductRepository _productRepository;
+  final Ref _ref;
 
-  MarketController(ProductRepository productRepository)
+  MarketController(ProductRepository productRepository, Ref ref)
       : _productRepository = productRepository,
+        _ref = ref,
         super(MarketState()) {
     _initialize();
   }
@@ -71,14 +77,17 @@ class MarketController extends StateNotifier<MarketState> {
     
     try {
       final products = await _productRepository.getProducts();
-      final productCards = _convertToProductCards(products);
+      // WatchController에서 찜한 상품 ID 목록 가져오기
+      final watchState = _ref.read(watchControllerProvider);
+      final trackedIds = watchState.trackedProductIds;
       
       state = state.copyWith(
         isLoading: false,
-        allProducts: productCards,
-        hotDealProducts: productCards.take(5).toList(), // 임시: 상위 5개
-        popularProducts: productCards.take(5).toList(), // 임시: 상위 5개
+        allProducts: products,
+        hotDealProducts: products.take(5).toList(), // 임시: 상위 5개
+        popularProducts: products.take(5).toList(), // 임시: 상위 5개
         categories: _generateCategories(),
+        trackedProductIds: trackedIds,
       );
     } catch (e) {
       state = state.copyWith(
@@ -94,13 +103,16 @@ class MarketController extends StateNotifier<MarketState> {
     
     try {
       final products = await _productRepository.getProducts();
-      final productCards = _convertToProductCards(products);
+      // WatchController에서 찜한 상품 ID 목록 가져오기
+      final watchState = _ref.read(watchControllerProvider);
+      final trackedIds = watchState.trackedProductIds;
       
       state = state.copyWith(
         isRefreshing: false,
-        allProducts: productCards,
-        hotDealProducts: productCards.take(5).toList(),
-        popularProducts: productCards.take(5).toList(),
+        allProducts: products,
+        hotDealProducts: products.take(5).toList(),
+        popularProducts: products.take(5).toList(),
+        trackedProductIds: trackedIds,
       );
     } catch (e) {
       state = state.copyWith(
@@ -110,18 +122,17 @@ class MarketController extends StateNotifier<MarketState> {
     }
   }
 
-  /// ProductDto를 ProductCardData로 변환
-  List<ProductCardData> _convertToProductCards(List<ProductDto> products) {
-    return products.map((product) {
-      return ProductCardData(
-        id: product.id,
-        brandName: product.brandName,
-        productName: product.productName,
-        price: 0, // TODO: ProductOffer에서 가격 정보 가져오기 (API 확장 필요)
-        imageUrl: null, // TODO: 상품 이미지 URL 추가
-      );
-    }).toList();
+  /// 찜 상태 업데이트 (WatchController 변경 시 호출)
+  void updateTrackingStatus() {
+    final watchState = _ref.read(watchControllerProvider);
+    final trackedIds = watchState.trackedProductIds;
+    
+    // trackedProductIds만 업데이트 (불필요한 리스트 재생성 제거)
+    state = state.copyWith(
+      trackedProductIds: trackedIds,
+    );
   }
+
 
   /// 카테고리 선택
   void selectCategory(String? categoryId) {
@@ -150,5 +161,5 @@ class MarketController extends StateNotifier<MarketState> {
 final marketControllerProvider =
     StateNotifierProvider<MarketController, MarketState>((ref) {
   final productRepository = ref.watch(productRepositoryProvider);
-  return MarketController(productRepository);
+  return MarketController(productRepository, ref);
 });
