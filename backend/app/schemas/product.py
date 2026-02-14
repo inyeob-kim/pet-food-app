@@ -65,7 +65,10 @@ class RecommendationItem(BaseModel):
     safety_score: float = Field(..., description="안전성 점수")
     fitness_score: float = Field(..., description="적합성 점수")
     match_reasons: Optional[List[str]] = Field(None, description="추천 이유 리스트 (기술적)")
-    explanation: Optional[str] = Field(None, description="추천 이유 자연어 설명")
+    technical_explanation: Optional[str] = Field(None, description="추천 과정 설명 (기술적 이유 기반, 빠름)")
+    expert_explanation: Optional[str] = Field(None, description="전문가 수준 설명 (RAG 문서 기반, 느림)")
+    # Deprecated: 하위 호환성을 위해 유지 (expert_explanation과 동일)
+    explanation: Optional[str] = Field(None, description="[Deprecated] expert_explanation과 동일")
     # 애니메이션용 상세 분석 데이터
     ingredient_count: Optional[int] = Field(None, description="검출된 성분 개수")
     main_ingredients: Optional[List[str]] = Field(None, description="주요 성분 리스트")
@@ -73,6 +76,10 @@ class RecommendationItem(BaseModel):
     harmful_ingredients: Optional[List[str]] = Field(None, description="유해 성분 리스트")
     quality_checklist: Optional[List[str]] = Field(None, description="품질 체크리스트")
     daily_amount_g: Optional[float] = Field(None, description="하루 권장 급여량 (g)")
+    # v1.1.0 추가 필드
+    animation_explanation: Optional[str] = Field(None, description="Step 1~5에 들어갈 짧은 한 줄 설명 (e.g. '닭고기 ZERO, 단일단백질')")
+    safety_badges: Optional[List[str]] = Field(None, description="안전성 배지 리스트 (e.g. ['알레르기 안전', '유해성분 없음'])")
+    confidence_score: Optional[float] = Field(None, description="RAG 신뢰도 (0~100)")
 
 
 class RecommendationResponse(BaseModel):

@@ -26,6 +26,11 @@ class RecommendationItemDto {
   final double fitnessScore;
   @JsonKey(name: 'match_reasons')
   final List<String>? matchReasons;
+  @JsonKey(name: 'technical_explanation')
+  final String? technicalExplanation;
+  @JsonKey(name: 'expert_explanation')
+  final String? expertExplanation;
+  // Deprecated: 하위 호환성을 위해 유지 (expertExplanation과 동일)
   final String? explanation;
   // 애니메이션용 상세 분석 데이터
   @JsonKey(name: 'ingredient_count')
@@ -40,6 +45,13 @@ class RecommendationItemDto {
   final List<String>? qualityChecklist;
   @JsonKey(name: 'daily_amount_g')
   final double? dailyAmountG;
+  // v1.1.0 추가 필드
+  @JsonKey(name: 'animation_explanation')
+  final String? animationExplanation;
+  @JsonKey(name: 'safety_badges')
+  final List<String>? safetyBadges;
+  @JsonKey(name: 'confidence_score')
+  final double? confidenceScore;
 
   RecommendationItemDto({
     required this.product,
@@ -52,6 +64,8 @@ class RecommendationItemDto {
     required this.safetyScore,
     required this.fitnessScore,
     this.matchReasons,
+    this.technicalExplanation,
+    this.expertExplanation,
     this.explanation,
     this.ingredientCount,
     this.mainIngredients,
@@ -59,6 +73,9 @@ class RecommendationItemDto {
     this.harmfulIngredients,
     this.qualityChecklist,
     this.dailyAmountG,
+    this.animationExplanation,
+    this.safetyBadges,
+    this.confidenceScore,
   });
 
   factory RecommendationItemDto.fromJson(Map<String, dynamic> json) => _$RecommendationItemDtoFromJson(json);

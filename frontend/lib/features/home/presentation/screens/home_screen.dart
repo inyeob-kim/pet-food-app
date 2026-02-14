@@ -17,6 +17,7 @@ import '../../../../../domain/services/onboarding_service.dart';
 import '../../../../../features/onboarding/data/repositories/onboarding_repository.dart';
 import '../controllers/home_controller.dart';
 import '../../../../../ui/widgets/app_top_bar.dart';
+import '../../../../../data/repositories/product_repository.dart';
 import '../../../../../core/constants/pet_constants.dart';
 import '../widgets/icon_text_row.dart';
 import '../widgets/status_signal_card.dart';
@@ -210,6 +211,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               title: state.userNickname != null 
                   ? '안녕하세요, ${state.userNickname}님!'
                   : '헤이제노',
+              actions: [
+                // 임시: 캐시 제거 버튼
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  color: AppColors.textPrimary,
+                  tooltip: '캐시 제거',
+                  onPressed: () async {
+                    print('[HomeScreen] 🗑️ 캐시 제거 버튼 클릭');
+                    final petSummary = state.petSummary;
+                    if (petSummary != null) {
+                      try {
+                        final repository = ref.read(productRepositoryProvider);
+                        await repository.clearRecommendationCache(petSummary.petId);
+                        
+                        // 홈 화면 상태에서 추천 데이터 제거 (캐시가 없으므로)
+                        ref.read(homeControllerProvider.notifier).clearRecommendations();
+                        
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('캐시가 제거되었습니다.'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        print('[HomeScreen] ❌ 캐시 제거 실패: $e');
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('캐시 제거 실패: ${e.toString()}'),
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('펫 정보가 없어서 캐시를 제거할 수 없습니다.'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
             ),
             // 스크롤 가능한 콘텐츠 (항상 동일한 구조)
             Expanded(
@@ -445,7 +494,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs + 2),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight, // #EFF6FF (HeyGeno Landing)
+                    color: AppColors.divider, // 중성 회색 배경
                     borderRadius: BorderRadius.circular(AppRadius.pill), // rounded-full
                   ),
                   child: const Text(
@@ -453,7 +502,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
+                      color: AppColors.textSecondary, // 중성 회색 텍스트
                     ),
                   ),
                 ),
@@ -766,7 +815,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppColors.primaryLight, // #EFF6FF
+                            color: AppColors.divider, // 중성 회색 배경
                             borderRadius: BorderRadius.circular(AppRadius.lg), // rounded-2xl (16px)
                           ),
                           child: Center(
@@ -1821,8 +1870,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: Icons.arrow_downward,
                   title: '지금 먹는 사료가',
                   subtitle: '최근 30일 중 가장 싸요',
-                  backgroundColor: AppColors.primaryLight, // Blue 배경 - DESIGN_GUIDE v4.1
-                  iconColor: AppColors.primary, // Blue (#1D4ED8) - DESIGN_GUIDE v4.1
+                  backgroundColor: AppColors.divider, // 중성 회색 배경
+                  iconColor: AppColors.textSecondary, // 중성 회색 아이콘
                 ),
               ),
             );

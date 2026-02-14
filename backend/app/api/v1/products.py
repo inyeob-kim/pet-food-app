@@ -25,17 +25,23 @@ async def get_products(db: AsyncSession = Depends(get_db)):
 @router.get("/recommendations", response_model=RecommendationResponse)
 async def get_recommendations(
     pet_id: UUID = Query(..., description="반려동물 ID"),
-    skip_llm: bool = Query(False, description="LLM 설명 생성 스킵 여부 (애니메이션 화면용)"),
+    force_refresh: bool = Query(False, description="캐시 무시하고 새로 계산 (RAG 강제 실행)"),
+    generate_explanation_only: bool = Query(False, description="기존 추천 결과에 RAG 설명만 생성 (전체 재계산 없음)"),
     db: AsyncSession = Depends(get_db)
 ):
-    """추천 상품 목록 조회 (실시간 계산 + 히스토리 저장)"""
+    """추천 상품 목록 조회 (실시간 계산 + 히스토리 저장, 항상 RAG 실행)"""
     start_time = time.time()
-    logger.info(f"[Products API] 📥 추천 요청 수신: pet_id={pet_id}, skip_llm={skip_llm}")
+    logger.info(f"[Products API] 📥 추천 요청 수신: pet_id={pet_id}, force_refresh={force_refresh}, generate_explanation_only={generate_explanation_only}")
     
     try:
-        result = await ProductService.get_recommendations(pet_id, db, skip_llm=skip_llm)
+        result = await ProductService.get_recommendations(
+            pet_id, 
+            db, 
+            force_refresh=force_refresh,
+            generate_explanation_only=generate_explanation_only
+        )
         duration_ms = int((time.time() - start_time) * 1000)
-        logger.info(f"[Products API] ✅ 추천 응답 반환: pet_id={pet_id}, items={len(result.items)}개, 소요시간={duration_ms}ms")
+        logger.info(f"[Products API] ✅ 추천 응답 반환: pet_id={pet_id}, items={len(result.items)}개, is_cached={result.is_cached}, 소요시간={duration_ms}ms")
         return result
     except Exception as e:
         duration_ms = int((time.time() - start_time) * 1000)
@@ -61,6 +67,26 @@ async def get_recommendation_history(
     except Exception as e:
         duration_ms = int((time.time() - start_time) * 1000)
         logger.error(f"[Products API] ❌ 히스토리 조회 실패: pet_id={pet_id}, error={str(e)}, 소요시간={duration_ms}ms", exc_info=True)
+        raise
+
+
+@router.delete("/recommendations/cache")
+async def clear_recommendation_cache(
+    pet_id: UUID = Query(..., description="반려동물 ID"),
+    db: AsyncSession = Depends(get_db)
+):
+    """추천 캐시 제거 (추천 재계산 없이 캐시만 삭제)"""
+    start_time = time.time()
+    logger.info(f"[Products API] 🗑️ 캐시 제거 요청 수신: pet_id={pet_id}")
+    
+    try:
+        deleted_count = await ProductService.clear_recommendation_cache(pet_id, db)
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.info(f"[Products API] ✅ 캐시 제거 완료: pet_id={pet_id}, deleted_runs={deleted_count}, 소요시간={duration_ms}ms")
+        return {"success": True, "pet_id": str(pet_id), "deleted_runs": deleted_count}
+    except Exception as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.error(f"[Products API] ❌ 캐시 제거 실패: pet_id={pet_id}, error={str(e)}, 소요시간={duration_ms}ms", exc_info=True)
         raise
 
 

@@ -12,6 +12,7 @@ class Endpoints {
   static String product(String id) => '$products/$id';
   static const String productRecommendations = '$products/recommendations';
   static const String productRecommendationHistory = '$products/recommendations/history';
+  static const String productRecommendationCache = '$products/recommendations/cache';
   static String productOffers(String id) => '$products/$id/offers';
   
   // Trackings

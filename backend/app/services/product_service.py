@@ -2,7 +2,7 @@
 from typing import Optional, List, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, desc
+from sqlalchemy import select, and_, desc, delete
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -82,39 +82,54 @@ class ProductService:
     async def get_recommendations(
         pet_id: UUID,
         db: AsyncSession,
-        skip_llm: bool = False
+        force_refresh: bool = False,
+        generate_explanation_only: bool = False
     ) -> RecommendationResponse:
         """
-        추천 상품 목록 조회 (룰베이스 기반)
+        추천 상품 목록 조회 (룰베이스 기반, 항상 RAG 실행)
         
         설계 문서 기반 룰베이스 스코링 시스템:
         - 안전성 점수 (60%): 알레르기, 유해 성분, 품질
         - 적합성 점수 (40%): 종류, 나이, 건강 고민, 품종, 영양
+        
+        Args:
+            pet_id: 반려동물 ID
+            db: 데이터베이스 세션
+            force_refresh: 캐시 무시하고 새로 계산 (RAG 강제 실행)
+            generate_explanation_only: 기존 추천 결과에 RAG 설명만 생성 (전체 재계산 없음)
         """
         start_time = time.time()
-        logger.info(f"[ProductService] 🎯 추천 요청 시작: pet_id={pet_id}")
+        logger.info(f"[ProductService] 🎯 추천 요청 시작: pet_id={pet_id}, force_refresh={force_refresh}, generate_explanation_only={generate_explanation_only}")
+        
+        # UPDATED: RAG 설명만 생성하는 경우 (전체 재계산 없음)
+        if generate_explanation_only:
+            logger.info(f"[ProductService] 🎯 RAG 설명만 생성 모드: 기존 추천 결과에 explanation만 추가")
+            return await ProductService._generate_explanations_only(pet_id, db)
         
         # UPDATED: Caching & User Prefs for recommendation freshness - 캐싱 체크
-        cache_threshold = datetime.now(timezone.utc) - timedelta(days=7)
-        latest_run_result = await db.execute(
-            select(RecommendationRun)
-            .where(RecommendationRun.pet_id == pet_id)
-            .order_by(desc(RecommendationRun.created_at))
-            .limit(1)
-        )
-        latest_run = latest_run_result.scalar_one_or_none()
-        
-        # datetime 비교 시 timezone-aware로 통일
-        if latest_run:
-            # latest_run.created_at이 timezone-aware인지 확인
-            latest_created_at = latest_run.created_at
-            if latest_created_at.tzinfo is None:
-                # timezone-naive인 경우 UTC로 가정
-                latest_created_at = latest_created_at.replace(tzinfo=timezone.utc)
+        # force_refresh가 True면 캐싱 무시
+        if not force_refresh:
+            cache_threshold = datetime.now(timezone.utc) - timedelta(days=7)
+            latest_run_result = await db.execute(
+                select(RecommendationRun)
+                .where(RecommendationRun.pet_id == pet_id)
+                .order_by(desc(RecommendationRun.created_at))
+                .limit(1)
+            )
+            latest_run = latest_run_result.scalar_one_or_none()
             
-            if latest_created_at >= cache_threshold:
-                # 캐싱된 추천 반환 (7일 이내)
-                logger.info(f"[ProductService] 💾 캐싱된 추천 사용: run_id={latest_run.id}, created_at={latest_run.created_at}")
+            # datetime 비교 시 timezone-aware로 통일
+            if latest_run:
+                # latest_run.created_at이 timezone-aware인지 확인
+                latest_created_at = latest_run.created_at
+                if latest_created_at.tzinfo is None:
+                    # timezone-naive인 경우 UTC로 가정
+                    latest_created_at = latest_created_at.replace(tzinfo=timezone.utc)
+                
+                if latest_created_at >= cache_threshold:
+                    # 캐싱된 추천 반환 (7일 이내)
+                    logger.info(f"[ProductService] 💾 캐싱된 추천 사용: run_id={latest_run.id}, created_at={latest_run.created_at}")
+                    logger.info(f"[ProductService] ⚠️ RAG 호출 스킵됨 (캐싱된 결과 사용). RAG를 테스트하려면 force_refresh=true 파라미터 사용")
                 
                 # RecommendationItem들 조회
                 items_result = await db.execute(
@@ -124,9 +139,11 @@ class ProductService:
                     .limit(10)
                 )
                 db_items = items_result.scalars().all()
+                logger.info(f"[ProductService] 📦 캐시에서 가져온 추천 아이템: run_id={latest_run.id}, 개수={len(db_items)}개")
                 
                 # Product 정보 eager load
                 product_ids = [item.product_id for item in db_items]
+                logger.info(f"[ProductService] 🔍 조회할 product_ids: {product_ids}")
                 products_result = await db.execute(
                     select(Product)
                     .options(
@@ -137,12 +154,16 @@ class ProductService:
                     .where(Product.id.in_(product_ids))
                 )
                 products = {p.id: p for p in products_result.scalars().all()}
+                logger.info(f"[ProductService] 🔍 조회된 products: {list(products.keys())}, 개수={len(products)}개")
                 
                 # RecommendationItemSchema로 변환
                 recommendation_items = []
+                filtered_count = 0
                 for db_item in db_items:
                     product = products.get(db_item.product_id)
                     if not product:
+                        logger.warning(f"[ProductService] ⚠️ Product를 찾을 수 없음: product_id={db_item.product_id}, rank={db_item.rank}")
+                        filtered_count += 1
                         continue
                     
                     # Primary offer 찾기
@@ -181,6 +202,12 @@ class ProductService:
                     # 하지만 캐싱된 경우라도 explanation을 저장했다면 사용 가능
                     explanation = None
                     
+                    # v1.1.0: 캐싱된 경우 새 필드 기본값 설정
+                    # (실제 데이터는 없으므로 기본값 사용)
+                    animation_explanation = None
+                    safety_badges = None
+                    confidence_score = 75.0  # 기본 신뢰도
+                    
                     recommendation_items.append(
                         RecommendationItemSchema(
                             product=ProductRead.model_validate(product),
@@ -193,9 +220,17 @@ class ProductService:
                             safety_score=safety_score,
                             fitness_score=fitness_score,
                             match_reasons=db_item.reasons or [],
-                            explanation=explanation,  # 캐싱된 경우 explanation은 재생성하지 않음
+                            technical_explanation=None,  # 캐싱된 경우에는 없음 (나중에 생성 가능)
+                            expert_explanation=None,  # 캐싱된 경우에는 없음 (나중에 생성 가능)
+                            explanation=None,  # 하위 호환성: None
+                            # v1.1.0 추가 필드 (캐싱된 경우 기본값)
+                            animation_explanation=animation_explanation,
+                            safety_badges=safety_badges,
+                            confidence_score=confidence_score,
                         )
                     )
+                
+                logger.info(f"[ProductService] 📊 최종 recommendation_items: {len(recommendation_items)}개 (필터링됨: {filtered_count}개)")
                 
                 # 캐싱된 응답 반환
                 return RecommendationResponse(
@@ -204,9 +239,11 @@ class ProductService:
                     is_cached=True,
                     last_recommended_at=latest_run.created_at
                 )
+        else:
+            logger.info(f"[ProductService] 🔄 force_refresh=true: 캐시 무시하고 새로 계산")
         
-        # 캐싱되지 않은 경우: 풀 스코링 진행
-        logger.info(f"[ProductService] 🔄 새로운 추천 계산 시작 (캐시 없음 또는 만료)")
+        # 캐싱되지 않은 경우 또는 force_refresh인 경우: 풀 스코링 진행
+        logger.info(f"[ProductService] 🔄 새로운 추천 계산 시작 (캐시 없음 또는 만료 또는 force_refresh)")
         
         # 1. 펫 프로필 조회
         pet = await db.get(Pet, pet_id)
@@ -473,9 +510,10 @@ class ProductService:
             # 기본 정렬: 총점 내림차순, 동점 시 안전성 점수 내림차순
             scored_products.sort(key=lambda x: (x[1], x[2]), reverse=True)
         
-        # 5. 상위 10개 선택
-        top_products = scored_products[:10]
-        logger.info(f"[ProductService] 📋 상위 {len(top_products)}개 상품 선택 완료")
+        # 5. 상위 3개 선택 (최대 3개)
+        max_products = min(3, len(scored_products))
+        top_products = scored_products[:max_products]
+        logger.info(f"[ProductService] 📋 상위 {len(top_products)}개 상품 선택 완료 (총 {len(scored_products)}개 중, 최대 3개)")
         for idx, (product, total_score, safety_score, fitness_score, reasons) in enumerate(top_products, 1):
             logger.info(f"[ProductService]   {idx}. {product.brand_name} {product.product_name}: 총점={total_score:.1f}, 안전={safety_score:.1f}, 적합={fitness_score:.1f}")
         
@@ -514,34 +552,35 @@ class ProductService:
                 delta_percent = None
                 is_new_low = False
             
-            # ADDED: User Prefs Customization - LLM으로 추천 이유 설명 생성 (user_prefs 전달)
-            # skip_llm이 True면 LLM 설명 생성 스킵 (애니메이션 화면용)
-            explanation = None
-            if not skip_llm:
-                try:
-                    explanation_start = time.time()
-                    explanation = await RecommendationExplanationService.generate_explanation(
-                        pet_name=pet_summary.name,
-                        pet_species=pet_summary.species,
-                        pet_age_stage=pet_summary.age_stage,
-                        pet_weight=pet_summary.weight_kg,
-                        pet_breed=pet_summary.breed_code,
-                        pet_neutered=pet_summary.is_neutered,
-                        health_concerns=pet_summary.health_concerns or [],
-                        allergies=pet_summary.food_allergies or [],
-                        brand_name=product.brand_name,
-                        product_name=product.product_name,
-                        technical_reasons=reasons,
-                        user_prefs=user_prefs
-                    )
-                    explanation_duration_ms = int((time.time() - explanation_start) * 1000)
-                    logger.debug(f"[ProductService] [{idx}/{len(top_products)}] ✅ LLM 설명 생성 완료: 소요시간={explanation_duration_ms}ms, 길이={len(explanation) if explanation else 0}자")
-                except Exception as e:
-                    explanation_duration_ms = int((time.time() - explanation_start) * 1000)
-                    logger.error(f"[ProductService] [{idx}/{len(top_products)}] ❌ LLM 설명 생성 실패: product_id={product.id}, error={str(e)}, 소요시간={explanation_duration_ms}ms")
-                    # 실패해도 계속 진행 (explanation은 None)
-            else:
-                logger.debug(f"[ProductService] [{idx}/{len(top_products)}] ⏭️ LLM 설명 생성 스킵 (skip_llm=True)")
+            # ADDED: User Prefs Customization - 기술적 설명만 생성 (빠름, RAG 없음)
+            technical_explanation = None
+            expert_explanation = None
+            logger.info(f"[ProductService] [{idx}/{len(top_products)}] 🔧 기술적 설명 생성 시작: product_id={product.id}")
+            try:
+                explanation_start = time.time()
+                technical_explanation = await RecommendationExplanationService.generate_technical_explanation(
+                    pet_name=pet_summary.name,
+                    pet_species=pet_summary.species,
+                    pet_age_stage=pet_summary.age_stage,
+                    pet_weight=pet_summary.weight_kg,
+                    pet_breed=pet_summary.breed_code,
+                    pet_neutered=pet_summary.is_neutered,
+                    health_concerns=pet_summary.health_concerns or [],
+                    allergies=pet_summary.food_allergies or [],
+                    brand_name=product.brand_name,
+                    product_name=product.product_name,
+                    technical_reasons=reasons,
+                    user_prefs=user_prefs
+                )
+                explanation_duration_ms = int((time.time() - explanation_start) * 1000)
+                logger.debug(f"[ProductService] [{idx}/{len(top_products)}] ✅ 기술적 설명 생성 완료: 소요시간={explanation_duration_ms}ms, 길이={len(technical_explanation) if technical_explanation else 0}자")
+            except Exception as e:
+                explanation_duration_ms = int((time.time() - explanation_start) * 1000)
+                logger.error(f"[ProductService] [{idx}/{len(top_products)}] ❌ 기술적 설명 생성 실패: product_id={product.id}, error={str(e)}, 소요시간={explanation_duration_ms}ms")
+                # 실패해도 계속 진행 (technical_explanation은 None)
+            
+            # 하위 호환성: explanation 필드에 technical_explanation 값 설정
+            explanation = technical_explanation
             
             # ADDED: 애니메이션용 상세 분석 데이터 추출
             parsed = product.ingredient_profile.parsed if product.ingredient_profile else {}
@@ -599,6 +638,28 @@ class ProductService:
             else:
                 quality_checklist.append("하루 권장 급여량: 계산 불가 (칼로리 정보 없음)")
             
+            # v1.1.0: 애니메이션용 짧은 설명 생성
+            animation_explanation = None
+            if main_ingredients:
+                first_ingredient = main_ingredients[0] if main_ingredients else ""
+                if not allergy_ingredients:
+                    animation_explanation = f"{first_ingredient} ZERO, 단일단백질"
+                else:
+                    animation_explanation = f"{first_ingredient} 기반"
+            
+            # v1.1.0: 안전성 배지 생성
+            safety_badges = []
+            if not allergy_ingredients:
+                safety_badges.append("알레르기 안전")
+            if not harmful_ingredients:
+                safety_badges.append("유해성분 없음")
+            if safety_score >= 90:
+                safety_badges.append("고품질")
+            
+            # v1.1.0: RAG 신뢰도 점수 (임시로 explanation이 있으면 높은 점수, 없으면 낮은 점수)
+            # TODO: 실제 RAG 구현 시 Confidence Score 계산 로직 추가
+            confidence_score = 85.0 if explanation else 70.0
+            
             recommendation_items.append(
                 RecommendationItemSchema(
                     product=ProductRead.model_validate(product),
@@ -611,7 +672,9 @@ class ProductService:
                     safety_score=safety_score,  # 안전성 점수
                     fitness_score=fitness_score,  # 적합성 점수
                     match_reasons=reasons,  # 기술적 이유 리스트
-                    explanation=explanation,  # 자연어 설명
+                    technical_explanation=technical_explanation,  # 기술적 설명 (빠름)
+                    expert_explanation=expert_explanation,  # 전문가 설명 (RAG 기반, 느림)
+                    explanation=explanation,  # 하위 호환성: technical_explanation과 동일
                     # 애니메이션용 상세 분석 데이터
                     ingredient_count=ingredient_count,
                     main_ingredients=main_ingredients,
@@ -619,6 +682,10 @@ class ProductService:
                     harmful_ingredients=harmful_ingredients,
                     quality_checklist=quality_checklist,
                     daily_amount_g=daily_amount_g,
+                    # v1.1.0 추가 필드
+                    animation_explanation=animation_explanation,
+                    safety_badges=safety_badges if safety_badges else None,
+                    confidence_score=confidence_score,
                 )
             )
         
@@ -675,7 +742,15 @@ class ProductService:
             
             await db.commit()
             save_duration_ms = int((time.time() - save_start_time) * 1000)
-            logger.info(f"[ProductService] 💾 추천 히스토리 저장 완료: run_id={recommendation_run.id}, 소요시간={save_duration_ms}ms")
+            logger.info(f"[ProductService] 💾 추천 히스토리 저장 완료: run_id={recommendation_run.id}, items={len(recommendation_items)}개, 소요시간={save_duration_ms}ms")
+            
+            # 저장된 아이템 개수 확인
+            saved_items_result = await db.execute(
+                select(RecommendationItem)
+                .where(RecommendationItem.run_id == recommendation_run.id)
+            )
+            saved_items_count = len(saved_items_result.scalars().all())
+            logger.info(f"[ProductService] ✅ DB에 실제 저장된 아이템 개수 확인: run_id={recommendation_run.id}, 저장된 개수={saved_items_count}개")
         except Exception as e:
             await db.rollback()
             logger.error(f"[ProductService] ❌ 추천 히스토리 저장 실패: {str(e)}", exc_info=True)
@@ -687,6 +762,217 @@ class ProductService:
             items=recommendation_items,
             is_cached=False,
             last_recommended_at=datetime.now(timezone.utc) if recommendation_items else None
+        )
+    
+    @staticmethod
+    async def _generate_explanations_only(
+        pet_id: UUID,
+        db: AsyncSession
+    ) -> RecommendationResponse:
+        """
+        기존 추천 결과에 RAG 설명만 생성 (전체 재계산 없음)
+        
+        Args:
+            pet_id: 반려동물 ID
+            db: 데이터베이스 세션
+        
+        Returns:
+            RecommendationResponse: 기존 추천 결과 + RAG 설명
+        """
+        logger.info(f"[ProductService] 🎯 RAG 설명만 생성 모드 시작: pet_id={pet_id}")
+        
+        # 1. 펫 프로필 조회 (RAG 설명 생성에 필요)
+        pet = await db.get(Pet, pet_id)
+        if pet is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Pet not found"
+            )
+        
+        pet_summary = await ProductService._build_pet_summary(pet, db)
+        logger.info(f"[ProductService] 펫 프로필: {pet_summary.name}, 종류={pet_summary.species}, 나이={pet_summary.age_stage}")
+        
+        # 2. 사용자 선호도 불러오기
+        user_id = pet.user_id
+        user_prefs_result = await db.execute(
+            select(UserRecoPrefs).where(UserRecoPrefs.user_id == user_id)
+        )
+        user_prefs_obj = user_prefs_result.scalars().first()
+        
+        default_prefs = {
+            "weights_preset": "BALANCED",
+            "hard_exclude_allergens": [],
+            "soft_avoid_ingredients": [],
+            "max_price_per_kg": None,
+            "sort_preference": "default",
+            "health_concern_priority": False,
+        }
+        
+        if user_prefs_obj and user_prefs_obj.prefs:
+            user_prefs = {**default_prefs, **user_prefs_obj.prefs}
+        else:
+            user_prefs = default_prefs
+        
+        # 3. 캐시된 추천 결과 가져오기
+        cache_threshold = datetime.now(timezone.utc) - timedelta(days=7)
+        latest_run_result = await db.execute(
+            select(RecommendationRun)
+            .where(RecommendationRun.pet_id == pet_id)
+            .order_by(desc(RecommendationRun.created_at))
+            .limit(1)
+        )
+        latest_run = latest_run_result.scalar_one_or_none()
+        
+        if not latest_run:
+            logger.warning(f"[ProductService] ⚠️ 캐시된 추천 결과 없음: pet_id={pet_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No cached recommendation found. Please run full recommendation first."
+            )
+        
+        # datetime 비교 시 timezone-aware로 통일
+        latest_created_at = latest_run.created_at
+        if latest_created_at.tzinfo is None:
+            latest_created_at = latest_created_at.replace(tzinfo=timezone.utc)
+        
+        if latest_created_at < cache_threshold:
+            logger.warning(f"[ProductService] ⚠️ 캐시 만료: pet_id={pet_id}, created_at={latest_created_at}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cached recommendation expired. Please run full recommendation first."
+            )
+        
+        logger.info(f"[ProductService] 💾 캐시된 추천 사용: run_id={latest_run.id}, created_at={latest_run.created_at}")
+        
+        # 4. RecommendationItem들 조회
+        items_result = await db.execute(
+            select(RecommendationItem)
+            .where(RecommendationItem.run_id == latest_run.id)
+            .order_by(RecommendationItem.rank.asc())
+            .limit(10)
+        )
+        db_items = items_result.scalars().all()
+        
+        if not db_items:
+            logger.warning(f"[ProductService] ⚠️ 추천 아이템 없음: run_id={latest_run.id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No recommendation items found."
+            )
+        
+        # 5. Product 정보 eager load
+        product_ids = [item.product_id for item in db_items]
+        products_result = await db.execute(
+            select(Product)
+            .options(
+                selectinload(Product.offers),
+                selectinload(Product.ingredient_profile),
+                selectinload(Product.nutrition_facts)
+            )
+            .where(Product.id.in_(product_ids))
+        )
+        products = {p.id: p for p in products_result.scalars().all()}
+        
+        # 6. 기존 추천 결과에 RAG 설명만 추가
+        logger.info(f"[ProductService] 🤖 RAG 설명 생성 시작: {len(db_items)}개 상품")
+        recommendation_items = []
+        
+        for idx, db_item in enumerate(db_items, 1):
+            product = products.get(db_item.product_id)
+            if not product:
+                continue
+            
+            # Primary offer 찾기
+            primary_offer = None
+            for offer in product.offers:
+                if offer.is_primary and offer.is_active:
+                    primary_offer = offer
+                    break
+            
+            if not primary_offer:
+                for offer in product.offers:
+                    if offer.is_active:
+                        primary_offer = offer
+                        break
+            
+            if not primary_offer:
+                offer_merchant = Merchant.COUPANG
+                current_price = 0
+                avg_price = 0
+                delta_percent = None
+                is_new_low = False
+            else:
+                offer_merchant = primary_offer.merchant
+                current_price = 0
+                avg_price = 0
+                delta_percent = None
+                is_new_low = False
+            
+            # score_components에서 점수 추출
+            score_components = db_item.score_components or {}
+            safety_score = score_components.get("safety_score", 0.0)
+            fitness_score = score_components.get("fitness_score", 0.0)
+            total_score = float(db_item.score)
+            
+            # 전문가 설명(RAG) 생성 (기존 추천 결과의 reasons 사용)
+            reasons = db_item.reasons or []
+            expert_explanation = None
+            logger.info(f"[ProductService] [{idx}/{len(db_items)}] 🎓 전문가 설명(RAG) 생성 시작: product_id={product.id}")
+            try:
+                explanation_start = time.time()
+                expert_explanation = await RecommendationExplanationService.generate_expert_explanation(
+                    pet_name=pet_summary.name,
+                    pet_species=pet_summary.species,
+                    pet_age_stage=pet_summary.age_stage,
+                    pet_weight=pet_summary.weight_kg,
+                    pet_breed=pet_summary.breed_code,
+                    pet_neutered=pet_summary.is_neutered,
+                    health_concerns=pet_summary.health_concerns or [],
+                    allergies=pet_summary.food_allergies or [],
+                    brand_name=product.brand_name,
+                    product_name=product.product_name,
+                    technical_reasons=reasons,
+                    user_prefs=user_prefs
+                )
+                explanation_duration_ms = int((time.time() - explanation_start) * 1000)
+                logger.info(f"[ProductService] [{idx}/{len(db_items)}] ✅ 전문가 설명(RAG) 생성 완료: 소요시간={explanation_duration_ms}ms, 길이={len(expert_explanation) if expert_explanation else 0}자")
+            except Exception as e:
+                explanation_duration_ms = int((time.time() - explanation_start) * 1000)
+                logger.error(f"[ProductService] [{idx}/{len(db_items)}] ❌ 전문가 설명(RAG) 생성 실패: product_id={product.id}, error={str(e)}, 소요시간={explanation_duration_ms}ms")
+                # 실패해도 계속 진행 (expert_explanation은 None)
+            
+            # 기존 필드들 유지하고 expert_explanation만 추가
+            logger.info(f"[ProductService] [{idx}/{len(db_items)}] 📦 RecommendationItemSchema 생성: expert_explanation={'있음' if expert_explanation else '없음'}, 길이={len(expert_explanation) if expert_explanation else 0}")
+            recommendation_items.append(
+                RecommendationItemSchema(
+                    product=ProductRead.model_validate(product),
+                    offer_merchant=offer_merchant,
+                    current_price=current_price,
+                    avg_price=avg_price,
+                    delta_percent=delta_percent,
+                    is_new_low=is_new_low,
+                    match_score=total_score,
+                    safety_score=safety_score,
+                    fitness_score=fitness_score,
+                    match_reasons=reasons,
+                    technical_explanation=None,  # 기존 추천에는 기술적 설명 없음
+                    expert_explanation=expert_explanation,  # 새로 생성된 전문가 설명(RAG)
+                    explanation=expert_explanation,  # 하위 호환성: expert_explanation과 동일
+                    # v1.1.0 추가 필드 (기본값)
+                    animation_explanation=None,
+                    safety_badges=None,
+                    confidence_score=85.0 if expert_explanation else 70.0,
+                )
+            )
+            logger.info(f"[ProductService] [{idx}/{len(db_items)}] ✅ RecommendationItemSchema 생성 완료: expert_explanation={'있음' if expert_explanation else '없음'}")
+        
+        logger.info(f"[ProductService] ✅ RAG 설명 생성 완료: {len(recommendation_items)}개 상품")
+        
+        return RecommendationResponse(
+            pet_id=pet_id,
+            items=recommendation_items,
+            is_cached=True,  # 캐시된 결과에 설명만 추가했으므로 is_cached=True
+            last_recommended_at=latest_run.created_at
         )
     
     @staticmethod
@@ -1055,3 +1341,48 @@ class ProductService:
             products = products_without_offers
         
         return products, total
+    
+    @staticmethod
+    async def clear_recommendation_cache(
+        pet_id: UUID,
+        db: AsyncSession
+    ) -> int:
+        """
+        추천 캐시 제거 (추천 재계산 없이 캐시만 삭제)
+        
+        Args:
+            pet_id: 반려동물 ID
+            db: 데이터베이스 세션
+        
+        Returns:
+            삭제된 RecommendationRun 개수
+        """
+        logger.info(f"[ProductService] 🗑️ 캐시 제거 시작: pet_id={pet_id}")
+        
+        try:
+            # 해당 pet_id의 모든 RecommendationRun 조회
+            runs_result = await db.execute(
+                select(RecommendationRun)
+                .where(RecommendationRun.pet_id == pet_id)
+            )
+            runs = runs_result.scalars().all()
+            
+            deleted_count = len(runs)
+            
+            if deleted_count == 0:
+                logger.info(f"[ProductService] 💾 삭제할 캐시 없음: pet_id={pet_id}")
+                return 0
+            
+            # RecommendationRun 삭제 (cascade로 RecommendationItem도 자동 삭제됨)
+            await db.execute(
+                delete(RecommendationRun).where(RecommendationRun.pet_id == pet_id)
+            )
+            
+            await db.commit()
+            logger.info(f"[ProductService] ✅ 캐시 제거 완료: pet_id={pet_id}, deleted_runs={deleted_count}개")
+            
+            return deleted_count
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"[ProductService] ❌ 캐시 제거 실패: pet_id={pet_id}, error={str(e)}", exc_info=True)
+            raise

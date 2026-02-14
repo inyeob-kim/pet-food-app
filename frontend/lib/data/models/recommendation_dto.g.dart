@@ -38,6 +38,11 @@ RecommendationItemDto _$RecommendationItemDtoFromJson(
       ?.map((e) => e as String)
       .toList(),
   dailyAmountG: (json['daily_amount_g'] as num?)?.toDouble(),
+  animationExplanation: json['animation_explanation'] as String?,
+  safetyBadges: (json['safety_badges'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  confidenceScore: (json['confidence_score'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$RecommendationItemDtoToJson(
@@ -62,6 +67,9 @@ Map<String, dynamic> _$RecommendationItemDtoToJson(
   'harmful_ingredients': instance.harmfulIngredients,
   'quality_checklist': instance.qualityChecklist,
   'daily_amount_g': instance.dailyAmountG,
+  'animation_explanation': instance.animationExplanation,
+  'safety_badges': instance.safetyBadges,
+  'confidence_score': instance.confidenceScore,
 };
 
 RecommendationResponseDto _$RecommendationResponseDtoFromJson(
@@ -75,6 +83,7 @@ RecommendationResponseDto _$RecommendationResponseDtoFromJson(
   lastRecommendedAt: json['last_recommended_at'] == null
       ? null
       : DateTime.parse(json['last_recommended_at'] as String),
+  message: json['message'] as String?,
 );
 
 Map<String, dynamic> _$RecommendationResponseDtoToJson(
@@ -84,4 +93,5 @@ Map<String, dynamic> _$RecommendationResponseDtoToJson(
   'items': instance.items,
   'is_cached': instance.isCached,
   'last_recommended_at': instance.lastRecommendedAt?.toIso8601String(),
+  'message': instance.message,
 };

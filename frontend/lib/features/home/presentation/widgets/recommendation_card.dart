@@ -117,7 +117,7 @@ class RecommendationCard extends StatelessWidget {
             child: Text(
               '왜 추천?',
               style: AppTypography.sub.copyWith(
-                color: AppColors.primary,
+                color: AppColors.textSecondary, // 중성 회색 텍스트
                 decoration: TextDecoration.underline,
               ),
             ),

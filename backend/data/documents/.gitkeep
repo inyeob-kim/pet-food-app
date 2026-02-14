@@ -1,0 +1,6 @@
+# 이 디렉토리는 RAG 문서를 저장하는 위치입니다.
+# 각 하위 폴더에 해당 문서를 업로드하세요:
+# - veterinary_allergy_4th/: Veterinary Allergy 4th Edition
+# - fediaf_2025/: FEDIAF 2025 Nutritional Guidelines
+# - aafco_2025/: AAFCO 2025 Official Publication
+# - small_animal_clinical_nutrition/: Small Animal Clinical Nutrition 5th Edition

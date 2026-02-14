@@ -71,21 +71,71 @@ class ProductRepository {
     }
   }
 
-  /// 추천 상품 목록 조회 (실시간 계산)
-  Future<RecommendationResponseDto> getRecommendations(String petId, {bool skipLlm = false}) async {
+  /// 추천 캐시 제거 (추천 재계산 없이 캐시만 삭제)
+  Future<void> clearRecommendationCache(String petId) async {
     final startTime = DateTime.now();
-    print('[ProductRepository] 🌐 API 호출 시작: GET ${Endpoints.productRecommendations}?pet_id=$petId&skip_llm=$skipLlm');
+    print('[ProductRepository] 🗑️ 캐시 제거 API 호출 시작: DELETE ${Endpoints.productRecommendationCache}?pet_id=$petId');
+    
+    try {
+      final response = await _apiClient.delete(
+        Endpoints.productRecommendationCache,
+        queryParameters: {'pet_id': petId},
+      );
+
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ✅ 캐시 제거 완료: statusCode=${response.statusCode}, 소요시간=${duration.inMilliseconds}ms');
+      
+      final data = response.data as Map<String, dynamic>;
+      final deletedCount = data['deleted_runs'] as int? ?? 0;
+      print('[ProductRepository] 📦 삭제된 캐시: $deletedCount개');
+    } on DioException catch (e) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ 캐시 제거 DioException 발생: type=${e.type}, message=${e.message}, 소요시간=${duration.inMilliseconds}ms');
+      if (e.response != null) {
+        print('[ProductRepository] ❌ 응답 상세: statusCode=${e.response?.statusCode}, data=${e.response?.data}');
+      }
+      _handleDioException(e);
+      rethrow;
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ 캐시 제거 예외 발생: error=$e, 소요시간=${duration.inMilliseconds}ms');
+      print('[ProductRepository] ❌ StackTrace: $stackTrace');
+      throw ServerException('추천 캐시를 제거하는데 실패했습니다: ${e.toString()}');
+    }
+  }
+
+  /// 추천 상품 목록 조회 (실시간 계산, 항상 RAG 실행)
+  Future<RecommendationResponseDto> getRecommendations(
+    String petId, {
+    bool forceRefresh = false,
+    bool generateExplanationOnly = false,
+  }) async {
+    final startTime = DateTime.now();
+    print('[ProductRepository] 🌐 API 호출 시작: GET ${Endpoints.productRecommendations}?pet_id=$petId&force_refresh=$forceRefresh&generate_explanation_only=$generateExplanationOnly');
     
     try {
       final response = await _apiClient.get(
         Endpoints.productRecommendations,
-        queryParameters: {'pet_id': petId, 'skip_llm': skipLlm},
+        queryParameters: {
+          'pet_id': petId,
+          'force_refresh': forceRefresh,
+          'generate_explanation_only': generateExplanationOnly,
+        },
       );
 
       final duration = DateTime.now().difference(startTime);
       print('[ProductRepository] ✅ API 응답 수신: statusCode=${response.statusCode}, 소요시간=${duration.inMilliseconds}ms');
       
       final data = response.data as Map<String, dynamic>;
+      
+      // 디버깅: 응답 데이터 확인
+      if (generateExplanationOnly && data.containsKey('items') && (data['items'] as List).isNotEmpty) {
+        final firstItem = (data['items'] as List).first as Map<String, dynamic>;
+        print('[ProductRepository] 🔍 응답 데이터 확인:');
+        print('[ProductRepository] 🔍 expert_explanation: ${firstItem['expert_explanation']?.toString().substring(0, 50) ?? "null"}...');
+        print('[ProductRepository] 🔍 technical_explanation: ${firstItem['technical_explanation']?.toString().substring(0, 50) ?? "null"}...');
+        print('[ProductRepository] 🔍 explanation: ${firstItem['explanation']?.toString().substring(0, 50) ?? "null"}...');
+      }
       final itemsCount = (data['items'] as List?)?.length ?? 0;
       print('[ProductRepository] 📦 응답 데이터: pet_id=${data['pet_id']}, items=$itemsCount개');
       

@@ -52,7 +52,7 @@ class PetCard extends StatelessWidget {
           child: Text(
             '프로필 수정',
             style: AppTypography.sub.copyWith(
-              color: AppColors.primary,
+              color: AppColors.textSecondary, // 중성 회색 텍스트
               decoration: TextDecoration.underline,
             ),
           ),

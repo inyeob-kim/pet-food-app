@@ -185,7 +185,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                     child: Text(
                                       '전체보기',
                                       style: AppTypography.small.copyWith(
-                                        color: AppColors.primary, // Primary Blue #2563EB
+                                        color: AppColors.textSecondary, // 중성 회색 텍스트
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -250,10 +250,10 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                       Container(
                         padding: const EdgeInsets.all(24), // Card Padding
                         decoration: BoxDecoration(
-                          color: AppColors.primaryLight, // Light Blue #EFF6FF
+                          color: AppColors.divider, // 중성 회색 배경
                           borderRadius: BorderRadius.circular(16), // rounded-2xl
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.border,
                             width: 1,
                           ),
                           boxShadow: [
@@ -283,7 +283,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                   style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.primary, // Primary Blue #2563EB
+                                    color: AppColors.textPrimary, // 중성 텍스트 색상
                                   ),
                                 ),
                               ],
@@ -351,7 +351,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         ),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
-          height: 140,
+          height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -387,11 +387,11 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           }
         },
         child: SizedBox(
-          width: 120,
+          width: 130,
           child: Container(
             padding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 16,
+              vertical: 16,
+              horizontal: 18,
             ),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -414,24 +414,24 @@ class _MyScreenState extends ConsumerState<MyScreen> {
               children: [
                 PetAvatar(
                   species: pet.species,
-                  size: 36,
+                  size: 48,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   pet.name,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   pet.species == 'DOG' ? '강아지' : '고양이',
                   style: AppTypography.small.copyWith(
-                    fontSize: 10,
+                    fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -440,7 +440,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                   Text(
                     PetConstants.getAgeStageText(pet.ageStage) ?? '',
                     style: AppTypography.small.copyWith(
-                      fontSize: 9,
+                      fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -463,11 +463,11 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           context.go('${RoutePaths.onboardingV2}?mode=add_pet');
         },
         child: SizedBox(
-          width: 120,
+          width: 130,
           child: Container(
             padding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 16,
+              vertical: 16,
+              horizontal: 18,
             ),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -489,29 +489,25 @@ class _MyScreenState extends ConsumerState<MyScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight, // Light Blue #EFF6FF
+                    color: AppColors.divider, // 중성 회색 배경
                     borderRadius: BorderRadius.circular(16), // rounded-2xl
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
-                      width: 2,
-                    ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add,
-                    size: 22,
-                    color: AppColors.primary, // Primary Blue #2563EB
+                    size: 28,
+                    color: AppColors.textSecondary.withOpacity(0.6), // 텍스트와 같은 옅은 색상
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   '아이 추가하기',
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: AppColors.primary, // Primary Blue #2563EB
+                    fontSize: 14,
+                    color: AppColors.textSecondary.withOpacity(0.6), // 옅은 색상
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -543,13 +539,13 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight, // Light Blue #EFF6FF
+                  color: AppColors.divider, // 중성 회색 배경
                   borderRadius: BorderRadius.circular(12), // rounded-xl
                 ),
                 child: const Icon(
                   Icons.image_outlined,
                   size: 32,
-                  color: AppColors.primary, // Primary Blue #2563EB
+                  color: AppColors.textSecondary, // 중성 회색 아이콘
                 ),
               ),
               const SizedBox(width: AppSpacing.md),

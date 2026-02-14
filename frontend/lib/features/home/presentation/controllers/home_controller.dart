@@ -149,8 +149,9 @@ class HomeController extends StateNotifier<HomeState> {
     state = state.copyWith(isLoadingRecommendations: true); // 로딩 상태 시작
     
     try {
-      print('[HomeController] 📞 ProductRepository.getRecommendations() 호출');
-      final recommendations = await _productRepository.getRecommendations(petId);
+      print('[HomeController] 📞 ProductRepository.getRecommendations() 호출: force=$force (force=true면 RAG 강제 실행)');
+      // force=true면 캐시 무시하고 RAG 강제 실행
+      final recommendations = await _productRepository.getRecommendations(petId, forceRefresh: force);
       final duration = DateTime.now().difference(startTime);
       print('[HomeController] ✅ 추천 데이터 로드 완료: ${recommendations.items.length}개 상품, isCached=${recommendations.isCached}, 소요시간=${duration.inMilliseconds}ms');
       print('[HomeController] 📊 추천 상품 요약:');
@@ -227,6 +228,15 @@ class HomeController extends StateNotifier<HomeState> {
       isLoadingRecommendations: false,
       lastRecommendedAt: recommendations.lastRecommendedAt,
       hasRecentRecommendation: recommendations.hasRecentRecommendation,
+    );
+  }
+  
+  /// 추천 데이터 제거 (캐시 제거 후 호출)
+  void clearRecommendations() {
+    state = state.copyWith(
+      recommendations: null,
+      lastRecommendedAt: null,
+      hasRecentRecommendation: false,
     );
   }
 }

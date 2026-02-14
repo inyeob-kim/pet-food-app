@@ -210,8 +210,12 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
                 mainAxisSpacing: AppSpacing.lg,
                 childAspectRatio: 0.65,
               ),
-              itemCount: sortedProducts.length,
+              itemCount: sortedProducts.length + 1, // 상품 + 추가하기 카드
               itemBuilder: (context, index) {
+                // 마지막 항목은 추가하기 카드
+                if (index == sortedProducts.length) {
+                  return _buildAddProductCard();
+                }
                 final product = sortedProducts[index];
                 return TrackingProductCard(
                   data: product,
@@ -235,57 +239,65 @@ class _WatchScreenState extends ConsumerState<WatchScreen> {
       onTap: () {
         context.go('/market');
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // "+" 아이콘 영역 (TrackingProductCard와 동일한 크기)
-          AspectRatio(
-            aspectRatio: 1,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F8FA), // 회색 배경
-                  // 테두리 제거
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add,
-                      size: 48,
-                      color: AppColors.textSecondary.withOpacity(0.6), // 옅은 회색 아이콘
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '사료 추가하기',
-                      style: AppTypography.body2.copyWith(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
-                        color: AppColors.textSecondary.withOpacity(0.6), // 더 옅은 회색
+      child: ClipRect(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 이미지 영역 (TrackingProductCard와 동일한 구조)
+            AspectRatio(
+              aspectRatio: 1,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  color: const Color(0xFFF7F8FA),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add,
+                        size: 40,
+                        color: AppColors.textSecondary.withOpacity(0.6),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        '사료 추가하기',
+                        style: AppTypography.body2.copyWith(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          color: AppColors.textSecondary.withOpacity(0.6),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          // 텍스트 영역 (TrackingProductCard와 동일한 구조)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 브랜드명 위치 (빈 공간)
-                const SizedBox(height: 15), // 브랜드명 높이 + 간격
-                // 제품명 위치 (빈 공간)
-                const SizedBox(height: 20), // 제품명 높이
-              ],
+            // 텍스트 영역 (TrackingProductCard와 동일한 구조)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 브랜드명 위치 (빈 공간) - 11px 폰트
+                  const SizedBox(height: 11),
+                  const SizedBox(height: 1),
+                  // 제품명 위치 (빈 공간) - 13px * 1.15 * 2줄 = 약 30px
+                  SizedBox(
+                    height: 13 * 1.15 * 2,
+                  ),
+                  const SizedBox(height: 2),
+                  // 가격 위치 (빈 공간) - 15px 폰트
+                  const SizedBox(height: 15),
+                  // 알림 상태 위치 (빈 공간) - 최대 높이를 위해 공간 확보
+                  const SizedBox(height: 13),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -594,7 +594,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryLight, // Light Blue #EFF6FF
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12), // rounded-xl
                       border: Border.all(
                         color: AppColors.border,
@@ -608,7 +608,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       size: 24,
                       color: state.isFavorite
                           ? const Color(0xFFEF4444) // Red
-                          : AppColors.primary, // Primary Blue
+                          : AppColors.textSecondary, // 중성 회색
                     ),
                   ),
                 ),
