@@ -147,12 +147,62 @@ class RecommendationExplanationService:
             client = chromadb.PersistentClient(path=str(vector_store_path))
             
             # 컬렉션 가져오기 (없으면 빈 리스트 반환)
+            metadata_corrupted = False
+            
             try:
                 logger.info("[RAG] 🔍 컬렉션 'pet_food_rag' 조회 시도...")
-                collection = client.get_collection(name="pet_food_rag")
-                logger.info(f"[RAG] ✅ 컬렉션 조회 성공: {collection.name}, 문서 수: {collection.count()}")
+                
+                # list_collections()는 메타데이터 손상 시 실패할 수 있으므로 선택적으로 실행
+                try:
+                    collections = client.list_collections()
+                    collection_names = [c.name for c in collections]
+                    logger.info(f"[RAG] 📋 사용 가능한 컬렉션: {collection_names}")
+                    
+                    if "pet_food_rag" not in collection_names:
+                        logger.warning(f"[RAG] ⚠️ 컬렉션 'pet_food_rag'이 존재하지 않습니다. 사용 가능한 컬렉션: {collection_names}")
+                        return []
+                except KeyError as list_error:
+                    # _type KeyError는 메타데이터 손상을 의미
+                    if "_type" in str(list_error):
+                        metadata_corrupted = True
+                        logger.warning(f"[RAG] ⚠️ ChromaDB 메타데이터 손상 감지 (list_collections 실패). 직접 조회 시도...")
+                    else:
+                        logger.warning(f"[RAG] ⚠️ 컬렉션 목록 조회 실패: {type(list_error).__name__}: {str(list_error)}")
+                except Exception as list_error:
+                    # 기타 에러는 무시하고 직접 조회 시도
+                    logger.debug(f"[RAG] 컬렉션 목록 조회 실패 (무시): {type(list_error).__name__}: {str(list_error)}")
+                
+                # 직접 컬렉션 조회 시도
+                try:
+                    collection = client.get_collection(name="pet_food_rag")
+                    logger.info(f"[RAG] ✅ 컬렉션 조회 성공: {collection.name}, 문서 수: {collection.count()}")
+                except KeyError as get_error:
+                    # get_collection()도 _type 에러 발생 시 메타데이터 손상으로 판단
+                    if "_type" in str(get_error):
+                        metadata_corrupted = True
+                        raise  # 외부 except로 전달
+                    else:
+                        raise
+                        
+            except KeyError as e:
+                # _type KeyError 처리
+                if "_type" in str(e) or metadata_corrupted:
+                    logger.error(f"[RAG] ❌ ChromaDB 메타데이터 손상으로 컬렉션을 사용할 수 없습니다. "
+                               f"해결 방법: vector_store 디렉토리 삭제 후 재생성하거나 ChromaDB를 업데이트하세요.")
+                    return []
+                else:
+                    logger.warning(f"[RAG] ⚠️ 컬렉션 조회 실패: {type(e).__name__}: {str(e)}")
+                    return []
             except Exception as e:
-                logger.warning(f"[RAG] ⚠️ 컬렉션을 찾을 수 없습니다: {str(e)}")
+                error_type = type(e).__name__
+                error_msg = str(e)
+                
+                # ChromaDB의 특정 에러 타입 확인
+                if error_type == "InvalidCollectionException" or "does not exist" in error_msg.lower():
+                    logger.warning(f"[RAG] ⚠️ 컬렉션 'pet_food_rag'이 존재하지 않습니다.")
+                else:
+                    logger.warning(f"[RAG] ⚠️ 컬렉션 조회 실패: {error_type}: {error_msg}")
+                
                 return []
             
             # 쿼리 텍스트 생성

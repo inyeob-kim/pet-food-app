@@ -1,14 +1,14 @@
 """상품 API 라우터 - 라우팅만 담당"""
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Depends, Query, Body, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from typing import List, Optional
 import logging
 import time
 
 from app.db.session import get_db
-from app.schemas.product import ProductRead, RecommendationResponse
+from app.schemas.product import ProductRead, RecommendationResponse, ProductMatchScoreResponse
 from app.schemas.section import (
     SectionRequest, SectionResponse, BatchSectionRequest, BatchSectionResponse
 )
@@ -159,18 +159,62 @@ async def clear_recommendation_cache(
     pet_id: UUID = Query(..., description="반려동물 ID"),
     db: AsyncSession = Depends(get_db)
 ):
-    """추천 캐시 제거 (추천 재계산 없이 캐시만 삭제)"""
+    """추천 캐시 제거 (Redis + PostgreSQL)"""
     start_time = time.time()
     logger.info(f"[Products API] 🗑️ 캐시 제거 요청 수신: pet_id={pet_id}")
     
     try:
+        # UPDATED: Redis 캐시 삭제
+        from app.core.cache.recommendation_cache_service import RecommendationCacheService
+        redis_deleted = await RecommendationCacheService.invalidate_recommendation(pet_id)
+        
+        # PostgreSQL 캐시 삭제 (기존 로직)
         deleted_count = await ProductService.clear_recommendation_cache(pet_id, db)
+        
         duration_ms = int((time.time() - start_time) * 1000)
-        logger.info(f"[Products API] ✅ 캐시 제거 완료: pet_id={pet_id}, deleted_runs={deleted_count}, 소요시간={duration_ms}ms")
-        return {"success": True, "pet_id": str(pet_id), "deleted_runs": deleted_count}
+        logger.info(f"[Products API] ✅ 캐시 제거 완료: pet_id={pet_id}, deleted_runs={deleted_count}, redis_keys_deleted={1 if redis_deleted else 0}, 소요시간={duration_ms}ms")
+        return {
+            "success": True,
+            "pet_id": str(pet_id),
+            "deleted_runs": deleted_count,
+            "redis_keys_deleted": 1 if redis_deleted else 0
+        }
     except Exception as e:
         duration_ms = int((time.time() - start_time) * 1000)
         logger.error(f"[Products API] ❌ 캐시 제거 실패: pet_id={pet_id}, error={str(e)}, 소요시간={duration_ms}ms", exc_info=True)
+        raise
+
+
+@router.delete("/recommendations/cache/all", status_code=status.HTTP_200_OK)
+async def clear_all_recommendation_cache(
+    db: AsyncSession = Depends(get_db)
+):
+    """전체 추천 캐시 제거 (모든 펫의 Redis + PostgreSQL 캐시)"""
+    start_time = time.time()
+    logger.info(f"[Products API] 🗑️ 전체 캐시 제거 요청 수신")
+    
+    try:
+        # UPDATED: Redis 전체 캐시 삭제
+        from app.core.cache.recommendation_cache_service import RecommendationCacheService
+        redis_deleted = await RecommendationCacheService.invalidate_all_recommendations()
+        
+        # PostgreSQL 캐시 삭제 (모든 RecommendationRun 삭제)
+        from app.models.recommendation import RecommendationRun
+        delete_result = await db.execute(delete(RecommendationRun))
+        await db.commit()
+        db_deleted = delete_result.rowcount
+        
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.info(f"[Products API] ✅ 전체 캐시 제거 완료: deleted_runs={db_deleted}, redis_keys_deleted={redis_deleted}, 소요시간={duration_ms}ms")
+        return {
+            "success": True,
+            "deleted_runs": db_deleted,
+            "redis_keys_deleted": redis_deleted
+        }
+    except Exception as e:
+        await db.rollback()
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.error(f"[Products API] ❌ 전체 캐시 제거 실패: error={str(e)}, 소요시간={duration_ms}ms", exc_info=True)
         raise
 
 
@@ -195,3 +239,33 @@ async def get_product_offers(
     )
     offers = result.scalars().all()
     return [{"id": str(o.id), "merchant": o.merchant.value, "url": o.url} for o in offers]
+
+
+@router.get("/{product_id}/match-score", response_model=ProductMatchScoreResponse)
+async def get_product_match_score(
+    product_id: UUID,
+    pet_id: UUID = Query(..., description="반려동물 ID"),
+    db: AsyncSession = Depends(get_db)
+):
+    """특정 상품의 맞춤 점수 계산"""
+    start_time = time.time()
+    logger.info(f"[Products API] 📥 맞춤 점수 계산 요청: product_id={product_id}, pet_id={pet_id}")
+    
+    try:
+        result = await ProductService.calculate_product_match_score(product_id, pet_id, db)
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.info(
+            f"[Products API] ✅ 맞춤 점수 계산 완료: product_id={product_id}, pet_id={pet_id}, "
+            f"match_score={result.match_score:.1f}, 소요시간={duration_ms}ms"
+        )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.error(
+            f"[Products API] ❌ 맞춤 점수 계산 실패: product_id={product_id}, pet_id={pet_id}, "
+            f"error={str(e)}, 소요시간={duration_ms}ms",
+            exc_info=True
+        )
+        raise

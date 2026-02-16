@@ -20,6 +20,7 @@ Alembic 마이그레이션 명령어:
 - 모델 변경 후 반드시 autogenerate로 revision을 생성하세요.
 """
 
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,17 +50,20 @@ app = FastAPI(
 # UUID도 자동으로 문자열로 직렬화됩니다.
 
 # CORS 설정
+# 개발 환경에서는 모든 origin 허용 (모바일 디바이스 접근을 위해)
 # allow_origins=["*"]와 allow_credentials=True를 함께 사용할 수 없으므로
-# 개발 환경에서는 명시적으로 localhost:3000을 허용
+# 개발 환경에서는 allow_credentials=False로 설정
+is_development = os.getenv("ENVIRONMENT", "development") == "development"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+    allow_origins=["*"] if is_development else [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",  # Vite 기본 포트
         "http://127.0.0.1:5173",
     ],
-    allow_credentials=True,
+    allow_credentials=not is_development,  # 개발 환경에서는 False
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -68,6 +72,12 @@ app.add_middleware(
 
 @app.get("/health")
 async def health_check():
+    return {"status": "ok", "message": "Service is running"}
+
+
+# Health 엔드포인트를 api_router에도 추가 (일관성을 위해)
+@api_router.get("/health")
+async def api_health_check():
     return {"status": "ok", "message": "Service is running"}
 
 

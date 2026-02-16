@@ -459,6 +459,12 @@ async def update_pet(
         await db.commit()
         await db.refresh(pet)
         
+        # UPDATED: 펫 프로필 업데이트 시 추천 캐시 무효화
+        from app.core.cache.recommendation_cache_service import RecommendationCacheService
+        await RecommendationCacheService.invalidate_recommendation(pet_id)
+        await RecommendationCacheService.invalidate_pet_summary(pet_id)
+        logger.info(f"[Pets API] ✅ 추천 캐시 무효화 완료: pet_id={pet_id}")
+        
         # Health concerns 조회
         health_result = await db.execute(
             select(PetHealthConcern.concern_code).where(

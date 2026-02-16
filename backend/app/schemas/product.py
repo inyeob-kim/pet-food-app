@@ -90,3 +90,15 @@ class RecommendationResponse(BaseModel):
     last_recommended_at: Optional[datetime] = Field(default=None, description="마지막 추천 시각")
     message: Optional[str] = Field(default=None, description="추천 결과가 없을 때 사용자 친화적 메시지")
 
+
+class ProductMatchScoreResponse(BaseModel):
+    """특정 상품의 맞춤 점수 응답"""
+    product_id: UUID
+    pet_id: UUID
+    match_score: float = Field(..., description="총점 (0~100)")
+    safety_score: float = Field(..., description="안전성 점수 (0~100)")
+    fitness_score: float = Field(..., description="적합성 점수 (0~100)")
+    match_reasons: List[str] = Field(default_factory=list, description="매칭 이유 리스트")
+    score_components: dict = Field(default_factory=dict, description="세부 점수 분해")
+    calculated_at: datetime = Field(default_factory=datetime.now, description="점수 계산 시각")
+

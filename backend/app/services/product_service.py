@@ -79,6 +79,147 @@ class ProductService:
         return product
     
     @staticmethod
+    async def calculate_product_match_score(
+        product_id: UUID,
+        pet_id: UUID,
+        db: AsyncSession
+    ) -> "ProductMatchScoreResponse":
+        """
+        특정 상품의 맞춤 점수 계산
+        
+        Args:
+            product_id: 상품 ID
+            pet_id: 반려동물 ID
+            db: 데이터베이스 세션
+        
+        Returns:
+            ProductMatchScoreResponse: 맞춤 점수 응답
+        """
+        from app.schemas.product import ProductMatchScoreResponse
+        from app.core.cache.recommendation_cache_service import RecommendationCacheService
+        
+        logger.info(f"[ProductService] 🎯 상품 맞춤 점수 계산 시작: product_id={product_id}, pet_id={pet_id}")
+        
+        # UPDATED: Redis 캐시 체크
+        cached_score = await RecommendationCacheService.get_product_match_score(product_id, pet_id)
+        if cached_score:
+            logger.info(f"[ProductService] ✅ 맞춤 점수 캐시 히트: product_id={product_id}, pet_id={pet_id}")
+            return cached_score
+        
+        logger.debug(f"[ProductService] ❌ 맞춤 점수 캐시 미스: product_id={product_id}, pet_id={pet_id}, 새로 계산")
+        
+        # 1. 펫 프로필 조회
+        pet = await db.get(Pet, pet_id)
+        if pet is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Pet not found"
+            )
+        
+        pet_summary = await ProductService._build_pet_summary(pet, db)
+        logger.info(f"[ProductService] 펫 프로필: {pet_summary.name}, 종류={pet_summary.species}, 나이={pet_summary.age_stage}")
+        
+        # 2. 사용자 선호도 불러오기
+        user_id = pet.user_id
+        user_prefs_result = await db.execute(
+            select(UserRecoPrefs).where(UserRecoPrefs.user_id == user_id)
+        )
+        user_prefs_obj = user_prefs_result.scalars().first()
+        
+        default_prefs = {
+            "weights_preset": "BALANCED",
+            "hard_exclude_allergens": [],
+            "soft_avoid_ingredients": [],
+            "max_price_per_kg": None,
+            "sort_preference": "default",
+            "health_concern_priority": False,
+        }
+        
+        if user_prefs_obj and user_prefs_obj.prefs:
+            user_prefs = {**default_prefs, **user_prefs_obj.prefs}
+        else:
+            user_prefs = default_prefs
+        
+        # 3. 상품 정보 조회 (ingredient_profile, nutrition_facts 포함)
+        result = await db.execute(
+            select(Product)
+            .options(
+                selectinload(Product.ingredient_profile),
+                selectinload(Product.nutrition_facts)
+            )
+            .where(Product.id == product_id)
+        )
+        product = result.scalar_one_or_none()
+        
+        if product is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Product not found"
+            )
+        
+        if not product.ingredient_profile or product.ingredient_profile.parsed is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Product ingredient information is not available"
+            )
+        
+        # 4. parsed JSON 파싱
+        parsed = product.ingredient_profile.parsed
+        if isinstance(parsed, str):
+            parsed = json.loads(parsed)
+        
+        ingredients_text = product.ingredient_profile.ingredients_text or ""
+        
+        # 5. 유해 성분 캐시 로드
+        harmful_ingredients_cache = await RecommendationScoringService._get_harmful_ingredients(db)
+        
+        # 6. 안전성 점수 계산
+        safety_score, safety_reasons = await RecommendationScoringService.calculate_safety_score(
+            pet_summary, product, parsed, ingredients_text, user_prefs, db, harmful_ingredients_cache
+        )
+        logger.info(f"[ProductService] 안전성 점수: {safety_score:.1f}")
+        
+        # 7. 적합성 점수 계산
+        fitness_score, fitness_reasons, age_penalty = RecommendationScoringService.calculate_fitness_score(
+            pet_summary, product, parsed, product.nutrition_facts, user_prefs
+        )
+        logger.info(f"[ProductService] 적합성 점수: {fitness_score:.1f}, 나이 패널티: {age_penalty:.1f}")
+        
+        # 8. 총점 계산
+        total_score = RecommendationScoringService.calculate_total_score(
+            safety_score, fitness_score, age_penalty, user_prefs
+        )
+        logger.info(f"[ProductService] 총점: {total_score:.1f}")
+        
+        # 9. 매칭 이유 합치기
+        all_reasons = safety_reasons + fitness_reasons
+        
+        # 10. 세부 점수 분해
+        score_components = {
+            "safety_score": safety_score,
+            "fitness_score": fitness_score,
+            "age_penalty": age_penalty,
+            "total_score": total_score,
+        }
+        
+        result = ProductMatchScoreResponse(
+            product_id=product_id,
+            pet_id=pet_id,
+            match_score=total_score,
+            safety_score=safety_score,
+            fitness_score=fitness_score,
+            match_reasons=all_reasons,
+            score_components=score_components,
+            calculated_at=datetime.now(timezone.utc)
+        )
+        
+        # UPDATED: Redis 캐시 저장
+        await RecommendationCacheService.set_product_match_score(product_id, pet_id, result)
+        logger.info(f"[ProductService] ✅ 맞춤 점수 계산 완료 및 캐시 저장: product_id={product_id}, pet_id={pet_id}")
+        
+        return result
+    
+    @staticmethod
     async def get_recommendations(
         pet_id: UUID,
         db: AsyncSession,
@@ -105,6 +246,17 @@ class ProductService:
         if generate_explanation_only:
             logger.info(f"[ProductService] 🎯 RAG 설명만 생성 모드: 기존 추천 결과에 explanation만 추가")
             return await ProductService._generate_explanations_only(pet_id, db)
+        
+        # UPDATED: Redis 캐시 체크 (force_refresh가 False일 때만)
+        if not force_refresh:
+            from app.core.cache.recommendation_cache_service import RecommendationCacheService
+            
+            cached_recommendation = await RecommendationCacheService.get_recommendation(pet_id)
+            if cached_recommendation:
+                logger.info(f"[ProductService] ✅ Redis 캐시 히트: pet_id={pet_id}")
+                return cached_recommendation
+            
+            logger.debug(f"[ProductService] ❌ Redis 캐시 미스: pet_id={pet_id}, PostgreSQL 확인")
         
         # UPDATED: Caching & User Prefs for recommendation freshness - 캐싱 체크
         # force_refresh가 True면 캐싱 무시
@@ -232,13 +384,20 @@ class ProductService:
                 
                 logger.info(f"[ProductService] 📊 최종 recommendation_items: {len(recommendation_items)}개 (필터링됨: {filtered_count}개)")
                 
-                # 캐싱된 응답 반환
-                return RecommendationResponse(
+                # 캐싱된 응답 생성
+                recommendation_response = RecommendationResponse(
                     pet_id=pet_id,
                     items=recommendation_items,
                     is_cached=True,
                     last_recommended_at=latest_run.created_at
                 )
+                
+                # UPDATED: PostgreSQL에서 가져온 결과를 Redis에 저장
+                from app.core.cache.recommendation_cache_service import RecommendationCacheService
+                await RecommendationCacheService.set_recommendation(pet_id, recommendation_response)
+                logger.info(f"[ProductService] ✅ PostgreSQL → Redis 캐시 저장 완료")
+                
+                return recommendation_response
         else:
             logger.info(f"[ProductService] 🔄 force_refresh=true: 캐시 무시하고 새로 계산")
         
@@ -757,12 +916,19 @@ class ProductService:
             # 히스토리 저장 실패해도 추천 결과는 반환
         
         # UPDATED: Caching & User Prefs for recommendation freshness - 응답에 캐싱 정보 포함
-        return RecommendationResponse(
+        recommendation_response = RecommendationResponse(
             pet_id=pet_id,
             items=recommendation_items,
             is_cached=False,
             last_recommended_at=datetime.now(timezone.utc) if recommendation_items else None
         )
+        
+        # UPDATED: 새로 계산한 결과를 Redis에 저장
+        from app.core.cache.recommendation_cache_service import RecommendationCacheService
+        await RecommendationCacheService.set_recommendation(pet_id, recommendation_response)
+        logger.info(f"[ProductService] ✅ 새 추천 계산 → Redis 캐시 저장 완료")
+        
+        return recommendation_response
     
     @staticmethod
     async def _generate_explanations_only(
@@ -1083,7 +1249,17 @@ class ProductService:
     
     @staticmethod
     async def _build_pet_summary(pet: Pet, db: AsyncSession) -> PetSummaryResponse:
-        """Pet 모델을 PetSummaryResponse로 변환"""
+        """Pet 모델을 PetSummaryResponse로 변환 (캐시 활용)"""
+        from app.core.cache.recommendation_cache_service import RecommendationCacheService
+        
+        # UPDATED: Redis 캐시 체크
+        cached_summary = await RecommendationCacheService.get_pet_summary(pet.id)
+        if cached_summary:
+            logger.debug(f"[ProductService] ✅ 펫 프로필 캐시 히트: pet_id={pet.id}")
+            return PetSummaryResponse(**cached_summary)
+        
+        logger.debug(f"[ProductService] ❌ 펫 프로필 캐시 미스: pet_id={pet.id}, DB 조회")
+        
         # Health concerns 조회
         result = await db.execute(
             select(PetHealthConcern.concern_code).where(
@@ -1109,7 +1285,7 @@ class ProductService:
         other_allergy_row = result.first()
         other_allergies = other_allergy_row[0] if other_allergy_row else None
         
-        return PetSummaryResponse(
+        pet_summary = PetSummaryResponse(
             id=pet.id,
             name=pet.name,
             species=pet.species.value,
@@ -1124,6 +1300,15 @@ class ProductService:
             food_allergies=food_allergies,
             other_allergies=other_allergies,
         )
+        
+        # UPDATED: Redis 캐시 저장
+        await RecommendationCacheService.set_pet_summary(
+            pet.id,
+            pet_summary.model_dump(mode='json')
+        )
+        logger.debug(f"[ProductService] ✅ 펫 프로필 캐시 저장: pet_id={pet.id}")
+        
+        return pet_summary
     
     @staticmethod
     async def create_product(
@@ -1173,7 +1358,9 @@ class ProductService:
         product_data: ProductUpdate,
         db: AsyncSession
     ) -> Product:
-        """상품 수정"""
+        """상품 수정 (캐시 무효화 포함)"""
+        from app.core.cache.recommendation_cache_service import RecommendationCacheService
+        
         product = await ProductService.get_product_by_id(product_id, db)
         
         # 업데이트할 필드만 적용
@@ -1193,6 +1380,12 @@ class ProductService:
         try:
             await db.commit()
             await db.refresh(product)
+            
+            # UPDATED: 상품 업데이트 시 태그 기반 캐시 무효화
+            # 해당 상품의 모든 맞춤 점수 캐시 삭제 (모든 펫에 대해)
+            deleted_count = await RecommendationCacheService.invalidate_product_match_score(product_id)
+            logger.info(f"[ProductService] ✅ 상품 업데이트 후 맞춤 점수 캐시 무효화: product_id={product_id}, deleted={deleted_count}개")
+            
         except IntegrityError as e:
             await db.rollback()
             raise HTTPException(
