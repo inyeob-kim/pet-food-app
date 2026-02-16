@@ -25,7 +25,7 @@ class TodayEmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.pagePaddingHorizontal,
+          horizontal: AppSpacing.lg,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

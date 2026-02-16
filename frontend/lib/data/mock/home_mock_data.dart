@@ -39,6 +39,9 @@ class HomeMockData {
       avgPrice: 42000,
       deltaPercent: -16.67,
       isNewLow: true,
+      matchScore: 95.5,
+      safetyScore: 98.0,
+      fitnessScore: 93.0,
     );
   }
 
@@ -61,6 +64,9 @@ class HomeMockData {
         avgPrice: 52000,
         deltaPercent: -13.46,
         isNewLow: true,
+        matchScore: 92.0,
+        safetyScore: 95.0,
+        fitnessScore: 89.0,
       ),
       RecommendationItemDto(
         product: ProductDto(
@@ -75,6 +81,9 @@ class HomeMockData {
         avgPrice: 32000,
         deltaPercent: -12.5,
         isNewLow: false,
+        matchScore: 88.5,
+        safetyScore: 90.0,
+        fitnessScore: 87.0,
       ),
       RecommendationItemDto(
         product: ProductDto(
@@ -89,6 +98,9 @@ class HomeMockData {
         avgPrice: 65000,
         deltaPercent: -20.0,
         isNewLow: true,
+        matchScore: 90.0,
+        safetyScore: 92.0,
+        fitnessScore: 88.0,
       ),
       RecommendationItemDto(
         product: ProductDto(
@@ -103,6 +115,9 @@ class HomeMockData {
         avgPrice: 95000,
         deltaPercent: -10.53,
         isNewLow: false,
+        matchScore: 85.0,
+        safetyScore: 88.0,
+        fitnessScore: 82.0,
       ),
     ];
   }

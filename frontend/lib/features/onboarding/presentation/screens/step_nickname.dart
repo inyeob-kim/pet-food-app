@@ -85,7 +85,7 @@ class _StepNicknameScreenState extends ConsumerState<StepNicknameScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.pagePaddingHorizontal,
+                  horizontal: AppSpacing.lg,
                 ),
                 child: Column(
                   children: [

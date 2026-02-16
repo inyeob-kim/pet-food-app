@@ -24,7 +24,7 @@ class OnboardingHeader extends StatelessWidget {
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.pagePadding,
+          horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         child: Column(

@@ -148,7 +148,7 @@ class _StepAgeScreenState extends ConsumerState<StepAgeScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.pagePaddingHorizontal,
+                  horizontal: AppSpacing.lg,
                 ),
                 child: Column(
                   children: [

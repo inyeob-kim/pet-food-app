@@ -77,7 +77,7 @@ class _StepPetNameScreenState extends ConsumerState<StepPetNameScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.pagePaddingHorizontal,
+                  horizontal: AppSpacing.lg,
                 ),
                 child: Column(
                   children: [

@@ -85,7 +85,7 @@ class StateHandler extends StatelessWidget {
   Widget _buildErrorWidget(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.pagePaddingHorizontal),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -103,7 +103,7 @@ class StateHandler extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
-              const SizedBox(height: AppSpacing.gridGap),
+              const SizedBox(height: AppSpacing.lg),
               AppPrimaryButton(
                 text: '다시 시도',
                 onPressed: onRetry,

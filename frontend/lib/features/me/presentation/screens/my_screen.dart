@@ -61,7 +61,16 @@ class _MyScreenState extends ConsumerState<MyScreen> {
     if (state.isLoading) {
       return Scaffold(
         backgroundColor: Colors.white,
-        body: const Center(child: LoadingWidget()),
+        body: SafeArea(
+          child: Column(
+            children: [
+              AppTopBar(title: '더보기', showBackButton: false),
+              const Expanded(
+                child: Center(child: LoadingWidget()),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

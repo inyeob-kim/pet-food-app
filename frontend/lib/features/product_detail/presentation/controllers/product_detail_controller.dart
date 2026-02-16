@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/product_repository.dart';
 import '../../../../data/models/product_dto.dart';
+import '../../../../data/models/product_match_score_dto.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../domain/services/tracking_service.dart';
@@ -21,6 +22,8 @@ class ProductDetailState {
   final bool isFavorite; // 관심 사료 추가 여부
   final String? purchaseUrl; // 구매 링크
   final IngredientAnalysisData? ingredientAnalysis; // 성분 분석 데이터
+  final ProductMatchScoreDto? matchScore; // 맞춤 점수
+  final bool isLoadingMatchScore; // 맞춤 점수 로딩 중
 
   ProductDetailState({
     this.product,
@@ -36,6 +39,8 @@ class ProductDetailState {
     this.isFavorite = false,
     this.purchaseUrl,
     this.ingredientAnalysis,
+    this.matchScore,
+    this.isLoadingMatchScore = false,
   });
 
   ProductDetailState copyWith({
@@ -52,6 +57,8 @@ class ProductDetailState {
     bool? isFavorite,
     String? purchaseUrl,
     IngredientAnalysisData? ingredientAnalysis,
+    ProductMatchScoreDto? matchScore,
+    bool? isLoadingMatchScore,
   }) {
     return ProductDetailState(
       product: product ?? this.product,
@@ -67,6 +74,8 @@ class ProductDetailState {
       isFavorite: isFavorite ?? this.isFavorite,
       purchaseUrl: purchaseUrl ?? this.purchaseUrl,
       ingredientAnalysis: ingredientAnalysis ?? this.ingredientAnalysis,
+      matchScore: matchScore ?? this.matchScore,
+      isLoadingMatchScore: isLoadingMatchScore ?? this.isLoadingMatchScore,
     );
   }
 
@@ -84,7 +93,9 @@ class ProductDetailController extends StateNotifier<ProductDetailState> {
   ProductDetailController(
     this._productRepository,
     this._trackingService,
-  ) : super(ProductDetailState());
+  ) : super(ProductDetailState(
+    isLoadingMatchScore: false,
+  ));
 
   Future<void> loadProduct(String productId) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -104,6 +115,9 @@ class ProductDetailController extends StateNotifier<ProductDetailState> {
       
       // 찜 상태 확인
       await _checkFavoriteStatus(productId);
+      
+      // 맞춤 점수 로드 (petId가 있을 때만)
+      // petId는 loadMatchScore에서 HomeController를 통해 가져옴
     } catch (e) {
       final failure = e is Exception
           ? handleException(e)
@@ -246,6 +260,30 @@ class ProductDetailController extends StateNotifier<ProductDetailState> {
       state = state.copyWith(
         isTrackingLoading: false,
         error: failure.message,
+      );
+    }
+  }
+
+  /// 맞춤 점수 로드
+  Future<void> loadMatchScore(String productId, String petId) async {
+    state = state.copyWith(isLoadingMatchScore: true, error: null);
+
+    try {
+      final matchScore = await _productRepository.getProductMatchScore(
+        productId: productId,
+        petId: petId,
+      );
+      
+      state = state.copyWith(
+        isLoadingMatchScore: false,
+        matchScore: matchScore,
+      );
+    } catch (e) {
+      print('[ProductDetailController] 맞춤 점수 로드 실패: $e');
+      // 에러가 발생해도 기본값(null)로 설정 (점수 섹션 숨김)
+      state = state.copyWith(
+        isLoadingMatchScore: false,
+        matchScore: null,
       );
     }
   }

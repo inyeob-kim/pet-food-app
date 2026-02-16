@@ -235,48 +235,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   : '헤이제노',
               showBackButton: false,
               actions: [
-                // 임시: 캐시 제거 버튼
+                // 전체 캐시 제거 버튼
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
                   color: AppColors.textPrimary,
-                  tooltip: '캐시 제거',
+                  tooltip: '전체 캐시 제거',
                   onPressed: () async {
-                    print('[HomeScreen] 🗑️ 캐시 제거 버튼 클릭');
-                    final petSummary = state.petSummary;
-                    if (petSummary != null) {
-                      try {
-                        final repository = ref.read(productRepositoryProvider);
-                        await repository.clearRecommendationCache(petSummary.petId);
-                        
-                        // 홈 화면 상태에서 추천 데이터 제거 (캐시가 없으므로)
-                        ref.read(homeControllerProvider.notifier).clearRecommendations();
-                        
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('캐시가 제거되었습니다.'),
-                              duration: Duration(seconds: 2),
+                    print('[HomeScreen] 🗑️ 전체 캐시 제거 버튼 클릭');
+                    
+                    // 확인 다이얼로그 표시
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('전체 캐시 제거'),
+                        content: const Text('모든 추천 캐시를 제거하시겠습니까?\n다음 추천 요청 시 새로 계산됩니다.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('취소'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.drop,
                             ),
-                          );
-                        }
-                      } catch (e) {
-                        print('[HomeScreen] ❌ 캐시 제거 실패: $e');
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('캐시 제거 실패: ${e.toString()}'),
-                              duration: const Duration(seconds: 3),
+                            child: const Text('제거'),
+                          ),
+                        ],
+                      ),
+                    );
+                    
+                    if (confirmed != true) return;
+                    
+                    try {
+                      final repository = ref.read(productRepositoryProvider);
+                      final result = await repository.clearAllRecommendationCache();
+                      
+                      // 홈 화면 상태에서 추천 데이터 제거 (캐시가 없으므로)
+                      ref.read(homeControllerProvider.notifier).clearRecommendations();
+                      
+                      if (mounted) {
+                        final deletedRuns = result['deleted_runs'] as int? ?? 0;
+                        final redisKeysDeleted = result['redis_keys_deleted'] as int? ?? 0;
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '전체 캐시가 제거되었습니다.\n(PostgreSQL: $deletedRuns개, Redis: $redisKeysDeleted개)',
                             ),
-                          );
-                        }
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
                       }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('펫 정보가 없어서 캐시를 제거할 수 없습니다.'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                      
+                      print('[HomeScreen] ✅ 전체 캐시 제거 완료: $result');
+                    } catch (e) {
+                      print('[HomeScreen] ❌ 전체 캐시 제거 실패: $e');
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('캐시 제거 실패: ${e.toString()}'),
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
@@ -312,9 +334,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildBodyContent(BuildContext context, HomeState state) {
     // 로딩 상태
     if (state.isLoading) {
-      return const SizedBox(
-        height: 400, // 최소 높이 보장
-        child: Center(child: LoadingWidget()),
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: const Center(child: LoadingWidget()),
       );
     }
 
@@ -326,11 +348,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 에러 상태
     if (state.isError) {
       return SizedBox(
-        height: 400, // 최소 높이 보장
-        child: EmptyStateWidget(
-          title: state.error ?? '오류가 발생했습니다',
-          buttonText: '다시 시도',
-          onButtonPressed: () => ref.read(homeControllerProvider.notifier).initialize(),
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: Center(
+          child: EmptyStateWidget(
+            title: state.error ?? '오류가 발생했습니다',
+            buttonText: '다시 시도',
+            onButtonPressed: () => ref.read(homeControllerProvider.notifier).initialize(),
+          ),
         ),
       );
     }
@@ -343,9 +367,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : null;
 
     if (petSummary == null) {
-      return const SizedBox(
-        height: 400, // 최소 높이 보장
-        child: Center(child: LoadingWidget()),
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: const Center(child: LoadingWidget()),
       );
     }
 
@@ -1389,26 +1413,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return CardContainer(
         isHomeStyle: true,
         padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Lottie.asset(
-              'assets/animations/paw_loading.json',
-              width: 60,
-              height: 60,
-              fit: BoxFit.contain,
-              repeat: true,
-              animate: true,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              '${petSummary.name}에게 딱 맞는 사료 찾는 중...',
-              style: AppTypography.body.copyWith(
-                color: AppColors.textSecondary,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Lottie.asset(
+                'assets/animations/loading_dots.json',
+                width: 500,
+                height: 500,
+                fit: BoxFit.contain,
+                repeat: true,
+                animate: true,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                '${petSummary.name}에게 딱 맞는 사료 찾는 중...',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -2073,24 +2099,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (state.isLoadingRecommendations) {
       return CardContainer(
         padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          children: [
-            Lottie.asset(
-              'assets/animations/paw_loading.json',
-              width: 60,
-              height: 60,
-              fit: BoxFit.contain,
-              repeat: true,
-              animate: true,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              '${petSummary.name}에게 딱 맞는 사료 찾는 중...',
-              style: AppTypography.body.copyWith(
-                color: AppColors.textSecondary,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Lottie.asset(
+                'assets/animations/loading_dots.json',
+                width: 500,
+                height: 500,
+                fit: BoxFit.contain,
+                repeat: true,
+                animate: true,
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                '${petSummary.name}에게 딱 맞는 사료 찾는 중...',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }

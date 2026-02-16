@@ -6,6 +6,7 @@ import '../../core/network/endpoints.dart';
 import '../../core/error/exceptions.dart';
 import '../models/recommendation_dto.dart';
 import '../models/product_dto.dart';
+import '../models/product_match_score_dto.dart';
 
 /// 상품 관련 데이터 레포지토리
 /// 단일 책임: 상품 및 추천 데이터 조회
@@ -68,6 +69,41 @@ class ProductRepository {
       print('[ProductRepository] ❌ 히스토리 예외 발생: error=$e, 소요시간=${duration.inMilliseconds}ms');
       print('[ProductRepository] ❌ 히스토리 StackTrace: $stackTrace');
       throw ServerException('추천 히스토리를 불러오는데 실패했습니다: ${e.toString()}');
+    }
+  }
+
+  /// 전체 추천 캐시 제거 (모든 펫의 캐시)
+  Future<Map<String, dynamic>> clearAllRecommendationCache() async {
+    final startTime = DateTime.now();
+    print('[ProductRepository] 🗑️ 전체 캐시 제거 API 호출 시작: DELETE ${Endpoints.productRecommendationCacheAll}');
+    
+    try {
+      final response = await _apiClient.delete(
+        Endpoints.productRecommendationCacheAll,
+      );
+
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ✅ 전체 캐시 제거 완료: statusCode=${response.statusCode}, 소요시간=${duration.inMilliseconds}ms');
+      
+      final data = response.data as Map<String, dynamic>;
+      final deletedRuns = data['deleted_runs'] as int? ?? 0;
+      final redisKeysDeleted = data['redis_keys_deleted'] as int? ?? 0;
+      print('[ProductRepository] 📦 삭제된 캐시: PostgreSQL=$deletedRuns개, Redis=$redisKeysDeleted개');
+      
+      return data;
+    } on DioException catch (e) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ 전체 캐시 제거 DioException 발생: type=${e.type}, message=${e.message}, 소요시간=${duration.inMilliseconds}ms');
+      if (e.response != null) {
+        print('[ProductRepository] ❌ 응답 상세: statusCode=${e.response?.statusCode}, data=${e.response?.data}');
+      }
+      _handleDioException(e);
+      rethrow;
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ 전체 캐시 제거 예외 발생: error=$e, 소요시간=${duration.inMilliseconds}ms');
+      print('[ProductRepository] ❌ StackTrace: $stackTrace');
+      throw ServerException('전체 추천 캐시를 제거하는데 실패했습니다: ${e.toString()}');
     }
   }
 
@@ -169,6 +205,47 @@ class ProductRepository {
       rethrow;
     } catch (e) {
       throw ServerException('상품 정보를 불러오는데 실패했습니다: ${e.toString()}');
+    }
+  }
+
+  /// 특정 상품의 맞춤 점수 계산
+  Future<ProductMatchScoreDto> getProductMatchScore({
+    required String productId,
+    required String petId,
+  }) async {
+    final startTime = DateTime.now();
+    print('[ProductRepository] 🎯 맞춤 점수 계산 API 호출 시작: GET ${Endpoints.productMatchScore(productId)}?pet_id=$petId');
+    
+    try {
+      final response = await _apiClient.get(
+        Endpoints.productMatchScore(productId),
+        queryParameters: {'pet_id': petId},
+      );
+
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ✅ 맞춤 점수 계산 완료: statusCode=${response.statusCode}, 소요시간=${duration.inMilliseconds}ms');
+      
+      final data = response.data as Map<String, dynamic>;
+      final matchScore = data['match_score'] as double? ?? 0.0;
+      print('[ProductRepository] 📦 맞춤 점수: match_score=$matchScore, safety_score=${data['safety_score']}, fitness_score=${data['fitness_score']}');
+      
+      final result = ProductMatchScoreDto.fromJson(data);
+      print('[ProductRepository] ✅ DTO 변환 완료: match_score=${result.matchScore}');
+      
+      return result;
+    } on DioException catch (e) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ 맞춤 점수 계산 DioException 발생: type=${e.type}, message=${e.message}, 소요시간=${duration.inMilliseconds}ms');
+      if (e.response != null) {
+        print('[ProductRepository] ❌ 응답 상세: statusCode=${e.response?.statusCode}, data=${e.response?.data}');
+      }
+      _handleDioException(e);
+      rethrow;
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      print('[ProductRepository] ❌ 맞춤 점수 계산 예외 발생: error=$e, 소요시간=${duration.inMilliseconds}ms');
+      print('[ProductRepository] ❌ StackTrace: $stackTrace');
+      throw ServerException('맞춤 점수를 계산하는데 실패했습니다: ${e.toString()}');
     }
   }
 

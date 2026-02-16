@@ -26,7 +26,7 @@ class ProductCard extends StatelessWidget {
     final isNewLow = item.isNewLow;
 
     return CardContainer(
-      padding: const EdgeInsets.all(AppSpacing.itemPadding),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       onTap: () {
         context.go('/products/${product.id}');
       },
@@ -84,8 +84,8 @@ class ProductCard extends StatelessWidget {
                       // 배지 (Badge: 13px, font-weight: 700)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.badgePaddingHorizontal,
-                          vertical: AppSpacing.badgePaddingVertical,
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
                           color: isNewLow 

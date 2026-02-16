@@ -31,8 +31,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.pagePaddingHorizontal,
-            vertical: AppSpacing.navPaddingVertical,
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
           child: Row(
             children: [

@@ -23,6 +23,9 @@ class MockData {
           avgPrice: 42000,
           deltaPercent: -16.67,
           isNewLow: true,
+          matchScore: 95.5,
+          safetyScore: 98.0,
+          fitnessScore: 93.0,
         ),
         // 평균가와 비슷한 상품
         RecommendationItemDto(
@@ -38,6 +41,9 @@ class MockData {
           avgPrice: 45000,
           deltaPercent: 0.0,
           isNewLow: false,
+          matchScore: 92.0,
+          safetyScore: 95.0,
+          fitnessScore: 89.0,
         ),
         // 약간 할인된 상품
         RecommendationItemDto(
@@ -53,6 +59,9 @@ class MockData {
           avgPrice: 30000,
           deltaPercent: -6.67,
           isNewLow: false,
+          matchScore: 88.5,
+          safetyScore: 90.0,
+          fitnessScore: 87.0,
         ),
         // 큰 할인 상품
         RecommendationItemDto(
@@ -68,6 +77,9 @@ class MockData {
           avgPrice: 65000,
           deltaPercent: -20.0,
           isNewLow: true,
+          matchScore: 90.0,
+          safetyScore: 92.0,
+          fitnessScore: 88.0,
         ),
         // 가격 상승 상품 (참고용)
         RecommendationItemDto(
@@ -83,6 +95,9 @@ class MockData {
           avgPrice: 80000,
           deltaPercent: 6.25,
           isNewLow: false,
+          matchScore: 85.0,
+          safetyScore: 88.0,
+          fitnessScore: 82.0,
         ),
       ],
     );

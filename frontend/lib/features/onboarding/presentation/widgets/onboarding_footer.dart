@@ -24,10 +24,10 @@ class OnboardingFooter extends StatelessWidget {
       top: false,
       child: Padding(
         padding: EdgeInsets.only(
-          left: AppSpacing.pagePaddingHorizontal,
-          right: AppSpacing.pagePaddingHorizontal,
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
           top: AppSpacing.md,
-          bottom: AppSpacing.pagePaddingHorizontal,
+          bottom: AppSpacing.lg,
         ),
         child: AppPrimaryButton(
           text: buttonText,

@@ -48,7 +48,16 @@ class _BenefitsScreenState extends ConsumerState<BenefitsScreen> {
     if (state.isLoading) {
       return Scaffold(
         backgroundColor: Colors.white,
-        body: const Center(child: LoadingWidget()),
+        body: SafeArea(
+          child: Column(
+            children: [
+              AppTopBar(title: '혜택', showBackButton: false),
+              const Expanded(
+                child: Center(child: LoadingWidget()),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

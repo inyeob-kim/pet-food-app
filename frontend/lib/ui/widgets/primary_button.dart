@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
@@ -34,12 +35,18 @@ class PrimaryButton extends StatelessWidget {
         ),
       ),
       child: isLoading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ? Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: Lottie.asset(
+                  'assets/animations/loading_dots.json',
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
+                  repeat: true,
+                  animate: true,
+                ),
               ),
             )
           : Text(

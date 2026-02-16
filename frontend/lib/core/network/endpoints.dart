@@ -16,7 +16,9 @@ class Endpoints {
   static const String productRecommendations = '$products/recommendations';
   static const String productRecommendationHistory = '$products/recommendations/history';
   static const String productRecommendationCache = '$products/recommendations/cache';
+  static const String productRecommendationCacheAll = '$products/recommendations/cache/all';
   static String productOffers(String id) => '$products/$id/offers';
+  static String productMatchScore(String id) => '$products/$id/match-score';
   
   // Sections
   static String section(String sectionType) => '$products/sections/$sectionType';
