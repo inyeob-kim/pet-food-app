@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../ui/widgets/app_top_bar.dart';
+import '../../../../../ui/widgets/app_buttons.dart';
 import '../../../../../app/router/route_paths.dart';
 import '../../../../../domain/services/pet_service.dart';
 import '../../../../../domain/services/campaign_service.dart';
@@ -751,61 +752,43 @@ class _MissionBottomSheet extends ConsumerWidget {
                       ),
                     ),
                     child: SafeArea(
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            
-                            // 펫 프로필 업데이트 미션인 경우
-                            if (mission.title.contains('프로필 업데이트') || 
-                                mission.title.contains('업데이트')) {
-                              try {
-                                // Primary pet 가져오기
-                                final petService = ref.read(petServiceProvider);
-                                final primaryPet = await petService.getPrimaryPetSummary();
-                                
-                                if (primaryPet != null && context.mounted) {
-                                  context.push(RoutePaths.petUpdate(primaryPet.petId));
-                                } else if (context.mounted) {
-                                  // Primary pet이 없으면 모든 펫 목록에서 선택
-                                  final pets = await petService.getAllPetSummaries();
-                                  if (pets.isNotEmpty && context.mounted) {
-                                    // 첫 번째 펫으로 이동 (나중에 펫 선택 화면 추가 가능)
-                                    context.push(RoutePaths.petUpdate(pets.first.petId));
-                                  }
-                                }
-                              } catch (e) {
-                                // 에러 처리
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('펫 정보를 불러오는데 실패했습니다'),
-                                    ),
-                                  );
+                      child: AppPrimaryButton(
+                        text: '시작하기',
+                        height: 56,
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          
+                          // 펫 프로필 업데이트 미션인 경우
+                          if (mission.title.contains('프로필 업데이트') || 
+                              mission.title.contains('업데이트')) {
+                            try {
+                              // Primary pet 가져오기
+                              final petService = ref.read(petServiceProvider);
+                              final primaryPet = await petService.getPrimaryPetSummary();
+                              
+                              if (primaryPet != null && context.mounted) {
+                                context.push(RoutePaths.petUpdate(primaryPet.petId));
+                              } else if (context.mounted) {
+                                // Primary pet이 없으면 모든 펫 목록에서 선택
+                                final pets = await petService.getAllPetSummaries();
+                                if (pets.isNotEmpty && context.mounted) {
+                                  // 첫 번째 펫으로 이동 (나중에 펫 선택 화면 추가 가능)
+                                  context.push(RoutePaths.petUpdate(pets.first.petId));
                                 }
                               }
+                            } catch (e) {
+                              // 에러 처리
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('펫 정보를 불러오는데 실패했습니다'),
+                                  ),
+                                );
+                              }
                             }
-                            // TODO: 다른 미션 타입별 로직 구현
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary, // Primary Blue #2563EB
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12), // rounded-xl
-                            ),
-                            elevation: 0,
-                            shadowColor: Colors.transparent,
-                          ),
-                          child: Text(
-                            '시작하기',
-                            style: AppTypography.button.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
+                          }
+                          // TODO: 다른 미션 타입별 로직 구현
+                        },
                       ),
                     ),
                   ),

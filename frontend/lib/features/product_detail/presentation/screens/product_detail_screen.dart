@@ -17,7 +17,7 @@ import '../../../../../ui/widgets/app_buttons.dart';
 import '../controllers/product_detail_controller.dart';
 import '../widgets/price_comparison_card.dart';
 import '../widgets/match_analysis_card.dart';
-import '../widgets/nutrition_facts_section.dart';
+import '../widgets/ingredient_analysis_section.dart';
 import '../widgets/product_summary_card.dart';
 import '../widgets/price_line_chart.dart';
 import '../widgets/price_alert_settings_section.dart';
@@ -40,18 +40,27 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   int? _lastHandledRevision;  // 마지막으로 처리한 profileRevision
+  bool _hasInitializedMatchScore = false; // 초기 맞춤 점수 로드 여부
+  bool _isClaimsExpanded = false; // 기능성 클레임 접기/펼치기 상태
   
   @override
   void initState() {
     super.initState();
     // 화면 진입 시 데이터 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final controller = ref.read(productDetailControllerProvider(widget.productId).notifier);
-      controller.loadProduct(widget.productId);
-      
-      // ✅ 화면 진입 시 놓친 업데이트 복구
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // HomeController가 초기화되지 않았으면 초기화
       final homeState = ref.read(homeControllerProvider);
-      _maybeRecalculate(homeState);
+      if (homeState.isLoading) {
+        print('[ProductDetailScreen] 🔄 HomeController 초기화 시작');
+        await ref.read(homeControllerProvider.notifier).initialize();
+        print('[ProductDetailScreen] ✅ HomeController 초기화 완료');
+      }
+      
+      final controller = ref.read(productDetailControllerProvider(widget.productId).notifier);
+      await controller.loadProduct(widget.productId);
+      
+      // ✅ 제품 정보 로드 완료 후 맞춤 점수 로드 (homeState가 준비되면 build에서 처리)
+      // build 메서드의 ref.listen에서 homeState 업데이트를 감지하여 처리
     });
   }
   
@@ -89,13 +98,70 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     final state = ref.watch(productDetailControllerProvider(widget.productId));
     final homeState = ref.watch(homeControllerProvider);
     
-    // ✅ 화면 열린 상태에서 업데이트 감지
+    // ✅ 화면 열린 상태에서 업데이트 감지 및 초기 로드
     ref.listen<HomeState>(
       homeControllerProvider,
       (previousState, currentState) {
+        print('[ProductDetailScreen] 🔔 homeState 변경 감지:');
+        print('[ProductDetailScreen]   - previousState.stateType: ${previousState?.stateType}');
+        print('[ProductDetailScreen]   - currentState.stateType: ${currentState.stateType}');
+        print('[ProductDetailScreen]   - currentState.hasPet: ${currentState.hasPet}');
+        print('[ProductDetailScreen]   - currentState.petSummary: ${currentState.petSummary != null ? "있음 (petId: ${currentState.petSummary?.petId})" : "없음"}');
+        
+        // petSummary가 처음 로드되거나 업데이트될 때 맞춤 점수 로드
+        final petId = currentState.petSummary?.petId;
+        if (petId != null) {
+          final previousPetId = previousState?.petSummary?.petId;
+          // petId가 새로 로드되었거나 변경된 경우에만 로드
+          if (previousPetId != petId || (previousPetId == null && !_hasInitializedMatchScore)) {
+            print('[ProductDetailScreen] ✅ homeState 업데이트 감지, 맞춤 점수 로드 시작');
+            print('[ProductDetailScreen]   - petId: $petId');
+            print('[ProductDetailScreen]   - previousPetId: $previousPetId');
+            print('[ProductDetailScreen]   - _hasInitializedMatchScore: $_hasInitializedMatchScore');
+            final controller = ref.read(productDetailControllerProvider(widget.productId).notifier);
+            // 이미 로딩 중이 아니고, matchScore가 없을 때만 로드
+            if (!state.isLoadingMatchScore && state.matchScore == null) {
+              controller.loadMatchScore(widget.productId, petId);
+              _hasInitializedMatchScore = true;
+            } else {
+              print('[ProductDetailScreen] ⚠️ 로드 스킵: isLoadingMatchScore=${state.isLoadingMatchScore}, matchScore=${state.matchScore != null}');
+            }
+          } else {
+            print('[ProductDetailScreen] ℹ️ petId 변경 없음 또는 이미 초기화됨');
+          }
+        } else {
+          print('[ProductDetailScreen] ⚠️ petId가 null - 맞춤 점수 로드 불가');
+        }
         _maybeRecalculate(currentState);
       },
     );
+    
+    // ✅ build에서 직접 확인: homeState가 업데이트될 때마다 체크
+    // homeState가 hasPet 상태가 되면 맞춤 점수 로드
+    if (!_hasInitializedMatchScore && homeState.hasPet && homeState.petSummary != null) {
+      final petId = homeState.petSummary!.petId;
+      if (!state.isLoadingMatchScore && state.matchScore == null) {
+        print('[ProductDetailScreen] ✅ build에서 직접 맞춤 점수 로드 시작');
+        print('[ProductDetailScreen]   - petId: $petId');
+        print('[ProductDetailScreen]   - homeState.stateType: ${homeState.stateType}');
+        print('[ProductDetailScreen]   - homeState.hasPet: ${homeState.hasPet}');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_hasInitializedMatchScore) {
+            final controller = ref.read(productDetailControllerProvider(widget.productId).notifier);
+            controller.loadMatchScore(widget.productId, petId);
+            _hasInitializedMatchScore = true;
+          }
+        });
+      }
+    } else if (!_hasInitializedMatchScore) {
+      // homeState 상태 로깅
+      print('[ProductDetailScreen] ⏳ 맞춤 점수 로드 대기:');
+      print('[ProductDetailScreen]   - homeState.stateType: ${homeState.stateType}');
+      print('[ProductDetailScreen]   - homeState.hasPet: ${homeState.hasPet}');
+      print('[ProductDetailScreen]   - homeState.petSummary: ${homeState.petSummary != null ? "있음 (petId: ${homeState.petSummary?.petId})" : "없음"}');
+      print('[ProductDetailScreen]   - state.isLoadingMatchScore: ${state.isLoadingMatchScore}');
+      print('[ProductDetailScreen]   - state.matchScore: ${state.matchScore != null ? "있음" : "없음"}');
+    }
     
     // 에러 메시지 표시
     ref.listen<String?>(productDetailControllerProvider(widget.productId).select((s) => s.error), (previous, next) {
@@ -265,7 +331,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         },
                       ),
                       Divider(color: AppColors.border.withOpacity(0.3), thickness: 4, height: 1),
-                      // 맞춤 분석 섹션
+                      // 맞춤 분석 섹션 (항상 표시)
                       if (state.matchScore != null)
                         MatchAnalysisCard(
                           matchScore: state.matchScore!,
@@ -286,15 +352,81 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               animate: true,
                             ),
                           ),
+                        )
+                      else
+                        // petId가 없거나 맞춤 점수를 로드할 수 없는 경우
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                          width: double.infinity,
+                          color: AppColors.surface,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                homeState.petSummary?.name != null
+                                    ? '${homeState.petSummary!.name} 맞춤 점수'
+                                    : '맞춤 점수',
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                homeState.petSummary == null
+                                    ? '펫 정보를 등록하면 맞춤 점수를 확인할 수 있습니다.'
+                                    : state.matchScoreError == 'no_ingredient_info'
+                                        ? '이 상품의 성분 분석 정보가 아직 준비되지 않아 맞춤 점수를 제공할 수 없습니다.'
+                                        : '맞춤 점수를 계산하는 중입니다...',
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      if (state.matchScore != null)
-                        Divider(color: AppColors.border.withOpacity(0.3), thickness: 4, height: 1),
-                      // 영양 성분 섹션
-                      if (state.ingredientAnalysis != null &&
-                          state.ingredientAnalysis!.nutritionFacts.isNotEmpty) ...[
-                        NutritionFactsSection(
-                          nutritionFacts: state.ingredientAnalysis!.nutritionFacts,
-                        ),
+                      Divider(color: AppColors.border.withOpacity(0.3), thickness: 4, height: 1),
+                      // 성분 분석 섹션 (주요 원료, 알레르기 성분) - 항상 표시
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        width: double.infinity,
+                        color: AppColors.surface,
+                        child: state.ingredientAnalysis != null &&
+                                (state.ingredientAnalysis!.mainIngredients.isNotEmpty ||
+                                 state.ingredientAnalysis!.allergens?.isNotEmpty == true ||
+                                 state.ingredientAnalysis!.description != null)
+                            ? IngredientAnalysisSection(
+                                data: state.ingredientAnalysis,
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '성분 분석',
+                                    style: AppTypography.body.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+                                  Text(
+                                    '성분 정보가 없습니다.',
+                                    style: AppTypography.body.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                      Divider(color: AppColors.border.withOpacity(0.3), thickness: 4, height: 1),
+                      // 기능성 클레임 섹션
+                      if (state.claims.isNotEmpty) ...[
+                        _buildClaimsSection(state.claims),
                         Divider(color: AppColors.border.withOpacity(0.3), thickness: 4, height: 1),
                       ],
                       // 면책 조항 및 안내 문구
@@ -510,26 +642,156 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     );
   }
 
-  // 가격 히스토리 데이터 생성 (임시 - 실제 API 데이터로 대체 필요)
+  // 가격 히스토리 데이터 가져오기 (실제 API 데이터 사용)
   List<int> _getPriceHistory(ProductDetailState state) {
-    // TODO: 실제 가격 히스토리 API 데이터로 대체
-    // 현재는 임시 데이터 사용
-    if (state.currentPrice != null && state.averagePrice != null) {
-      final current = state.currentPrice!;
-      final avg = state.averagePrice!;
-      // 최근 7일 가격 데이터 시뮬레이션
-      return [
-        (avg * 1.1).round(), // 7일 전
-        (avg * 1.05).round(), // 6일 전
-        (avg * 1.02).round(), // 5일 전
-        (avg * 0.98).round(), // 4일 전
-        (avg * 0.95).round(), // 3일 전
-        (avg * 0.92).round(), // 2일 전
-        current, // 오늘
-      ];
+    if (state.priceHistory.isNotEmpty) {
+      return state.priceHistory.map((h) => h.price).toList();
     }
-    // 기본 데이터
-    return [65000, 58000, 62000, 55000, 60000, 52000, 48000];
+    // 가격 히스토리가 없으면 현재 가격만 반환
+    if (state.currentPrice != null) {
+      return [state.currentPrice!];
+    }
+    return [];
+  }
+
+  // 기능성 클레임 섹션
+  Widget _buildClaimsSection(List<ClaimItem> claims) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      width: double.infinity,
+      color: AppColors.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 헤더 (클릭 가능)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isClaimsExpanded = !_isClaimsExpanded;
+              });
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '기능성 클레임',
+                        style: AppTypography.body.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (!_isClaimsExpanded) ...[
+                        SizedBox(height: AppSpacing.xs),
+                        Text(
+                          '이 제품이 지원하는 기능성 정보입니다',
+                          style: AppTypography.small.copyWith(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm),
+                AnimatedRotation(
+                  turns: _isClaimsExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.textSecondary,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 접기/펼치기 콘텐츠
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: AppSpacing.xs),
+                Text(
+                  '이 제품이 지원하는 기능성 정보입니다',
+                  style: AppTypography.small.copyWith(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.lg),
+                ...claims.map((claim) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      border: Border.all(
+                        color: AppColors.border.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                claim.claimDisplayName ?? claim.claimCode,
+                                style: AppTypography.body.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                              ),
+                              child: Text(
+                                '증거 수준 ${claim.evidenceLevel}%',
+                                style: AppTypography.small.copyWith(
+                                  fontSize: 11,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (claim.note != null && claim.note!.isNotEmpty) ...[
+                          SizedBox(height: AppSpacing.xs),
+                          Text(
+                            claim.note!,
+                            style: AppTypography.small.copyWith(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                )).toList(),
+              ],
+            ),
+            crossFadeState: _isClaimsExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+            sizeCurve: Curves.easeInOut,
+          ),
+        ],
+      ),
+    );
   }
 
   /// 외부 앱으로 구매 링크 열기

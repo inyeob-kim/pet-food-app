@@ -1,5 +1,5 @@
 """상품 API 라우터 - 라우팅만 담당"""
-from fastapi import APIRouter, Depends, Query, Body, status
+from fastapi import APIRouter, Depends, Query, Body, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from sqlalchemy import select, delete
@@ -8,7 +8,7 @@ import logging
 import time
 
 from app.db.session import get_db
-from app.schemas.product import ProductRead, RecommendationResponse, ProductMatchScoreResponse
+from app.schemas.product import ProductRead, RecommendationResponse, ProductMatchScoreResponse, ProductDetailResponse
 from app.schemas.section import (
     SectionRequest, SectionResponse, BatchSectionRequest, BatchSectionResponse
 )
@@ -226,6 +226,15 @@ async def get_product(
     """상품 상세 조회"""
     product = await ProductService.get_product_by_id(product_id, db)
     return ProductRead.model_validate(product)
+
+
+@router.get("/{product_id}/detail", response_model=ProductDetailResponse)
+async def get_product_detail(
+    product_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """상품 상세 정보 조회 (가격, 성분, 영양, 클레임 포함)"""
+    return await ProductService.get_product_detail(product_id, db)
 
 
 @router.get("/{product_id}/offers")

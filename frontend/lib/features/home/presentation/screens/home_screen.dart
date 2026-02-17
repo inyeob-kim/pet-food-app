@@ -1009,7 +1009,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildPetSummaryBottomSheet(BuildContext context, petSummary, state) {
     // TODO: 현재 급여 사료 API 연동 후 실제 값으로 변경
     final hasCurrentFood = false; // 임시로 false
-    final currentFoodName = '로얄캐닌 미니 어덜트 3kg'; // TODO: 실제 데이터
     
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -1067,7 +1066,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1. 현재 급여 사료
-                      _buildCurrentFoodSection(hasCurrentFood, currentFoodName),
+                      _buildCurrentFoodSection(hasCurrentFood),
                       const SizedBox(height: AppSpacing.lg),
                       // 2. 건강 고민 요약
                       _buildHealthConcernsSection(petSummary),
@@ -1108,7 +1107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   /// 현재 급여 사료 섹션
-  Widget _buildCurrentFoodSection(bool hasCurrentFood, String currentFoodName) {
+  Widget _buildCurrentFoodSection(bool hasCurrentFood) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1122,11 +1121,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         const SizedBox(height: AppSpacing.md),
         if (hasCurrentFood) ...[
           // 등록됨: 상품명 표시 + '변경하기'
+          // TODO: 실제 현재 급여 사료 데이터 표시
           Row(
             children: [
               Expanded(
                 child: Text(
-                  currentFoodName,
+                  '', // TODO: 실제 데이터로 교체
                   style: AppTypography.body.copyWith(
                     color: const Color(0xFF111827),
                   ),
@@ -1472,12 +1472,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: AppSpacing.md),
             ] else ...[
               // 안내 문구 표시
-              Text(
+                          Text(
                 "알레르기, 나이, 건강 고민만 알려주세요!\n바로 맞춤 사료 추천해드릴게요.",
-                style: AppTypography.body.copyWith(
+                            style: AppTypography.body.copyWith(
                   color: AppColors.textSecondary,
-                ),
-              ),
+                      ),
+                    ),
               const SizedBox(height: AppSpacing.xl),
             ],
             
@@ -1721,15 +1721,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md), // 섹션 그룹 간격
-            // 사료 정보
-            Text(
-              '로얄캐닌 미니 어덜트 3kg', // TODO: 실제 데이터
-              style: AppTypography.h2.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-                height: 1.3,
-              ),
-            ),
+            // 사료 정보 (실제 데이터로 교체 필요)
+            // TODO: 현재 급여 사료 API 연동 후 실제 값으로 변경
             const SizedBox(height: AppSpacing.md), // 섹션 그룹 간격
             // 가격 정보 카드
             Container(

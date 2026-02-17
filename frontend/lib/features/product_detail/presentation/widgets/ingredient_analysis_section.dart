@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../app/theme/app_radius.dart';
+import '../../../../../app/theme/app_spacing.dart';
 
 /// 성분 분석 데이터 모델
 class IngredientAnalysisData {
@@ -19,7 +20,7 @@ class IngredientAnalysisData {
 }
 
 /// 성분 분석 섹션 위젯
-class IngredientAnalysisSection extends StatelessWidget {
+class IngredientAnalysisSection extends StatefulWidget {
   final IngredientAnalysisData? data;
 
   const IngredientAnalysisSection({
@@ -28,50 +29,106 @@ class IngredientAnalysisSection extends StatelessWidget {
   });
 
   @override
+  State<IngredientAnalysisSection> createState() => _IngredientAnalysisSectionState();
+}
+
+class _IngredientAnalysisSectionState extends State<IngredientAnalysisSection> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (data == null) {
+    if (widget.data == null) {
       return const SizedBox.shrink();
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 섹션 타이틀
-        Text(
-          '성분 분석',
-          style: AppTypography.h3.copyWith(
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
+        // 헤더 (클릭 가능)
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          },
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '성분 분석',
+                      style: AppTypography.h3.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (!_isExpanded) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        '주요 원료와 영양소 정보를 확인하세요',
+                        style: AppTypography.body2.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              AnimatedRotation(
+                turns: _isExpanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppColors.textSecondary,
+                  size: 24,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          '주요 원료와 영양소 정보를 확인하세요',
-          style: AppTypography.body2.copyWith(
-            color: Colors.grey.shade600,
-            fontSize: 13,
+        // 접기/펼치기 콘텐츠
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                '주요 원료와 영양소 정보를 확인하세요',
+                style: AppTypography.body2.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // 주요 원료
+              if (widget.data!.mainIngredients.isNotEmpty) ...[
+                _buildMainIngredients(widget.data!.mainIngredients),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+
+              // 영양소 분석
+              if (widget.data!.nutritionFacts.isNotEmpty) ...[
+                _buildNutritionFacts(widget.data!.nutritionFacts),
+                if (widget.data!.allergens != null && widget.data!.allergens!.isNotEmpty)
+                  const SizedBox(height: AppSpacing.xl),
+              ],
+              
+              // 알레르기 유발 성분
+              if (widget.data!.allergens != null && widget.data!.allergens!.isNotEmpty)
+                _buildAllergens(widget.data!.allergens!),
+            ],
           ),
+          crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 200),
+          sizeCurve: Curves.easeInOut,
         ),
-        const SizedBox(height: 20),
-
-        // 주요 원료
-        _buildMainIngredients(data!.mainIngredients),
-        const SizedBox(height: 24),
-
-        // 영양소 분석
-        _buildNutritionFacts(data!.nutritionFacts),
-        
-        // 알레르기 유발 성분
-        if (data!.allergens != null && data!.allergens!.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          _buildAllergens(data!.allergens!),
-        ],
-
-        // 기타 설명
-        if (data!.description != null && data!.description!.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          _buildDescription(data!.description!),
-        ],
       ],
     );
   }
@@ -80,53 +137,49 @@ class IngredientAnalysisSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '주요 원료',
-          style: AppTypography.body1.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.eco,
+              size: 18,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              '주요 원료',
+              style: AppTypography.body1.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: ingredients.asMap().entries.map((entry) {
-              final index = entry.key;
-              final ingredient = entry.value;
-              return Padding(
-                padding: EdgeInsets.only(bottom: index < ingredients.length - 1 ? 8 : 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.only(top: 6, right: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        ingredient,
-                        style: AppTypography.body2.copyWith(
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
+        const SizedBox(height: AppSpacing.md),
+        // Pill 형태로 표시
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: ingredients.map((ingredient) {
+            return Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+              ),
+              child: Text(
+                ingredient,
+                style: AppTypography.caption.copyWith(
+                  fontSize: 13,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
                 ),
-              );
-            }).toList(),
-          ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
@@ -136,36 +189,43 @@ class IngredientAnalysisSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '영양소 분석',
-          style: AppTypography.body1.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.analytics_outlined,
+              size: 18,
+              color: AppColors.status,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              '영양소 분석',
+              style: AppTypography.body1.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-          ),
-          child: Column(
-            children: nutritionFacts.entries.map((entry) {
-              final label = entry.key;
-              final value = entry.value;
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: entry.key == nutritionFacts.keys.last ? 0 : 12,
-                ),
-                child: Row(
+        const SizedBox(height: AppSpacing.md),
+        ...nutritionFacts.entries.map((entry) {
+          final label = entry.key;
+          final value = entry.value;
+          final isLast = entry.key == nutritionFacts.keys.last;
+          return Padding(
+            padding: EdgeInsets.only(bottom: isLast ? 0 : AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       label,
                       style: AppTypography.body2.copyWith(
                         fontSize: 14,
-                        color: Colors.grey.shade700,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
@@ -173,14 +233,27 @@ class IngredientAnalysisSection extends StatelessWidget {
                       style: AppTypography.body1.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
                 ),
-              );
-            }).toList(),
-          ),
-        ),
+                const SizedBox(height: AppSpacing.xs),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: value / 100,
+                    minHeight: 6,
+                    backgroundColor: AppColors.border,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.status,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ],
     );
   }
@@ -194,39 +267,42 @@ class IngredientAnalysisSection extends StatelessWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 18,
-              color: Colors.orange.shade600,
+              color: AppColors.drop,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.sm),
             Text(
               '알레르기 유발 성분',
               style: AppTypography.body1.copyWith(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
-                color: Colors.orange.shade700,
+                color: AppColors.drop,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
           children: allergens.map((allergen) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: AppColors.dropLight,
                 borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(
-                  color: Colors.orange.shade200,
+                  color: AppColors.drop.withOpacity(0.3),
                   width: 1,
                 ),
               ),
               child: Text(
                 allergen,
                 style: AppTypography.caption.copyWith(
-                  fontSize: 12,
-                  color: Colors.orange.shade800,
+                  fontSize: 13,
+                  color: AppColors.drop,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -237,38 +313,4 @@ class IngredientAnalysisSection extends StatelessWidget {
     );
   }
 
-  Widget _buildDescription(String description) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: Colors.blue.shade100,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 18,
-            color: Colors.blue.shade700,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              description,
-              style: AppTypography.body2.copyWith(
-                fontSize: 13,
-                color: Colors.blue.shade900,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

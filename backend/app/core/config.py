@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     # API Keys
     AFFILIATE_API_KEY: Optional[str] = None
     
+    # Coupang API Keys
+    COUPANG_ACCESS_KEY: Optional[str] = None
+    COUPANG_SECRET_KEY: Optional[str] = None
+    
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4o-mini"

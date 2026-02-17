@@ -102,3 +102,71 @@ class ProductMatchScoreResponse(BaseModel):
     score_components: dict = Field(default_factory=dict, description="세부 점수 분해")
     calculated_at: datetime = Field(default_factory=datetime.now, description="점수 계산 시각")
 
+
+class OfferDetailRead(BaseModel):
+    """판매처 상세 정보"""
+    id: UUID
+    merchant: str
+    url: str
+    affiliate_url: Optional[str] = None
+    current_price: Optional[int] = None
+    is_primary: bool
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
+class IngredientDetailRead(BaseModel):
+    """성분 상세 정보 (일반 사용자용)"""
+    main_ingredients: Optional[List[str]] = None
+    allergens: Optional[List[str]] = None
+    description: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class NutritionDetailRead(BaseModel):
+    """영양 정보 상세 (일반 사용자용)"""
+    protein_pct: Optional[float] = None
+    fat_pct: Optional[float] = None
+    fiber_pct: Optional[float] = None
+    moisture_pct: Optional[float] = None
+    calcium_pct: Optional[float] = None
+    phosphorus_pct: Optional[float] = None
+    kcal_per_100g: Optional[int] = None
+
+    model_config = {"from_attributes": True}
+
+
+class ClaimDetailRead(BaseModel):
+    """기능성 클레임 상세 (일반 사용자용)"""
+    claim_code: str
+    claim_display_name: Optional[str] = None
+    evidence_level: int
+    note: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class PriceHistoryRead(BaseModel):
+    """가격 히스토리"""
+    date: datetime
+    price: int
+
+    model_config = {"from_attributes": True}
+
+
+class ProductDetailResponse(BaseModel):
+    """제품 상세 정보 응답 (일반 사용자용)"""
+    product: ProductRead
+    offers: List[OfferDetailRead] = Field(default_factory=list)
+    current_price: Optional[int] = None
+    average_price: Optional[int] = None
+    min_price: Optional[int] = None
+    max_price: Optional[int] = None
+    purchase_url: Optional[str] = None
+    price_history: List[PriceHistoryRead] = Field(default_factory=list)
+    ingredient: Optional[IngredientDetailRead] = None
+    nutrition: Optional[NutritionDetailRead] = None
+    claims: List[ClaimDetailRead] = Field(default_factory=list)
+

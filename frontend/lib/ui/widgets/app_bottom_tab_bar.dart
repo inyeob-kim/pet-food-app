@@ -136,7 +136,7 @@ class _TabItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             iconWithColor,
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               label,
               style: AppTypography.small.copyWith(

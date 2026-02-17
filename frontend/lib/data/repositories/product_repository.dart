@@ -6,6 +6,7 @@ import '../../core/network/endpoints.dart';
 import '../../core/error/exceptions.dart';
 import '../models/recommendation_dto.dart';
 import '../models/product_dto.dart';
+import '../models/product_detail_dto.dart';
 import '../models/product_match_score_dto.dart';
 
 /// 상품 관련 데이터 레포지토리
@@ -205,6 +206,19 @@ class ProductRepository {
       rethrow;
     } catch (e) {
       throw ServerException('상품 정보를 불러오는데 실패했습니다: ${e.toString()}');
+    }
+  }
+
+  /// 상품 상세 정보 조회 (가격, 성분, 영양, 클레임 포함)
+  Future<ProductDetailDto> getProductDetail(String productId) async {
+    try {
+      final response = await _apiClient.get(Endpoints.productDetail(productId));
+      return ProductDetailDto.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      _handleDioException(e);
+      rethrow;
+    } catch (e) {
+      throw ServerException('상품 상세 정보를 불러오는데 실패했습니다: ${e.toString()}');
     }
   }
 

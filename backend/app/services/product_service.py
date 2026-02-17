@@ -2,7 +2,7 @@
 from typing import Optional, List, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, desc, delete
+from sqlalchemy import select, and_, desc, delete, func
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -11,16 +11,18 @@ import json
 import logging
 import time
 
-from app.models.product import Product, ProductIngredientProfile, ProductNutritionFacts
+from app.models.product import Product, ProductIngredientProfile, ProductNutritionFacts, ProductAllergen, ProductClaim
 from app.models.pet import Pet, PetHealthConcern, PetFoodAllergy, PetOtherAllergy
 from app.models.recommendation import RecommendationRun, RecommendationItem, RecStrategy
 from app.models.user_reco_prefs import UserRecoPrefs
 from app.models.ingredient_config import HarmfulIngredient, AllergenKeyword
-from app.schemas.product import ProductRead, ProductCreate, ProductUpdate, RecommendationResponse, RecommendationItem as RecommendationItemSchema
+from app.schemas.product import ProductRead, ProductCreate, ProductUpdate, RecommendationResponse, RecommendationItem as RecommendationItemSchema, ProductDetailResponse, OfferDetailRead, IngredientDetailRead, NutritionDetailRead, ClaimDetailRead, PriceHistoryRead
 from app.schemas.pet_summary import PetSummaryResponse
 from app.models.offer import Merchant, ProductOffer
+from app.models.price import PriceSnapshot, PriceSummary
 from app.services.recommendation_scoring_service import RecommendationScoringService
 from app.services.recommendation_explanation_service import RecommendationExplanationService
+from app.services.coupang_api_client import get_coupang_api_client
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,358 @@ class ProductService:
             )
         
         return product
+    
+    @staticmethod
+    async def get_product_detail(product_id: UUID, db: AsyncSession) -> ProductDetailResponse:
+        """상품 상세 정보 조회 (일반 사용자용)"""
+        # 상품 기본 정보 조회 (관계 포함)
+        from app.models.product import ProductClaim, ProductAllergen
+        result = await db.execute(
+            select(Product)
+            .options(
+                selectinload(Product.offers),
+                selectinload(Product.ingredient_profile),
+                selectinload(Product.nutrition_facts),
+                selectinload(Product.allergens).selectinload(ProductAllergen.allergen),
+                selectinload(Product.claims).selectinload(ProductClaim.claim)
+            )
+            .where(Product.id == product_id)
+        )
+        product = result.scalar_one_or_none()
+        
+        if product is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Product not found"
+            )
+        
+        # Primary offer 찾기
+        primary_offer = None
+        for offer in product.offers:
+            if offer.is_primary and offer.is_active:
+                primary_offer = offer
+                break
+        
+        if not primary_offer:
+            for offer in product.offers:
+                if offer.is_active:
+                    primary_offer = offer
+                    break
+        
+        # 가격 정보 조회
+        current_price = None
+        average_price = None
+        min_price = None
+        max_price = None
+        purchase_url = None
+        price_history = []
+        
+        if primary_offer:
+            purchase_url = primary_offer.affiliate_url or primary_offer.url
+            
+            # 1. 쿠팡 API로 실시간 가격 fetch
+            realtime_price_data = None
+            if primary_offer.merchant == Merchant.COUPANG:
+                coupang_client = get_coupang_api_client()
+                if coupang_client and primary_offer.vendor_item_id:
+                    logger.info(
+                        f"[ProductService] 🛒 쿠팡 API로 실시간 가격 조회: "
+                        f"vendor_item_id={primary_offer.vendor_item_id}"
+                    )
+                    realtime_price_data = await coupang_client.get_product_price(
+                        vendor_item_id=primary_offer.vendor_item_id
+                    )
+                    
+                    if realtime_price_data:
+                        current_price = realtime_price_data.get("final_price")
+                        logger.info(
+                            f"[ProductService] ✅ 쿠팡 API 가격 조회 성공: "
+                            f"final_price={current_price}"
+                        )
+                        
+                        # 백그라운드에서 PriceSnapshot 저장 (비동기, 에러 무시)
+                        try:
+                            await ProductService._save_price_snapshot(
+                                db, primary_offer, realtime_price_data
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"[ProductService] ⚠️ PriceSnapshot 저장 실패 (무시): {e}"
+                            )
+            
+            # 2. 실시간 가격이 없으면 DB 캐시 사용 (fallback)
+            if current_price is None:
+                logger.info(
+                    f"[ProductService] ℹ️ 실시간 가격 없음, DB 캐시 사용: "
+                    f"offer_id={primary_offer.id}"
+                )
+                current_price = primary_offer.current_price
+            
+            # 3. PriceSummary에서 통계 가져오기
+            price_summary = await db.get(PriceSummary, primary_offer.id)
+            if price_summary:
+                average_price = price_summary.avg_final_price
+                min_price = price_summary.min_final_price
+                max_price = price_summary.max_final_price
+                # 실시간 가격이 없고 캐시도 없으면 PriceSummary의 last_final_price 사용
+                if current_price is None:
+                    current_price = price_summary.last_final_price
+            
+            # 4. 최근 7일 가격 히스토리 조회
+            seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+            history_result = await db.execute(
+                select(PriceSnapshot)
+                .where(
+                    PriceSnapshot.offer_id == primary_offer.id,
+                    PriceSnapshot.captured_at >= seven_days_ago
+                )
+                .order_by(PriceSnapshot.captured_at.asc())
+            )
+            snapshots = history_result.scalars().all()
+            price_history = [
+                PriceHistoryRead(date=s.captured_at, price=s.final_price)
+                for s in snapshots
+            ]
+            
+            # 실시간 가격이 있으면 히스토리에 추가 (최신 데이터)
+            if realtime_price_data and current_price:
+                price_history.append(
+                    PriceHistoryRead(
+                        date=datetime.now(timezone.utc),
+                        price=current_price
+                    )
+                )
+        
+        # Offers 목록
+        offers = [
+            OfferDetailRead(
+                id=o.id,
+                merchant=o.merchant.value,
+                url=o.url,
+                affiliate_url=o.affiliate_url,
+                current_price=o.current_price,
+                is_primary=o.is_primary,
+                is_active=o.is_active
+            )
+            for o in product.offers if o.is_active
+        ]
+        
+        # 성분 정보
+        ingredient = None
+        if product.ingredient_profile:
+            main_ingredients = []
+            
+            # parsed가 있고 ingredients_ordered가 있으면 사용
+            if product.ingredient_profile.parsed:
+                parsed = product.ingredient_profile.parsed
+                ingredients_ordered = parsed.get("ingredients_ordered", [])
+                if ingredients_ordered:
+                    main_ingredients = ingredients_ordered[:10]
+                    logger.info(
+                        f"[ProductService] parsed에서 성분 추출: {len(main_ingredients)}개"
+                    )
+            
+            # parsed가 없거나 비어있으면 ingredients_text를 파싱
+            if not main_ingredients and product.ingredient_profile.ingredients_text:
+                # 쉼표로 구분된 텍스트를 파싱
+                ingredients_text = product.ingredient_profile.ingredients_text.strip()
+                if ingredients_text:
+                    # 쉼표, 공백으로 분리하고 빈 문자열 제거
+                    main_ingredients = [
+                        ing.strip() 
+                        for ing in ingredients_text.replace('，', ',').split(',') 
+                        if ing.strip()
+                    ][:10]  # 최대 10개만
+                    logger.info(
+                        f"[ProductService] ingredients_text에서 성분 파싱: {len(main_ingredients)}개"
+                    )
+            
+            # additives_text도 추가 (있으면)
+            if product.ingredient_profile.additives_text:
+                additives_text = product.ingredient_profile.additives_text.strip()
+                if additives_text:
+                    additives = [
+                        add.strip() 
+                        for add in additives_text.replace('，', ',').split(',') 
+                        if add.strip()
+                    ]
+                    # main_ingredients에 추가 (최대 10개 유지)
+                    main_ingredients.extend(additives[:max(0, 10 - len(main_ingredients))])
+                    logger.info(
+                        f"[ProductService] additives_text에서 첨가물 파싱: {len(additives)}개 추가"
+                    )
+            
+            # 알레르기 성분 추출
+            allergens = []
+            if product.allergens:
+                for allergen in product.allergens:
+                    if allergen.allergen:
+                        allergens.append(allergen.allergen.display_name)
+            
+            logger.info(
+                f"[ProductService] 알레르기 성분: {len(allergens)}개"
+            )
+            
+            # 설명 생성
+            description = None
+            if main_ingredients:
+                description = f"주요 성분: {', '.join(main_ingredients[:5])}"
+                if allergens:
+                    description += f"\n알레르기 주의 성분: {', '.join(allergens)}"
+            
+            # main_ingredients, allergens, description 중 하나라도 있으면 ingredient 생성
+            # main_ingredients는 항상 리스트로 반환 (빈 리스트라도)
+            if main_ingredients or allergens or description:
+                ingredient = IngredientDetailRead(
+                    main_ingredients=main_ingredients if main_ingredients else [],
+                    allergens=allergens if allergens else None,
+                    description=description
+                )
+                logger.info(
+                    f"[ProductService] ✅ IngredientDetailRead 생성: "
+                    f"main_ingredients={len(main_ingredients)}개, "
+                    f"allergens={len(allergens) if allergens else 0}개"
+                )
+            else:
+                logger.warning(
+                    f"[ProductService] ⚠️ 성분 정보가 모두 비어있어 IngredientDetailRead를 생성하지 않음"
+                )
+        
+        # 영양 정보
+        nutrition = None
+        if product.nutrition_facts:
+            nutrition = NutritionDetailRead(
+                protein_pct=float(product.nutrition_facts.protein_pct) if product.nutrition_facts.protein_pct else None,
+                fat_pct=float(product.nutrition_facts.fat_pct) if product.nutrition_facts.fat_pct else None,
+                fiber_pct=float(product.nutrition_facts.fiber_pct) if product.nutrition_facts.fiber_pct else None,
+                moisture_pct=float(product.nutrition_facts.moisture_pct) if product.nutrition_facts.moisture_pct else None,
+                calcium_pct=float(product.nutrition_facts.calcium_pct) if product.nutrition_facts.calcium_pct else None,
+                phosphorus_pct=float(product.nutrition_facts.phosphorus_pct) if product.nutrition_facts.phosphorus_pct else None,
+                kcal_per_100g=product.nutrition_facts.kcal_per_100g
+            )
+        
+        # 기능성 클레임
+        claims = []
+        if product.claims:
+            for claim in product.claims:
+                claim_display_name = None
+                if claim.claim:
+                    claim_display_name = claim.claim.display_name
+                claims.append(
+                    ClaimDetailRead(
+                        claim_code=claim.claim_code,
+                        claim_display_name=claim_display_name,
+                        evidence_level=claim.evidence_level,
+                        note=claim.note
+                    )
+                )
+        
+        return ProductDetailResponse(
+            product=ProductRead.model_validate(product),
+            offers=offers,
+            current_price=current_price,
+            average_price=average_price,
+            min_price=min_price,
+            max_price=max_price,
+            purchase_url=purchase_url,
+            price_history=price_history,
+            ingredient=ingredient,
+            nutrition=nutrition,
+            claims=claims
+        )
+    
+    @staticmethod
+    async def _save_price_snapshot(
+        db: AsyncSession,
+        offer: ProductOffer,
+        price_data: dict
+    ) -> None:
+        """
+        가격 스냅샷 저장 및 통계 업데이트
+        
+        Args:
+            db: 데이터베이스 세션
+            offer: ProductOffer 인스턴스
+            price_data: 쿠팡 API에서 받은 가격 데이터
+        """
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # PriceSnapshot 저장
+            snapshot = PriceSnapshot(
+                offer_id=offer.id,
+                listed_price=price_data.get("listed_price", 0),
+                shipping_fee=price_data.get("shipping_fee", 0),
+                coupon_discount=price_data.get("coupon_discount", 0),
+                card_discount=price_data.get("card_discount", 0),
+                final_price=price_data.get("final_price", 0),
+                currency=price_data.get("currency", "KRW"),
+                is_sold_out=price_data.get("is_sold_out", False),
+                captured_at=now,
+                captured_source="COUPANG_API"
+            )
+            db.add(snapshot)
+            
+            # ProductOffer.current_price 업데이트
+            offer.current_price = price_data.get("final_price")
+            offer.last_fetched_at = now
+            from app.models.offer import OfferFetchStatus
+            offer.last_fetch_status = OfferFetchStatus.SUCCESS
+            
+            # PriceSummary 업데이트 (30일 윈도우 기준)
+            price_summary = await db.get(PriceSummary, offer.id)
+            if price_summary and price_summary.window_days == 30:
+                # 기존 통계 유지하고 last_final_price만 업데이트
+                price_summary.last_final_price = price_data.get("final_price", 0)
+                price_summary.last_captured_at = now
+            else:
+                # 새로운 PriceSummary 생성 또는 재계산
+                # 최근 30일 스냅샷으로 통계 계산
+                thirty_days_ago = now - timedelta(days=30)
+                stats_result = await db.execute(
+                    select(
+                        func.avg(PriceSnapshot.final_price).label("avg"),
+                        func.min(PriceSnapshot.final_price).label("min"),
+                        func.max(PriceSnapshot.final_price).label("max")
+                    )
+                    .where(
+                        PriceSnapshot.offer_id == offer.id,
+                        PriceSnapshot.captured_at >= thirty_days_ago
+                    )
+                )
+                stats = stats_result.first()
+                
+                if price_summary:
+                    price_summary.avg_final_price = int(stats.avg or price_data.get("final_price", 0))
+                    price_summary.min_final_price = int(stats.min or price_data.get("final_price", 0))
+                    price_summary.max_final_price = int(stats.max or price_data.get("final_price", 0))
+                    price_summary.last_final_price = price_data.get("final_price", 0)
+                    price_summary.last_captured_at = now
+                else:
+                    final_price = price_data.get("final_price", 0)
+                    price_summary = PriceSummary(
+                        offer_id=offer.id,
+                        window_days=30,
+                        avg_final_price=int(stats.avg or final_price),
+                        min_final_price=int(stats.min or final_price),
+                        max_final_price=int(stats.max or final_price),
+                        last_final_price=final_price,
+                        last_captured_at=now
+                    )
+                    db.add(price_summary)
+            
+            await db.commit()
+            logger.info(
+                f"[ProductService] ✅ PriceSnapshot 저장 완료: "
+                f"offer_id={offer.id}, final_price={price_data.get('final_price')}"
+            )
+        except Exception as e:
+            await db.rollback()
+            logger.error(
+                f"[ProductService] ❌ PriceSnapshot 저장 실패: {e}",
+                exc_info=True
+            )
+            raise
     
     @staticmethod
     async def calculate_product_match_score(

@@ -13,6 +13,7 @@ class Endpoints {
   // Products
   static const String products = '/products';
   static String product(String id) => '$products/$id';
+  static String productDetail(String id) => '$products/$id/detail';
   static const String productRecommendations = '$products/recommendations';
   static const String productRecommendationHistory = '$products/recommendations/history';
   static const String productRecommendationCache = '$products/recommendations/cache';
